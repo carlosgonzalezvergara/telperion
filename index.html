@@ -2463,8 +2463,10 @@
         if (linkingLayerId) {
           const sourceInfo = getItemTypeById(linkingLayerId);
           const targetInfo = getItemTypeById(id);
-          if (targetInfo && targetInfo.type === 'operator' && targetInfo.anchorExprId !== sourceInfo?.anchorExprId) {
-            // Link source layer to target layer
+          const isValidOperatorTarget = targetInfo && targetInfo.type === 'operator' && targetInfo.anchorExprId !== sourceInfo?.anchorExprId;
+          const isValidExpressionTarget = targetInfo && targetInfo.type === 'expression';
+          if (isValidOperatorTarget || isValidExpressionTarget) {
+            // Link source layer to target layer or expression base node
             const newExprs = diagram.expressions.map((e, ei) => {
               if (ei !== sourceInfo.exprIndex) return e;
               const newLayers = e.operatorLayers.map(l => {
@@ -2911,7 +2913,7 @@
               // Si este estrato tiene un enlace cruzado, calculamos el nuevo centro
               if (layer.superiorLayerId) {
                 const sourceLabel = getOpEl(layer.id);
-                const targetLabel = getOpEl(layer.superiorLayerId);
+                const targetLabel = getOpEl(layer.superiorLayerId) || getExprEl(layer.superiorLayerId);
                 const exprLabel = getExprEl(expr.id); // El ancla léxica original
                 
                 if (sourceLabel && targetLabel && exprLabel) {
@@ -3133,7 +3135,7 @@
           expr.operatorLayers.forEach(layer => {
             if (!layer.superiorLayerId) return;
             const sourceLabel = getOpEl(layer.id);
-            const targetLabel = getOpEl(layer.superiorLayerId);
+            const targetLabel = getOpEl(layer.superiorLayerId) || getExprEl(layer.superiorLayerId);
             if (!sourceLabel || !targetLabel) return;
             const srcRect = sourceLabel.getBoundingClientRect();
             const tgtRect = targetLabel.getBoundingClientRect();
@@ -3637,7 +3639,7 @@
                   fontSize: '0.9rem', fontWeight: 500, zIndex: 9999, boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                   display: 'flex', alignItems: 'center', gap: '10px'
                 }}>
-                  <span>Click a layer node on another spine to link</span>
+                  <span>Click a layer node on another spine or a base node to link</span>
                   <button onClick={() => setLinkingLayerId(null)} style={{
                     background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', 
                     borderRadius: '4px', padding: '2px 8px', cursor: 'pointer', fontSize: '0.85rem'

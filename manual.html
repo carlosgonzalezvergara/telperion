@@ -114,6 +114,33 @@
       padding: 2px 4px;
       border-radius: 3px;
     }
+
+    /* Estilos del Footer */
+    footer {
+      text-align: center;
+      margin-top: 50px;
+      padding-top: 30px;
+      border-top: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+
+    footer p {
+      margin: 5px 0;
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s ease;
+    }
+
+    footer a:hover {
+      color: var(--accent-hover);
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -122,7 +149,6 @@
     <header>
       <h1>Telperion</h1>
       <p style="font-size: 1.2rem; color: var(--text-secondary); margin: 0; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">User Manual</p>
-      <p style="font-size: 0.9rem; margin-top: 10px;">Carlos González Vergara (<strong><a href="mailto:cgonzalv@uc.cl">cgonzalv@uc.cl</a></strong>)</p>
     </header>
 
     <section id="introduction">
@@ -204,11 +230,11 @@
         <li>Select the terminal node (the lowest node in a branch).</li>
         <li>In the sidebar, under <strong>Linking to expression item</strong>, choose the corresponding item from the dropdown.</li>
         <li><strong>Peripheries:</strong> a periphery may link to multiple expression items using checkboxes.</li>
-        <li><strong>Draw link as triangle:</strong> when a node dominates a full phrase, enable <span class="ui-element">Draw link as triangle</span> to replace multiple word-links with a single classic RRG triangle over the relevant span.</li>
+        <li><strong>Draw link as triangle:</strong> when a node dominates a full phrase, enable <span class="ui-element">Draw link as triangle</span> to replace multiple word-links with a single triangle over the relevant span.</li>
       </ol>
 
       <h3>Incoming Links (Managing connections from the base)</h3>
-      <p>If you need to review or quickly remove links pointing to a specific word from the syntax or operators:</p>
+      <p>If you need to review or quickly remove links pointing to a specific item from the syntax or operators:</p>
       <ol>
         <li>Select a base expression item (a word) in the lexical equator.</li>
         <li>Look at the <strong>Incoming Links</strong> section in the right sidebar.</li>
@@ -232,14 +258,14 @@
       <ol>
         <li>Select the source layer.</li>
         <li>In the sidebar, click <span class="ui-element">Link to secondary superior node</span>.</li>
-        <li>An on-screen indicator will appear. Click the target layer in another spine to generate the transversal link.</li>
+        <li>An on-screen indicator will appear. Click the target layer in another spine or a base node to generate the transversal link.</li>
         <li><strong>Cancel linking mode:</strong> press <span class="keyboard-shortcut">Esc</span> (or click the linking button again) to exit without creating a link.</li>
       </ol>
     </section>
 
     <section id="information-structure">
       <h2>6. Information Structure</h2>
-      <p>To analyze how information is distributed, activate <span class="ui-element">Information Structure</span>.</p>
+      <p>To analyze how information is distributed, click on any base node to activate <span class="ui-element">Information Structure</span> options.</p>
 
       <h3>Information Units (IU)</h3>
       <ul>
@@ -250,13 +276,9 @@
 
       <h3>Focus domains and Speech Act</h3>
       <ul>
-        <li>With an IU selected, check the boxes to include it within the Potential Focus Domain (<strong>PFD</strong>) or Actual Focus Domain (<strong>AFD</strong>).</li>
+        <li>With an IU selected, check the boxes to include it within the Potential Focus Domain (<strong>PFD</strong>) and/or Actual Focus Domain (<strong>AFD</strong>).</li>
         <li>Telperion draws lines towards the virtual <span class="ui-element">Speech Act</span> node.</li>
       </ul>
-
-      <div class="note">
-        <strong>Convention reminder:</strong> the application uses different line styles (dotted vs. solid) in focus-domain wiring. If you are preparing a publication, verify that the style matches your preferred convention for PFD/AFD in your diagram set.
-      </div>
 
       <h3>Speech Act node position</h3>
       <p>Select the Speech Act label to adjust its vertical position using <span class="ui-element">↑ Move Up</span> / <span class="ui-element">↓ Move Down</span>. Use <span class="ui-element">Reset position</span> to return to the default.</p>
@@ -289,7 +311,10 @@
       </ul>
     </section>
 
-  </div>
+    <footer>
+      <p>Developed by <strong>Carlos González Vergara</strong> (<a href="mailto:cgonzalv@uc.cl">cgonzalv@uc.cl</a>)</p>
+      <p>Departamento de Ciencias del Lenguaje &bull; Facultad de Letras <br> Pontificia Universidad Católica de Chile</p>
+    </footer>
 
-</body>
+  </div> </body>
 </html>
