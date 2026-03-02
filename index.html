@@ -640,7 +640,7 @@
     const generateId = () => Math.random().toString(36).substring(2, 9);
     const MAX_HISTORY = 100;
     const BASE_TREE_PADDING_TOP = 40;
-    const TREE_PADDING_SIDE = 48;
+    const TREE_PADDING_SIDE = 96;
     const TREE_PADDING_BOTTOM = 56;
     const MIN_VISIBLE_TOP_GAP = 24;
     const NODE_INSERT_Y_OFFSET = 72;
@@ -3149,13 +3149,13 @@
               }
 
               // Aplicamos el desplazamiento actual (ya sea 0, o el heredado de un nodo superior)
-              if (currentSpineShiftX !== 0) {
-                const layerWrapper = document.querySelector(`[data-operator-id="${layer.id}"]`);
-                if (layerWrapper) {
-                  // Si el usuario además lo movió manualmente, se suma al desplazamiento de la cascada
-                  const manualX = layer.manualXOffset || 0; 
-                  layerWrapper.style.transform = `translateX(${currentSpineShiftX + manualX}px)`;
-                }
+              const layerWrapper = document.querySelector(`[data-operator-id="${layer.id}"]`);
+              if (layerWrapper) {
+                // Si el usuario además lo movió manualmente, se suma al desplazamiento de la cascada
+                const manualX = layer.manualXOffset || 0;
+                const totalX = currentSpineShiftX + manualX;
+                // IMPORTANTE: si se quitó un enlace cruzado, hay que RESETEAR el transform (si no, queda "pegado")
+                layerWrapper.style.transform = totalX ? `translateX(${totalX}px)` : 'none';
               }
             });
           });
@@ -4948,7 +4948,6 @@
                 
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, marginTop: '10px' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={diagram.root ? 'var(--text-secondary)' : 'var(--border)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} title="Toggle visibility"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                     <input 
                       type="checkbox" 
                       checked={showConstituent} 
@@ -4956,6 +4955,7 @@
                       disabled={!diagram.root}
                       style={{ width: '16px', height: '16px', cursor: diagram.root ? 'pointer' : 'not-allowed', accentColor: 'var(--accent)' }}
                     />
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={diagram.root ? 'var(--text-secondary)' : 'var(--border)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} title="Toggle visibility"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   </div>
                   <div style={{ flex: 1 }}>
                     <button 
@@ -4975,7 +4975,6 @@
 
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, marginTop: '10px' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={diagram.expressions.some(e => e.operatorLayers?.length) ? 'var(--text-secondary)' : 'var(--border)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} title="Toggle visibility"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                     <input 
                       type="checkbox" 
                       checked={showOperators} 
@@ -4983,6 +4982,7 @@
                       disabled={!diagram.expressions.some(e => e.operatorLayers?.length)}
                       style={{ width: '16px', height: '16px', cursor: diagram.expressions.some(e => e.operatorLayers?.length) ? 'pointer' : 'not-allowed', accentColor: 'var(--accent)' }}
                     />
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={diagram.expressions.some(e => e.operatorLayers?.length) ? 'var(--text-secondary)' : 'var(--border)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} title="Toggle visibility"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   </div>
                   <div style={{ flex: 1 }}>
                     <button 
@@ -5000,8 +5000,7 @@
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, marginTop: '10px' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={diagram.expressions.some(e => e.infoUnit) ? 'var(--text-secondary)' : 'var(--border)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} title="Toggle visibility"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, marginTop: '10px' }}>                    
                     <input 
                       type="checkbox" 
                       checked={showInfoStructure} 
@@ -5009,6 +5008,7 @@
                       disabled={!diagram.expressions.some(e => e.infoUnit)}
                       style={{ width: '16px', height: '16px', cursor: diagram.expressions.some(e => e.infoUnit) ? 'pointer' : 'not-allowed', accentColor: 'var(--accent)' }}
                     />
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={diagram.expressions.some(e => e.infoUnit) ? 'var(--text-secondary)' : 'var(--border)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} title="Toggle visibility"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   </div>
                   <div style={{ flex: 1 }}>
                     <button 
