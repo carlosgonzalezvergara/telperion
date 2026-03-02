@@ -678,15 +678,17 @@
     // --- RRG Dictionary ---
     const RRG_LABELS = [
       "SENTENCE", "CLAUSE", "CORE", "NUC", "PRED", "PERIPHERY", "AUX",
-      "PrDP", "PoDP", "PrCS", "PoCS", "ECS", "LM",
+      "PrDP", "PoDP", "PrCS", "PoCS", "ECS", "LM", "ARG",
       "RP", "PP", "MP", "XP",
       "CORE_P", "NUC_P",
       "CORE_R", "NUC_R", "RPIP", "RPFP",
       "CORE_M", "NUC_M",
-      "CORE_W", "NUC_W", "AFF", "CL"
+      "CORE_W", "NUC_W", "AFF", "CL",
+      "V", "N", "P", "ADJ", "ADV", "N_PROP", "PRO",
     ];
 
     const RRG_OPERATOR_STRATA = [
+      "V", "N",
       "NUC", "CORE", "CLAUSE", "SENTENCE",
       "NUC_P", "CORE_P", "PP",
       "NUC_R", "CORE_R", "RP",
