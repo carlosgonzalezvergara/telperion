@@ -67,7 +67,7 @@
     .tree-wrapper { position: relative; display: flex; flex-direction: column; align-items: center; width: max-content; box-sizing: border-box; padding: 0 32px; transform-origin: 0 0; }
     
     /* La capa SVG no debe interceptar eventos */
-    .svg-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: visible; }
+    .svg-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; overflow: visible; }
 
     .svg-layer path, .svg-layer polygon {
       stroke-linejoin: round;
@@ -126,14 +126,15 @@
     /* The Ghost Label Trick 2.0 - Rehabilitamos los eventos aquí */
     .node-label { 
       position: relative; 
-      padding: 0 10px; 
+      padding: 4px 10px;
       border: 2px solid transparent; 
       border-radius: 6px; 
       cursor: pointer; 
-      font-size: 16px; 
-      min-width: 40px; 
-      height: 32px; 
-      display: flex; 
+      font-size: 16px;
+      min-width: 0;
+      min-height: 28px;
+      height: auto;
+      display: inline-flex; 
       align-items: center; 
       justify-content: center; 
       background: var(--bg-color); 
@@ -141,7 +142,7 @@
       pointer-events: auto; /* IMPORTANTE: Hace que la etiqueta sea clickeable */
     }
     .node-label:hover { border-color: var(--border-light); background: rgba(248,249,250,0.9); }
-    .node-label.selected { border-color: var(--accent); background: rgba(15, 81, 50, 0.04); box-shadow: 0 0 0 3px rgba(15, 81, 50, 0.10); padding: 0 4px; }
+    .node-label.selected { border-color: var(--accent); background: rgba(15, 81, 50, 0.04); box-shadow: 0 0 0 3px rgba(15, 81, 50, 0.10); }
     
     /* Chevrón inline dentro del input (estilo B) */
     .node-chevron {
@@ -178,6 +179,66 @@
       stroke-linejoin: round;
     }
 
+    /* Inline node action buttons (green) */
+    .node-action-btn {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #198754;
+      color: #fff;
+      border: 1px solid rgba(0,0,0,0.12);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.14);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1;
+      cursor: pointer;
+      user-select: none;
+      pointer-events: auto;
+      z-index: 60;
+    }
+    /* Hidden by default; shown on hover or when the node is selected */
+    .node-label .node-action-btn {
+      opacity: 0;
+      pointer-events: none;
+      transform-origin: center;
+      transition: opacity 0.12s ease, transform 0.12s ease, filter 0.12s ease;
+    }
+    .node-label:hover .node-action-btn,
+    .node-label.selected .node-action-btn {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .node-label .node-action-btn.bottom-center {
+      transform: translateX(-50%) scale(0.96);
+    }
+    .node-label:hover .node-action-btn.bottom-center,
+    .node-label.selected .node-action-btn.bottom-center {
+      transform: translateX(-50%) scale(1);
+    }
+    .node-label .node-action-btn.left-center,
+    .node-label .node-action-btn.right-center {
+      transform: translateY(-50%) scale(0.96);
+    }
+    .node-label:hover .node-action-btn.left-center,
+    .node-label.selected .node-action-btn.left-center,
+    .node-label:hover .node-action-btn.right-center,
+    .node-label.selected .node-action-btn.right-center {
+      transform: translateY(-50%) scale(1);
+    }
+    .node-action-btn:hover { filter: brightness(0.96); }
+    .node-action-btn.bottom-center { left: 50%; bottom: -11px; }
+    .node-action-btn.left-center { left: -11px; top: 50%; }
+    .node-action-btn.right-center { right: -11px; top: 50%; }
+    .node-action-btn.arrow { font-size: 9px; font-weight: 900; }
+    .node-action-btn:active {
+      transform: translateX(-50%) scale(0.9);
+      filter: brightness(0.8);
+    }
+    
     .node-label.is-editing .node-display {
       opacity: 0;
       pointer-events: none;
@@ -662,7 +723,7 @@
     // --- Syntactic Node Component (Top) ---
     const TreeNode = ({ 
       node, selectedId, editingId, shifts = {}, 
-      onNodeClick, onLabelChange, onEditEnd
+      onNodeClick, onLabelChange, onEditEnd, onAddChild
     }) => {
       const isSelected = selectedId === node.id;
       const isEditing = editingId === node.id;
@@ -748,6 +809,17 @@
                 {isPlaceholder ? '...' : renderLabel(node.label)}
               </div>
 
+              {!isEditing && (
+                <div
+                  className="node-action-btn bottom-center"
+                  title="Add child"
+                  onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onClick={(e) => { e.stopPropagation(); onAddChild && onAddChild(node.id); }}
+                >
+                  +
+                </div>
+              )}
+
               {isEditing && (
                 <>
                   <input 
@@ -818,8 +890,8 @@
             <div className="node-children">
               {node.children.map(child => (
                 <TreeNode key={child.id} node={child} selectedId={selectedId} editingId={editingId} shifts={shifts}
-                  onNodeClick={onNodeClick} 
-                  onLabelChange={onLabelChange} onEditEnd={onEditEnd} />
+                  onNodeClick={onNodeClick}
+                  onLabelChange={onLabelChange} onEditEnd={onEditEnd} onAddChild={onAddChild} />
               ))}
             </div>
           )}
@@ -830,15 +902,15 @@
 
       return (
         <div style={{ display: 'flex', gap: '40px', alignItems: 'flex-start', width: 'max-content', pointerEvents: 'none' }}>
-          {leftPerifs.map(p => <TreeNode key={p.id} node={p} selectedId={selectedId} editingId={editingId} shifts={shifts} onNodeClick={onNodeClick} onLabelChange={onLabelChange} onEditEnd={onEditEnd} />)}
+          {leftPerifs.map(p => <TreeNode key={p.id} node={p} selectedId={selectedId} editingId={editingId} shifts={shifts} onNodeClick={onNodeClick} onLabelChange={onLabelChange} onEditEnd={onEditEnd} onAddChild={onAddChild} />)}
           {NodeCore}
-          {rightPerifs.map(p => <TreeNode key={p.id} node={p} selectedId={selectedId} editingId={editingId} shifts={shifts} onNodeClick={onNodeClick} onLabelChange={onLabelChange} onEditEnd={onEditEnd} />)}
+          {rightPerifs.map(p => <TreeNode key={p.id} node={p} selectedId={selectedId} editingId={editingId} shifts={shifts} onNodeClick={onNodeClick} onLabelChange={onLabelChange} onEditEnd={onEditEnd} onAddChild={onAddChild} />)}
         </div>
       );
     };
 
     // --- Expression Node Component (Equator Bottom) ---
-    const ExpressionItem = ({ expr, selectedId, editingId, shifts = {}, onSelect, onChange, onEndEdit, showOperators = true, showInfoStructure = true, projectionFocus = 'all' }) => {
+    const ExpressionItem = ({ expr, selectedId, editingId, shifts = {}, onSelect, onChange, onEndEdit, showOperators = true, showInfoStructure = true, projectionFocus = 'all', onAddOperatorLayerAfter, onAddOperatorToLayer }) => {
       const isSelected = selectedId === expr.id;
       const isEditing = editingId === expr.id;
       const [localVal, setLocalVal] = useState(expr.label);
@@ -900,7 +972,12 @@
                 {expr.operatorLayers.map((layer) => (
                   <OperatorLayerItem key={layer.id} layer={layer}
                     selectedId={selectedId} editingId={editingId}
-                    onSelect={onSelect} onChange={onChange} onEndEdit={onEndEdit} />
+                    onSelect={onSelect} onChange={onChange} onEndEdit={onEndEdit}
+                    canAddChild={!!(expr.operatorLayers && (expr.operatorLayers[expr.operatorLayers.length - 1]?.id === layer.id))}
+                    onAddChildLayer={onAddOperatorLayerAfter}
+                    onAddOperatorLeft={(layerId) => onAddOperatorToLayer(layerId, 'left')}
+                    onAddOperatorRight={(layerId) => onAddOperatorToLayer(layerId, 'right')}
+                  />
                 ))}
               </div>
             )}
@@ -911,7 +988,7 @@
     };
 
     // --- Operator Layer Node Component (Below Equator) ---
-    const OperatorLayerItem = ({ layer, selectedId, editingId, onSelect, onChange, onEndEdit }) => {
+    const OperatorLayerItem = ({ layer, selectedId, editingId, onSelect, onChange, onEndEdit, canAddChild = false, onAddChildLayer, onAddOperatorLeft, onAddOperatorRight }) => {
       const isSelected = selectedId === layer.id;
       const isEditing = editingId === layer.id;
       const [localVal, setLocalVal] = useState(layer.label === '...' ? '' : (layer.label || ''));
@@ -971,6 +1048,37 @@
             <div className={`node-display ${isPlaceholder ? 'placeholder' : ''}`}>
               {isPlaceholder ? '...' : renderLabel(layer.label)}
             </div>
+
+            {!isEditing && (
+              <>
+                {canAddChild && (
+                  <div
+                    className="node-action-btn bottom-center"
+                    title="Add child layer"
+                    onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    onClick={(e) => { e.stopPropagation(); onAddChildLayer && onAddChildLayer(layer.id); }}
+                  >
+                    +
+                  </div>
+                )}
+                <div
+                  className="node-action-btn left-center arrow"
+                  title="Add operator (left)"
+                  onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onClick={(e) => { e.stopPropagation(); onAddOperatorLeft && onAddOperatorLeft(layer.id); }}
+                >
+                  →
+                </div>
+                <div
+                  className="node-action-btn right-center arrow"
+                  title="Add operator (right)"
+                  onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onClick={(e) => { e.stopPropagation(); onAddOperatorRight && onAddOperatorRight(layer.id); }}
+                >
+                  ←
+                </div>
+              </>
+            )}
 
             {isEditing && (
               <>
@@ -1248,22 +1356,23 @@
                   style={{
                     width: `${inputWidth}px`,
                     left: '50%',
+                    textTransform: 'uppercase',
                     transform: 'translateX(-50%)',
                     paddingRight: '24px'
                   }}
                   value={localVal}
                   size={Math.max(3, localVal.length)}
                   onChange={(e) => {
-                    setLocalVal(e.target.value);
+                    setLocalVal(e.target.value.toUpperCase());
                     setShowDropdown(true);
                   }}
                   onBlur={(e) => {
-                    onChange(unit.id, e.target.value || '...');
+                    onChange(unit.id, e.target.value.toUpperCase() || '...');
                     onEndEdit();
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
-                      onChange(unit.id, localVal || '...');
+                      onChange(unit.id, localVal.toUpperCase() || '...');
                       onEndEdit();
                     } else if (e.key === 'Escape') {
                       if (showDropdown) {
@@ -1988,6 +2097,16 @@
           newRoot = updateNode(diagram.root, selectedId, n => ({ ...n, children: (n.children || []).slice(0, newCount) }));
         }
         commitChange({ ...diagram, root: newRoot });
+      };
+
+
+      const addChildToNode = (parentId) => {
+        if (!diagram || !diagram.root || !parentId) return;
+        const newChild = buildSimpleChildren(1)[0];
+        const newRoot = updateNode(diagram.root, parentId, n => ({ ...n, children: [...(n.children || []), newChild] }));
+        commitChange({ ...diagram, root: newRoot });
+        setSelectedId(newChild.id);
+        setPendingEditId(newChild.id);
       };
 
       const addPeriphery = (side) => {
@@ -4096,8 +4215,8 @@
                 {diagram.root && showConstituent && (
                   <div className="syntax-tree-container" style={{ zIndex: editingType === 'node' ? 1000 : 2 }}>
                     <TreeNode node={diagram.root} selectedId={selectedId} editingId={editingId} shifts={shifts}
-                      onNodeClick={handleNodeClick} 
-                      onLabelChange={handleLabelChange} onEditEnd={() => setEditingId(null)} />
+                      onNodeClick={handleNodeClick}
+                      onLabelChange={handleLabelChange} onEditEnd={() => setEditingId(null)} onAddChild={addChildToNode} />
                   </div>
                 )}
                 
@@ -4105,6 +4224,8 @@
                   {diagram.expressions.map(expr => (
                     <ExpressionItem key={expr.id} expr={expr} selectedId={selectedId} editingId={editingId} shifts={shifts}
                       onSelect={handleNodeClick} showOperators={showOperators} showInfoStructure={showInfoStructure} projectionFocus={projectionFocus}
+                      onAddOperatorLayerAfter={addOperatorLayerAfter}
+                      onAddOperatorToLayer={addOperatorToLayer}
                       onChange={handleLabelChange} onEndEdit={() => setEditingId(null)} onDelete={deleteItem} />
                   ))}
                 </div>
