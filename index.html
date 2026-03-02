@@ -53,6 +53,8 @@
 
     .btn { padding: 7px 16px; border: 1px solid var(--border); border-radius: 6px; background: white; cursor: pointer; font-weight: 600; transition: all 0.2s ease; font-family: inherit; font-size: 0.875rem; color: var(--text); }
     .btn:hover:not(:disabled) { background: var(--surface-warm); border-color: #ced4da; }
+    .btn.btn-no-hover { cursor: default; }
+    .btn.btn-no-hover:hover:not(:disabled) { background: white; border-color: unset; }
     .btn:disabled { opacity: 0.45; cursor: not-allowed; }
     .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
     .btn-primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
@@ -66,6 +68,10 @@
     
     /* La capa SVG no debe interceptar eventos */
     .svg-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: visible; }
+
+    .svg-layer path, .svg-layer polygon {
+      stroke-linejoin: round;
+    }
 
     /* Los contenedores estructurales DEBEN ser "atravesables" por el ratón para evitar solapamientos */
     .syntax-tree-container { display: flex; justify-content: center; z-index: 2; position: relative; width: max-content; min-width: 100%; min-height: 150px; pointer-events: none; }
@@ -101,6 +107,16 @@
     .action-row button:hover:not(:disabled) { background: var(--surface-warm); border-color: #ced4da; }
     .action-row button:disabled { opacity: 0.45; cursor: not-allowed; }
 
+
+    /* Joined (segmented) buttons */
+    .joined-row { display: flex; width: 100%; }
+    .joined-row button { flex: 1; padding: 8px; border: 1px solid var(--border); border-radius: 10px; background: white; cursor: pointer; font-family: inherit; font-size: 0.85rem; color: var(--text); transition: all 0.2s ease; }
+    .joined-row button:hover:not(:disabled) { background: var(--surface-warm); border-color: #ced4da; }
+    .joined-row button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .joined-row button:first-child { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+    .joined-row button:last-child { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+    .joined-row button + button { margin-left: -1px; }
+
     /* Nodes */
     /* La caja invisible del nodo debe ignorar los eventos del cursor */
     .tree-node { display: flex; flex-direction: column; align-items: center; position: relative; flex: 0 0 auto; pointer-events: none; }
@@ -127,27 +143,39 @@
     .node-label:hover { border-color: var(--border-light); background: rgba(248,249,250,0.9); }
     .node-label.selected { border-color: var(--accent); background: rgba(15, 81, 50, 0.04); box-shadow: 0 0 0 3px rgba(15, 81, 50, 0.10); padding: 0 4px; }
     
-    /* Chevrón verde, ubicado por fuera del nodo */
+    /* Chevrón inline dentro del input (estilo B) */
     .node-chevron {
       position: absolute;
-      right: -14px; 
+      right: 4px;
       top: 50%;
       transform: translateY(-50%);
-      font-size: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
       color: var(--accent);
-      opacity: 0;
-      transition: opacity 0.2s ease, transform 0.2s ease;
-      pointer-events: auto; /* IMPORTANTE */
       cursor: pointer;
-      padding: 4px;
+      pointer-events: auto;
       z-index: 30;
-    }
-    .node-content:hover .node-chevron, .node-chevron.active {
-      opacity: 1;
+      transition: transform 0.2s ease, color 0.2s ease, background 0.15s ease;
     }
     .node-chevron:hover {
       color: var(--accent-hover);
-      transform: translateY(-50%) scale(1.15);
+      background: rgba(15, 81, 50, 0.06);
+    }
+    .node-chevron.active {
+      transform: translateY(-50%) rotate(180deg);
+    }
+    .node-chevron svg {
+      width: 10px;
+      height: 6px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     .node-label.is-editing .node-display {
@@ -207,48 +235,64 @@
       pointer-events: auto; /* IMPORTANTE */
     }
 
-    /* Lista Desplegable Personalizada */
+    /* Lista Desplegable Pills (estilo II) */
     .dropdown-list {
       position: absolute;
-      top: calc(100% + 6px);
+      top: calc(100% + 8px);
       left: 50%;
       transform: translateX(-50%);
       background: white;
       border: 1px solid var(--border-light);
-      border-radius: 8px;
-      box-shadow: var(--shadow-float); 
-      max-height: 220px;
+      border-radius: 10px;
+      box-shadow: var(--shadow-float);
+      max-height: 240px;
       overflow-y: auto;
-      z-index: 9999; 
+      z-index: 9999;
       width: max-content;
-      min-width: 130px;
-      padding: 4px 0;
+      min-width: 160px;
+      max-width: 280px;
+      padding: 10px;
       list-style: none;
-      pointer-events: auto; /* IMPORTANTE */
+      pointer-events: auto;
     }
-    .dropdown-list li {
-      padding: 8px 16px;
-      font-size: 14px;
+    .dropdown-list .no-label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-secondary);
       cursor: pointer;
-      color: var(--text);
-      text-align: left;
-      font-weight: 500;
-      transition: background 0.15s ease, color 0.15s ease;
+      font-style: italic;
+      text-align: center;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-light);
+      transition: color 0.15s ease;
     }
-    .dropdown-list li:hover {
+    .dropdown-list .no-label:hover {
+      color: var(--danger);
+    }
+    .dropdown-list .pills-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      justify-content: center;
+    }
+    .dropdown-list .pill-item {
+      padding: 4px 10px;
+      font-size: 13px;
+      border-radius: 6px;
+      cursor: pointer;
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      font-weight: 600;
+      color: var(--text);
+      transition: all 0.15s ease;
+      font-family: var(--font-sans);
+      white-space: nowrap;
+    }
+    .dropdown-list .pill-item:hover {
       background: var(--accent);
       color: white;
-    }
-    .dropdown-list li.no-label {
-      color: var(--text-secondary);
-      font-style: italic;
-      border-bottom: 1px solid var(--border-light);
-      margin-bottom: 4px;
-      padding-bottom: 8px;
-    }
-    .dropdown-list li.no-label:hover {
-      background: var(--surface-warm);
-      color: var(--danger);
+      border-color: var(--accent);
     }
 
     /* Input Numérico de Hijos (Estilo Sidebar) */
@@ -692,10 +736,6 @@
       const filteredLabels = RRG_LABELS.filter(l => l.includes(localVal));
 
       const inputWidth = Math.max(100, (localVal.length + 1) * 10);
-      const dynamicChevronStyle = isEditing ? {
-        left: `calc(50% + ${inputWidth / 2}px + 2px)`, 
-        right: 'auto'
-      } : {};
 
       const NodeCore = (
         <div className="tree-node" data-node-id={node.id} style={shiftStyle}>
@@ -717,7 +757,8 @@
                       width: `${inputWidth}px`, 
                       left: '50%', 
                       transform: 'translateX(-50%)',
-                      textTransform: 'uppercase'
+                      textTransform: 'uppercase',
+                      paddingRight: '24px'
                     }}
                     value={localVal} 
                     size={Math.max(3, localVal.length)}
@@ -745,32 +786,32 @@
                     onFocus={(e) => e.target.select()}
                   />
 
+                  <div 
+                    className={`node-chevron ${showDropdown ? 'active' : ''}`} 
+                    onMouseDown={handleChevronMouseDown}
+                    onClick={(e) => e.stopPropagation()}
+                    style={{ right: `calc(50% - ${inputWidth / 2}px + 4px)` }}
+                  >
+                    <svg viewBox="0 0 10 6"><path d="M1 1L5 5L9 1"/></svg>
+                  </div>
+
                   {showDropdown && (
-                    <ul className="dropdown-list">
-                      <li className="no-label" onMouseDown={(e) => { e.preventDefault(); selectLabel('NO LABEL'); }}>
-                        NO LABEL
-                      </li>
-                      {filteredLabels.map(lbl => (
-                        <li key={lbl} onMouseDown={(e) => { e.preventDefault(); selectLabel(lbl); }}>
-                          {renderLabel(lbl)}
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="dropdown-list">
+                      <div className="no-label" onMouseDown={(e) => { e.preventDefault(); selectLabel('NO LABEL'); }}>
+                        no label
+                      </div>
+                      <div className="pills-container">
+                        {filteredLabels.map(lbl => (
+                          <span key={lbl} className="pill-item" onMouseDown={(e) => { e.preventDefault(); selectLabel(lbl); }}>
+                            {renderLabel(lbl)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </>
               )}
             </div>
-
-            {isEditing && (
-              <div 
-                className={`node-chevron ${showDropdown ? 'active' : ''}`} 
-                onMouseDown={handleChevronMouseDown}
-                onClick={(e) => e.stopPropagation()}
-                style={dynamicChevronStyle}
-              >
-                ▼
-              </div>
-            )}
           </div>
           
           {node.children && node.children.length > 0 && (
@@ -844,7 +885,16 @@
           {/* Contenedor de Proyecciones Paralelas (Bifurcación) */}
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', gap: (hasOps && hasIS) ? '40px' : '0' }}>
             
-            {/* Columna de Operadores */}
+            {/* Columna de Estructura Informativa (izquierda) */}
+            {showInfoStructure && hasIS && (
+              <div className="is-spine" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', transition: 'opacity 0.3s ease', opacity: opacityIS }}>
+                <InfoStructureNode unit={expr.infoUnit}
+                  selectedId={selectedId} editingId={editingId}
+                  onSelect={onSelect} onChange={onChange} onEndEdit={onEndEdit} />
+              </div>
+            )}
+
+            {/* Columna de Operadores (derecha) */}
             {showOperators && hasOps && (
               <div className="operator-spine" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', transition: 'opacity 0.3s ease', opacity: opacityOp }}>
                 {expr.operatorLayers.map((layer) => (
@@ -852,15 +902,6 @@
                     selectedId={selectedId} editingId={editingId}
                     onSelect={onSelect} onChange={onChange} onEndEdit={onEndEdit} />
                 ))}
-              </div>
-            )}
-
-            {/* Columna de Estructura Informativa */}
-            {showInfoStructure && hasIS && (
-              <div className="is-spine" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', transition: 'opacity 0.3s ease', opacity: opacityIS }}>
-                <InfoStructureNode unit={expr.infoUnit}
-                  selectedId={selectedId} editingId={editingId}
-                  onSelect={onSelect} onChange={onChange} onEndEdit={onEndEdit} />
               </div>
             )}
 
@@ -916,10 +957,6 @@
       const isPlaceholder = !layer.label || layer.label === '...';
       const filteredLabels = RRG_OPERATOR_STRATA.filter(l => l.includes(localVal));
       const inputWidth = Math.max(100, (localVal.length + 1) * 10);
-      const dynamicChevronStyle = isEditing ? {
-        left: `calc(50% + ${inputWidth / 2}px + 2px)`,
-        right: 'auto'
-      } : {};
 
       const leftOps = (layer.operators || []).filter(o => o.side === 'left');
       const rightOps = (layer.operators || []).filter(o => o.side === 'right');
@@ -944,7 +981,8 @@
                     width: `${inputWidth}px`, 
                     left: '50%', 
                     transform: 'translateX(-50%)',
-                    textTransform: 'uppercase'
+                    textTransform: 'uppercase',
+                    paddingRight: '24px'
                   }}
                   value={localVal}
                   size={Math.max(3, localVal.length)}
@@ -972,32 +1010,32 @@
                   onFocus={(e) => e.target.select()}
                 />
 
+                <div 
+                  className={`node-chevron ${showDropdown ? 'active' : ''}`}
+                  onMouseDown={handleChevronMouseDown}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ right: `calc(50% - ${inputWidth / 2}px + 4px)` }}
+                >
+                  <svg viewBox="0 0 10 6"><path d="M1 1L5 5L9 1"/></svg>
+                </div>
+
                 {showDropdown && (
-                  <ul className="dropdown-list">
-                    <li className="no-label" onMouseDown={(e) => { e.preventDefault(); selectLabel('NO LABEL'); }}>
-                      NO LABEL
-                    </li>
-                    {filteredLabels.map(lbl => (
-                      <li key={lbl} onMouseDown={(e) => { e.preventDefault(); selectLabel(lbl); }}>
-                        {renderLabel(lbl)}
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="dropdown-list">
+                    <div className="no-label" onMouseDown={(e) => { e.preventDefault(); selectLabel('NO LABEL'); }}>
+                      no label
+                    </div>
+                    <div className="pills-container">
+                      {filteredLabels.map(lbl => (
+                        <span key={lbl} className="pill-item" onMouseDown={(e) => { e.preventDefault(); selectLabel(lbl); }}>
+                          {renderLabel(lbl)}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </>
             )}
           </div>
-
-          {isEditing && (
-            <div 
-              className={`node-chevron ${showDropdown ? 'active' : ''}`}
-              onMouseDown={handleChevronMouseDown}
-              onClick={(e) => e.stopPropagation()}
-              style={dynamicChevronStyle}
-            >
-              ▼
-            </div>
-          )}
 
           {leftOps.length > 0 && (
             <div style={{ position: 'absolute', right: '100%', top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: '8px', paddingRight: '40px', flexDirection: 'row-reverse' }}>
@@ -1066,10 +1104,6 @@
       const isPlaceholder = !op.label || op.label === '...';
       const filteredLabels = RRG_OPERATOR_LABELS.filter(l => l.includes(localVal));
       const inputWidth = Math.max(100, (localVal.length + 1) * 10);
-      const dynamicChevronStyle = isEditing ? {
-        left: `calc(50% + ${inputWidth / 2}px + 2px)`,
-        right: 'auto'
-      } : {};
 
       return (
         <div className="node-content operator-layer-content" data-opnode-id={op.id} style={{marginBottom: 0, marginTop: 0, transform: (op.manualXOffset ? `translateX(${op.manualXOffset}px)` : 'none')}}>
@@ -1090,7 +1124,8 @@
                     width: `${inputWidth}px`, 
                     left: '50%', 
                     transform: 'translateX(-50%)',
-                    textTransform: 'uppercase'
+                    textTransform: 'uppercase',
+                    paddingRight: '24px'
                   }}
                   value={localVal}
                   size={Math.max(3, localVal.length)}
@@ -1118,32 +1153,32 @@
                   onFocus={(e) => e.target.select()}
                 />
 
+                <div 
+                  className={`node-chevron ${showDropdown ? 'active' : ''}`}
+                  onMouseDown={handleChevronMouseDown}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ right: `calc(50% - ${inputWidth / 2}px + 4px)` }}
+                >
+                  <svg viewBox="0 0 10 6"><path d="M1 1L5 5L9 1"/></svg>
+                </div>
+
                 {showDropdown && (
-                  <ul className="dropdown-list">
-                    <li className="no-label" onMouseDown={(e) => { e.preventDefault(); selectLabel('NO LABEL'); }}>
-                      NO LABEL
-                    </li>
-                    {filteredLabels.map(lbl => (
-                      <li key={lbl} onMouseDown={(e) => { e.preventDefault(); selectLabel(lbl); }}>
-                        {renderLabel(lbl)}
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="dropdown-list">
+                    <div className="no-label" onMouseDown={(e) => { e.preventDefault(); selectLabel('NO LABEL'); }}>
+                      no label
+                    </div>
+                    <div className="pills-container">
+                      {filteredLabels.map(lbl => (
+                        <span key={lbl} className="pill-item" onMouseDown={(e) => { e.preventDefault(); selectLabel(lbl); }}>
+                          {renderLabel(lbl)}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </>
             )}
           </div>
-
-          {isEditing && (
-            <div 
-              className={`node-chevron ${showDropdown ? 'active' : ''}`}
-              onMouseDown={handleChevronMouseDown}
-              onClick={(e) => e.stopPropagation()}
-              style={dynamicChevronStyle}
-            >
-              ▼
-            </div>
-          )}
         </div>
       );
     };
@@ -1193,14 +1228,10 @@
       const isPlaceholder = !unit.label || unit.label === '...';
       const filteredLabels = RRG_INFO_STRUCTURE_LABELS.filter(l => l.toLowerCase().includes(localVal.toLowerCase()));
       const inputWidth = Math.max(100, (localVal.length + 1) * 10);
-      const dynamicChevronStyle = isEditing ? {
-        left: `calc(50% + ${inputWidth / 2}px + 2px)`,
-        right: 'auto'
-      } : {};
 
       return (
         <div className="node-content operator-layer-content" data-info-id={unit.id}
-          style={{ marginBottom: (unit.isPotentialFocus || unit.isActualFocus) ? '220px' : 0, marginTop: '25px' }}>
+          style={{ marginBottom: (unit.isPotentialFocus || unit.isActualFocus || unit.focusType) ? '220px' : 0, marginTop: '25px' }}>
           <div
             className={`node-label operator-label ${isSelected && !isEditing ? 'selected' : ''} ${isEditing ? 'is-editing' : ''}`}
             onClick={handleLabelClick}
@@ -1217,7 +1248,8 @@
                   style={{
                     width: `${inputWidth}px`,
                     left: '50%',
-                    transform: 'translateX(-50%)'
+                    transform: 'translateX(-50%)',
+                    paddingRight: '24px'
                   }}
                   value={localVal}
                   size={Math.max(3, localVal.length)}
@@ -1245,33 +1277,33 @@
                   onFocus={(e) => e.target.select()}
                 />
 
+                <div
+                  className={`node-chevron ${showDropdown ? 'active' : ''}`}
+                  onMouseDown={handleChevronMouseDown}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ right: `calc(50% - ${inputWidth / 2}px + 4px)` }}
+                >
+                  <svg viewBox="0 0 10 6"><path d="M1 1L5 5L9 1"/></svg>
+                </div>
+
                 {showDropdown && (
-                  <ul className="dropdown-list">
-                    <li className="no-label" onMouseDown={(e) => { e.preventDefault(); selectLabel('NO LABEL'); }}>
-                      NO LABEL
-                    </li>
-                    {filteredLabels.map(lbl => (
-                      <li key={lbl} onMouseDown={(e) => { e.preventDefault(); selectLabel(lbl); }}
-                        style={{ fontStyle: 'normal' }}>
-                        {renderInfoLabel(lbl)}
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="dropdown-list">
+                    <div className="no-label" onMouseDown={(e) => { e.preventDefault(); selectLabel('NO LABEL'); }}>
+                      no label
+                    </div>
+                    <div className="pills-container">
+                      {filteredLabels.map(lbl => (
+                        <span key={lbl} className="pill-item" onMouseDown={(e) => { e.preventDefault(); selectLabel(lbl); }}
+                          style={{ fontStyle: 'normal' }}>
+                          {renderInfoLabel(lbl)}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </>
             )}
           </div>
-
-          {isEditing && (
-            <div
-              className={`node-chevron ${showDropdown ? 'active' : ''}`}
-              onMouseDown={handleChevronMouseDown}
-              onClick={(e) => e.stopPropagation()}
-              style={dynamicChevronStyle}
-            >
-              ▼
-            </div>
-          )}
         </div>
       );
     };
@@ -1346,6 +1378,8 @@
 
       // Autosave state
       const [lastSaved, setLastSaved] = useState(null);
+      const [focusSelectionMode, setFocusSelectionMode] = useState(null);
+      const [showFocusDomains, setShowFocusDomains] = useState(false); // null | 'pfd' | 'afd' | 'completive' | 'contrastive'
       const [isSaving, setIsSaving] = useState(false);
       const isUndoRedo = useRef(false);
 
@@ -1789,7 +1823,7 @@
             setHistoryIndex(0);
             setSelectedId(null);
             setEditingId(null);
-          } catch (err) { alert("Error: The .tlp file is invalid or corrupted."); }
+          } catch (err) { alert("Error: The .tlp file is invalid or corrupted"); }
         };
         reader.readAsText(file);
       };
@@ -1804,7 +1838,7 @@
         setIsDragOver(false);
         const file = e.dataTransfer.files[0];
         if (file && file.name.endsWith('.tlp')) loadFile(file);
-        else if (file) alert('Please drop a .tlp file.');
+        else if (file) alert('Please drop a .tlp file');
       };
 
       const handleDragOver = (e) => { e.preventDefault(); setIsDragOver(true); };
@@ -2003,6 +2037,14 @@
         if (!node) return [];
         if (Array.isArray(node.exprIds)) return node.exprIds.filter(Boolean);
         return node.exprId ? [node.exprId] : [];
+      };
+
+      const subtreeHasEquatorLink = (node) => {
+        if (!node) return false;
+        if (getNodeLinkIds(node).length > 0) return true;
+        if (Array.isArray(node.children) && node.children.some(subtreeHasEquatorLink)) return true;
+        if (Array.isArray(node.peripheries) && node.peripheries.some(subtreeHasEquatorLink)) return true;
+        return false;
       };
 
       const setNodeLinkIds = (node, ids) => {
@@ -2458,6 +2500,63 @@
 
       const handleNodeClick = (e, id) => {
         e.stopPropagation();
+
+        // If in focus selection mode, handle IU marking
+        if (focusSelectionMode) {
+          const info = getItemTypeById(id);
+          // Only process clicks on infoUnit nodes
+          if (info && info.type === 'infoUnit') {
+            const exprIndex = info.exprIndex;
+            const currentExpr = diagram.expressions[exprIndex];
+            const currentUnit = currentExpr.infoUnit;
+            const newExprs = [...diagram.expressions];
+
+            if (focusSelectionMode === 'pfd') {
+              newExprs[exprIndex] = { ...currentExpr, infoUnit: { ...currentUnit, isPotentialFocus: !currentUnit.isPotentialFocus } };
+            } else if (focusSelectionMode === 'afd') {
+              newExprs[exprIndex] = { ...currentExpr, infoUnit: { ...currentUnit, isActualFocus: !currentUnit.isActualFocus, focusType: !currentUnit.isActualFocus ? 'actual' : undefined } };
+            } else if (focusSelectionMode === 'completive') {
+              // Clear any existing completive from all IUs, then set on this one (single selection)
+              const cleared = newExprs.map(ex => {
+                if (!ex.infoUnit || ex.infoUnit.focusType !== 'completive') return ex;
+                return { ...ex, infoUnit: { ...ex.infoUnit, isActualFocus: false, focusType: undefined } };
+              });
+              const target = cleared[exprIndex];
+              cleared[exprIndex] = { ...target, infoUnit: { ...target.infoUnit, isActualFocus: true, focusType: 'completive' } };
+              // Clear all AFD markings
+              for (let i = 0; i < cleared.length; i++) {
+                if (cleared[i].infoUnit && cleared[i].infoUnit.focusType === 'actual') {
+                  cleared[i] = { ...cleared[i], infoUnit: { ...cleared[i].infoUnit, isActualFocus: false, focusType: undefined } };
+                }
+              }
+              newExprs.splice(0, newExprs.length, ...cleared);
+            } else if (focusSelectionMode === 'contrastive') {
+              const cleared = newExprs.map(ex => {
+                if (!ex.infoUnit || ex.infoUnit.focusType !== 'contrastive') return ex;
+                return { ...ex, infoUnit: { ...ex.infoUnit, isActualFocus: false, focusType: undefined } };
+              });
+              const target = cleared[exprIndex];
+              cleared[exprIndex] = { ...target, infoUnit: { ...target.infoUnit, isActualFocus: true, focusType: 'contrastive' } };
+              for (let i = 0; i < cleared.length; i++) {
+                if (cleared[i].infoUnit && cleared[i].infoUnit.focusType === 'actual') {
+                  cleared[i] = { ...cleared[i], infoUnit: { ...cleared[i].infoUnit, isActualFocus: false, focusType: undefined } };
+                }
+              }
+              newExprs.splice(0, newExprs.length, ...cleared);
+            }
+
+            commitChange({ ...diagram, expressions: newExprs });
+            setSelectedId(null);
+            setEditingId(null);
+            // For single-selection modes (completive/contrastive), exit mode after selection
+            if (focusSelectionMode === 'completive' || focusSelectionMode === 'contrastive') {
+              setFocusSelectionMode(null);
+            }
+            return;
+          }
+          // Clicking on non-IU node: cancel focus selection mode
+          setFocusSelectionMode(null);
+        }
 
         // If in layer linking mode, check if clicked target is a valid operator layer on a different spine
         if (linkingLayerId) {
@@ -3232,8 +3331,10 @@
         });
 
         // --- Dominios de Foco (PFD y AFD) ---
-        let globalPfdMidX = null; // Variable para compartir el eje vertical entre ambos triángulos
-        let globalPfdVertexY = null; // Variable para compartir el vértice Y entre ambos triángulos
+        let globalPfdMidX = null;
+        let globalPfdVertexY = null;
+        // Geometría del PFD para inscribir el AFD
+        let pfdLeftX = null, pfdRightX = null, pfdBaseY = null, pfdVertexX = null, pfdVtxY = null;
 
         // 1. Potential Focus Domain (PFD) - Triángulo invertido sin base ("V")
         const pfdNodes = diagram.expressions.filter(e => e.infoUnit && e.infoUnit.isPotentialFocus);
@@ -3253,21 +3354,49 @@
           });
 
           if (minLeft !== Infinity) {
-            const padX = 17; 
             const baseY = maxBottomY + 16; 
             const speechActOffset = diagram.speechActYOffset || 0;
-            const vertexY = baseY + 150 + speechActOffset; 
+            const pfdHeight = 150;
+            const vertexY = baseY + pfdHeight + speechActOffset; 
             const midX = (minLeft + maxRight) / 2;
             
-            globalPfdMidX = midX; // Guardamos el eje central del Acto de Habla
-            globalPfdVertexY = vertexY; // Guardamos el vértice Y para el texto Speech Act
+            // --- CÁLCULO DINÁMICO DE SEPARACIÓN ---
+            const dxLeft = Math.abs(midX - minLeft);
+            const hypRatioLeft = Math.sqrt(dxLeft * dxLeft + pfdHeight * pfdHeight) / pfdHeight;
+            
+            const dxRight = Math.abs(maxRight - midX);
+            const hypRatioRight = Math.sqrt(dxRight * dxRight + pfdHeight * pfdHeight) / pfdHeight;
 
-            // Trazado en forma de "V"
+            // Ampliado: Ahora detecta CUALQUIER triángulo sólido interior (Actual, Completive o Contrastive)
+            const hasSolidFocusTriangle = diagram.expressions.some(e => 
+              e.infoUnit && (e.infoUnit.isActualFocus || e.infoUnit.focusType === 'completive' || e.infoUnit.focusType === 'contrastive')
+            );
+
+            let dynamicPadLeft = 17;
+            let dynamicPadRight = 17;
+
+            // Aumentamos la holgura visual a 26 para que sea a prueba de balas
+            if (hasSolidFocusTriangle) {
+              const specializedPad = 9;
+              const visualGap = 26; 
+              dynamicPadLeft = Math.max(17, specializedPad + (visualGap * hypRatioLeft));
+              dynamicPadRight = Math.max(17, specializedPad + (visualGap * hypRatioRight));
+            }
+            // --------------------------------------
+
+            globalPfdMidX = midX;
+            globalPfdVertexY = vertexY;
+            pfdLeftX = minLeft - dynamicPadLeft;
+            pfdRightX = maxRight + dynamicPadRight;
+            pfdBaseY = baseY;
+            pfdVertexX = midX;
+            pfdVtxY = vertexY;
+
             calculatedLines.push({
               id: 'pfd-triangle-path',
               isPath: true,
               isDashed: true,
-              d: `M ${minLeft - padX} ${baseY} L ${midX} ${vertexY} L ${maxRight + padX} ${baseY}`,
+              d: `M ${pfdLeftX} ${baseY} L ${midX} ${vertexY} L ${pfdRightX} ${baseY}`,
               stroke: "#343a40",
               strokeWidth: "1.5"
             });
@@ -3283,7 +3412,7 @@
           }
         }
 
-        // 2. Actual Focus Domain (AFD) - Triángulo invertido sólido con base
+        // 2. Actual Focus Domain (AFD) - Triángulo invertido sólido, base propia + separación 15px del PFD
         const afdNodes = diagram.expressions.filter(e => e.infoUnit && e.infoUnit.isActualFocus);
         if (afdNodes.length > 0) {
           let minLeft = Infinity;
@@ -3301,34 +3430,203 @@
           });
 
           if (minLeft !== Infinity) {
-            const padX = 9; 
-            const baseY = maxBottomY + 16; 
+            const padX = 9;
             const speechActOffset = diagram.speechActYOffset || 0;
-            const vertexY = baseY + 145 + speechActOffset; // Más corto que el PFD
-            
-            // LA MAGIA: Si existe un PFD, forzamos su vértice inferior al mismo eje. Si no, usamos su propio centro.
-            const targetMidX = globalPfdMidX !== null ? globalPfdMidX : (minLeft + maxRight) / 2;
+            const gap = 15; // separación mínima respecto al PFD
 
-            // Trazado: Mueve a izq (M), línea a der (L), línea al vértice compartido (L), cierra base (Z)
-            calculatedLines.push({
-              id: 'afd-triangle-path',
-              isPath: true,
-              isDashed: false, // Línea sólida
-              d: `M ${minLeft - padX} ${baseY} L ${maxRight + padX} ${baseY} L ${targetMidX} ${vertexY} Z`,
-              stroke: "#343a40",
-              strokeWidth: "1.5"
-            });
+            // Geometría natural del AFD basada en sus propios nodos
+            let afdLX = minLeft - padX;
+            let afdRX = maxRight + padX;
+            let afdBY = maxBottomY + 16;
+            const afdMidX = (afdLX + afdRX) / 2;
+            let afdVY = afdBY + 145 + speechActOffset;
 
-            // Si no hay PFD, el AFD también genera la etiqueta Speech Act
+            // Si existe PFD, compartir el eje del vértice y garantizar 15px de separación
+            const afdVX = globalPfdMidX !== null ? globalPfdMidX : afdMidX;
+
+            if (pfdVtxY !== null) {
+              // Función auxiliar: distancia perpendicular de un punto a una línea definida por dos puntos
+              const distToLine = (px, py, x1, y1, x2, y2) => {
+                const A = py - y1;
+                const B = px - x1;
+                const dx = x2 - x1;
+                const dy = y2 - y1;
+                return Math.abs(A * dx - B * dy) / Math.sqrt(dx * dx + dy * dy);
+              };
+
+              // La base del AFD debe estar en el mismo plano horizontal que la base del PFD
+              afdBY = pfdBaseY;
+
+              // Verificar esquina sup-izq contra arista izquierda del PFD (pfdLeftX,pfdBaseY → pfdVertexX,pfdVtxY)
+              const distL = distToLine(afdLX, afdBY, pfdLeftX, pfdBaseY, pfdVertexX, pfdVtxY);
+              if (distL < gap) {
+                // Mover hacia dentro: calcular desplazamiento horizontal necesario
+                const lDx = pfdVertexX - pfdLeftX;
+                const lDy = pfdVtxY - pfdBaseY;
+                const lLen = Math.sqrt(lDx * lDx + lDy * lDy);
+                const needed = (gap - distL) * lLen / Math.abs(lDy);
+                afdLX += needed;
+              }
+
+              // Verificar esquina sup-der contra arista derecha del PFD (pfdRightX,pfdBaseY → pfdVertexX,pfdVtxY)
+              const distR = distToLine(afdRX, afdBY, pfdRightX, pfdBaseY, pfdVertexX, pfdVtxY);
+              if (distR < gap) {
+                const rDx = pfdVertexX - pfdRightX;
+                const rDy = pfdVtxY - pfdBaseY;
+                const rLen = Math.sqrt(rDx * rDx + rDy * rDy);
+                const needed = (gap - distR) * rLen / Math.abs(rDy);
+                afdRX -= needed;
+              }
+
+              // Vértice inferior del AFD: siempre a exactamente gap px del vértice del PFD
+              afdVY = pfdVtxY - gap;
+            }
+
+
+            // If both Specialized Focus Domains are present (contrastive + completive),
+            // do NOT draw the AFD triangle, because it creates an unwanted third (solid) triangle
+            // between the two hatched triangles.
+            const hasCompletiveFD = diagram.expressions.some(e => e.infoUnit && e.infoUnit.focusType === 'completive');
+            const hasContrastiveFD = diagram.expressions.some(e => e.infoUnit && e.infoUnit.focusType === 'contrastive');
+            const shouldDrawAfdTriangle = !(hasCompletiveFD && hasContrastiveFD);
+
+            if (shouldDrawAfdTriangle) {
+              calculatedLines.push({
+                id: 'afd-triangle-path',
+                isPath: true,
+                isDashed: false,
+                d: `M ${afdLX} ${afdBY - 2} L ${afdRX} ${afdBY - 2} L ${afdVX} ${afdVY} Z`,
+                stroke: "#343a40",
+                strokeWidth: "1.5"
+              });
+            }
+
             if (globalPfdVertexY === null) {
               calculatedLines.push({
                 id: 'pfd-text',
                 isText: true,
                 isSpeechAct: true,
                 text: 'Speech Act',
-                x: targetMidX,
-                y: vertexY + 22
+                x: afdVX,
+                y: afdVY + 22
               });
+            }
+          }
+        }
+
+        // 3. Completive Focus Domain - Triángulo sólido con achurado horizontal
+        const compNodes = diagram.expressions.filter(e => e.infoUnit && e.infoUnit.focusType === 'completive');
+        if (compNodes.length > 0) {
+          let minLeft = Infinity, maxRight = -Infinity, maxBottomY = -Infinity;
+          compNodes.forEach(expr => {
+            const infoLabel = getInfoEl(expr.infoUnit.id);
+            if (infoLabel) {
+              const rect = infoLabel.getBoundingClientRect();
+              minLeft = Math.min(minLeft, rect.left - wrapperRect.left);
+              maxRight = Math.max(maxRight, rect.right - wrapperRect.left);
+              maxBottomY = Math.max(maxBottomY, rect.bottom - wrapperRect.top);
+            }
+          });
+          if (minLeft !== Infinity) {
+            const padX = 9;
+            const speechActOffset = diagram.speechActYOffset || 0;
+            let cLX = minLeft - padX, cRX = maxRight + padX, cBY = maxBottomY + 16;
+            const cVX = globalPfdMidX !== null ? globalPfdMidX : (cLX + cRX) / 2;
+            let cVY = cBY + 145 + speechActOffset;
+            if (pfdVtxY !== null) {
+              if (cVY > pfdVtxY - 15) cVY = pfdVtxY - 15;
+            }
+            // Detect which sides overlap with PFD edges (within threshold)
+            let strokeLeftSide = true, strokeRightSide = true;
+            if (pfdLeftX !== null && pfdRightX !== null && pfdBaseY !== null && pfdVtxY !== null) {
+              const pfdLeftAtCBY = pfdLeftX + (pfdVertexX - pfdLeftX) * (cBY - pfdBaseY) / (pfdVtxY - pfdBaseY);
+              const pfdRightAtCBY = pfdRightX + (pfdVertexX - pfdRightX) * (cBY - pfdBaseY) / (pfdVtxY - pfdBaseY);
+              // If left base point is close to or beyond PFD left edge at this height, that side overlaps
+              if (cLX <= pfdLeftAtCBY + 15) strokeLeftSide = false;
+              // If right base point is close to or beyond PFD right edge at this height, that side overlaps
+              if (cRX >= pfdRightAtCBY - 15) strokeRightSide = false;
+            }
+            // Build stroke path: only draw non-overlapping sides + base
+            let strokeD = '';
+            if (strokeLeftSide && strokeRightSide) {
+              strokeD = `M ${cLX} ${cBY} L ${cVX} ${cVY} L ${cRX} ${cBY} Z`;
+            } else if (!strokeLeftSide && strokeRightSide) {
+              // Skip left side: draw base, then right side
+              strokeD = `M ${cLX} ${cBY} L ${cRX} ${cBY} L ${cVX} ${cVY}`;
+            } else if (strokeLeftSide && !strokeRightSide) {
+              // Skip right side: draw left side, then base
+              strokeD = `M ${cVX} ${cVY} L ${cLX} ${cBY} L ${cRX} ${cBY}`;
+            } else {
+              // Both overlap (covers entire PFD): just draw the base
+              strokeD = `M ${cLX} ${cBY} L ${cRX} ${cBY}`;
+            }
+            calculatedLines.push({
+              id: 'comp-triangle-path',
+              isPath: true,
+              isHatchedV: true,
+              fillPattern: 'hatch-horizontal',
+              clipPoints: `${cLX},${cBY} ${cRX},${cBY} ${cVX},${cVY}`,
+              d: strokeD,
+              stroke: "#343a40", strokeWidth: "1.5"
+            });
+            if (globalPfdVertexY === null && !diagram.expressions.some(e => e.infoUnit?.isActualFocus)) {
+              calculatedLines.push({ id: 'pfd-text', isText: true, isSpeechAct: true, text: 'Speech Act', x: cVX, y: Math.max(cVY, pfdVtxY || 0) + 22 });
+            }
+          }
+        }
+
+        // 4. Contrastive Focus Domain - Triángulo sólido con achurado vertical
+        const contNodes = diagram.expressions.filter(e => e.infoUnit && e.infoUnit.focusType === 'contrastive');
+        if (contNodes.length > 0) {
+          let minLeft = Infinity, maxRight = -Infinity, maxBottomY = -Infinity;
+          contNodes.forEach(expr => {
+            const infoLabel = getInfoEl(expr.infoUnit.id);
+            if (infoLabel) {
+              const rect = infoLabel.getBoundingClientRect();
+              minLeft = Math.min(minLeft, rect.left - wrapperRect.left);
+              maxRight = Math.max(maxRight, rect.right - wrapperRect.left);
+              maxBottomY = Math.max(maxBottomY, rect.bottom - wrapperRect.top);
+            }
+          });
+          if (minLeft !== Infinity) {
+            const padX = 9;
+            const speechActOffset = diagram.speechActYOffset || 0;
+            let cLX = minLeft - padX, cRX = maxRight + padX, cBY = maxBottomY + 16;
+            const cVX = globalPfdMidX !== null ? globalPfdMidX : (cLX + cRX) / 2;
+            let cVY = cBY + 145 + speechActOffset;
+            if (pfdVtxY !== null) {
+              if (cVY > pfdVtxY - 15) cVY = pfdVtxY - 15;
+            }
+            // Detect which sides overlap with PFD edges (within threshold)
+            let strokeLeftSide = true, strokeRightSide = true;
+            if (pfdLeftX !== null && pfdRightX !== null && pfdBaseY !== null && pfdVtxY !== null) {
+              const pfdLeftAtCBY = pfdLeftX + (pfdVertexX - pfdLeftX) * (cBY - pfdBaseY) / (pfdVtxY - pfdBaseY);
+              const pfdRightAtCBY = pfdRightX + (pfdVertexX - pfdRightX) * (cBY - pfdBaseY) / (pfdVtxY - pfdBaseY);
+              if (cLX <= pfdLeftAtCBY + 15) strokeLeftSide = false;
+              if (cRX >= pfdRightAtCBY - 15) strokeRightSide = false;
+            }
+            // Build stroke path: only draw non-overlapping sides + base
+            let strokeD = '';
+            if (strokeLeftSide && strokeRightSide) {
+              strokeD = `M ${cLX} ${cBY} L ${cVX} ${cVY} L ${cRX} ${cBY} Z`;
+            } else if (!strokeLeftSide && strokeRightSide) {
+              strokeD = `M ${cLX} ${cBY} L ${cRX} ${cBY} L ${cVX} ${cVY}`;
+            } else if (strokeLeftSide && !strokeRightSide) {
+              strokeD = `M ${cVX} ${cVY} L ${cLX} ${cBY} L ${cRX} ${cBY}`;
+            } else {
+              strokeD = `M ${cLX} ${cBY} L ${cRX} ${cBY}`;
+            }
+            calculatedLines.push({
+              id: 'cont-triangle-path',
+              isPath: true,
+              isHatchedV: true,
+              fillPattern: 'hatch-vertical',
+              clipPoints: `${cLX},${cBY} ${cRX},${cBY} ${cVX},${cVY}`,
+              d: strokeD,
+              stroke: "#343a40", strokeWidth: "1.5"
+            });
+            if (globalPfdVertexY === null && !diagram.expressions.some(e => e.infoUnit?.isActualFocus) && compNodes.length === 0) {
+              calculatedLines.push({ id: 'pfd-text', isText: true, isSpeechAct: true, text: 'Speech Act', x: cVX, y: Math.max(cVY, pfdVtxY || 0) + 22 });
             }
           }
         }
@@ -3362,7 +3660,7 @@
               <div className="init-box">
                 <h3 style={{fontFamily: 'var(--font-serif)', color: 'var(--accent)', marginBottom: '6px', fontSize: '1.2rem', fontWeight: 600}}>New Tree</h3>
                 <p style={{color: 'var(--text-secondary)', marginBottom: '16px', fontSize: '0.9rem'}}>
-                  Type the full expression, then click between items to mark boundaries.
+                  Type the full expression, then click between items to mark boundaries
                 </p>
                 <form onSubmit={handleGenerateBase} style={{display: 'flex', flexDirection: 'column', flex: 1}}>
                   <div style={{display: 'flex', gap: '8px', alignItems: 'stretch'}}>
@@ -3481,7 +3779,7 @@
                       </svg>
                       <h3 style={{fontFamily: 'var(--font-serif)', color: '#495057', marginBottom: '6px', fontSize: '1.15rem', fontWeight: 600}}>Load Tree</h3>
                       <p style={{color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '0.85rem'}}>
-                        Drop a .tlp file here<br/>or click to browse.
+                        Drop a .tlp file here<br/>or click to browse
                       </p>
                     </>
                   )}
@@ -3538,7 +3836,7 @@
       const isSpeechAct = info && info.type === 'speechAct';
       const canAddParent = isSyntax && info && !info.parent;
       const canDeleteSelection = Boolean(info) && !isSpeechAct;
-      const deleteLabel = isInfoUnit ? '✕ Delete Info Unit' : isOperatorNode ? '✕ Delete Operator' : isOperator ? '✕ Delete Layer' : isExpr ? '✕ Delete Item' : (isSyntax ? '✕ Delete Node' : '✕ Delete');
+      const deleteLabel = isInfoUnit ? '✕ Delete Information Unit' : isOperatorNode ? '✕ Delete Operator' : isOperator ? '✕ Delete Layer' : isExpr ? '✕ Delete Item' : (isSyntax ? '✕ Delete Node' : '✕ Delete');
       
       let canMoveLeft = false;
       let canMoveRight = false;
@@ -3600,9 +3898,9 @@
               </div>
   
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <button className="btn" onClick={handleLoadClick}>Load</button>
-                <button className="btn" onClick={handleSave} disabled={!diagram}>Save</button>
-                <button className="btn" onClick={handleExportPNG} disabled={!diagram}>Export PNG</button>
+                <button className="btn" onClick={handleLoadClick}>Load .tlp</button>
+                <button className="btn" onClick={handleSave} disabled={!diagram}>Save .tlp</button>
+                <button className="btn" onClick={handleExportPNG} disabled={!diagram}>Export .png</button>
                 <div style={{width: '1px', background: 'var(--border-light)', margin: '0 4px', alignSelf: 'stretch'}}></div>
                 <button className="btn" onClick={undo} disabled={historyIndex <= 0} title="Undo (Ctrl/⌘+Z)" style={{padding: '7px 10px', fontSize: '1rem', lineHeight: 1}}>↩</button>
                 <button className="btn" onClick={redo} disabled={historyIndex >= history.length - 1} title="Redo (Ctrl/⌘+Y)" style={{padding: '7px 10px', fontSize: '1rem', lineHeight: 1}}>↪</button>
@@ -3612,9 +3910,17 @@
               </div>
             </header>
 
-            <div className="canvas-container">
+            <div className="canvas-container" onClick={(e) => {
+              // Clicking the canvas background clears selection and returns to the main Projections panel
+              e.stopPropagation();
+              setSelectedId(null);
+              setEditingId(null);
+              setLinkingLayerId(null);
+              setFocusSelectionMode(null);
+              setShowFocusDomains(false);
+            }}>
               {/* Zoom controls */}
-              <div className={`zoom-controls ${diagram && diagram.root ? 'visible' : ''}`}>
+              <div className={`zoom-controls ${diagram ? 'visible' : ''}`}>
                 <button className="zoom-btn" onClick={zoomOut} disabled={zoomLevel <= ZOOM_MIN} title="Zoom out (Ctrl/⌘ + −)">−</button>
                 <div className="zoom-indicator" onClick={zoomReset} title="Reset zoom (Ctrl/⌘ + 0)">{zoomLevel}%</div>
                 <button className="zoom-btn" onClick={zoomIn} disabled={zoomLevel >= ZOOM_MAX} title="Zoom in (Ctrl/⌘ + +)">+</button>
@@ -3624,7 +3930,7 @@
               <div className={`autosave-indicator ${(isSaving || lastSaved) && diagram ? 'visible' : ''}`}>
                 {isSaving ? (
                   <span style={{display:'flex',alignItems:'center',gap:'4px'}}>
-                    <span style={{animation:'pulse 1.5s ease-in-out infinite'}}>☁</span> Saving...
+                    <span style={{animation:'pulse 1.5s ease-in-out infinite'}}>☁</span> Saving
                   </span>
                 ) : lastSaved ? (
                   <span>✓ Auto-saved {formatTimeAgo(lastSaved)}</span>
@@ -3651,6 +3957,14 @@
               <div className="tree-wrapper" ref={wrapperRef} style={{ paddingTop: `${BASE_TREE_PADDING_TOP + extraTopPadding}px`, paddingRight: `${TREE_PADDING_SIDE}px`, paddingBottom: `${TREE_PADDING_BOTTOM}px`, paddingLeft: `${TREE_PADDING_SIDE}px`, transform: `scale(${zoomLevel / 100})`, transformOrigin: '0 0' }}>
                 
                 <svg className="svg-layer">
+                  <defs>
+                    <pattern id="hatch-horizontal" patternUnits="userSpaceOnUse" width="6" height="6">
+                      <line x1="0" y1="3" x2="6" y2="3" stroke="#343a40" strokeWidth="0.8" />
+                    </pattern>
+                    <pattern id="hatch-vertical" patternUnits="userSpaceOnUse" width="6" height="6">
+                      <line x1="3" y1="0" x2="3" y2="6" stroke="#343a40" strokeWidth="0.8" />
+                    </pattern>
+                  </defs>
                   {svgLines.filter(l => {
                     if (!showConstituent && (
                       l.id.startsWith('line-') || l.id.startsWith('perif-') || 
@@ -3661,7 +3975,7 @@
                       l.id.startsWith('oplink-') || l.id.startsWith('crosslink-')
                     )) return false;
                     // Asegurarnos de ocultar el Speech Act y Actual Focus si se apaga la proyección IS
-                    if (!showInfoStructure && (l.id.startsWith('info-line-') || l.id.startsWith('info-bracket-') || l.id.startsWith('pfd-') || l.id.startsWith('afd-'))) return false;
+                    if (!showInfoStructure && (l.id.startsWith('info-line-') || l.id.startsWith('info-bracket-') || l.id.startsWith('pfd-') || l.id.startsWith('afd-') || l.id.startsWith('comp-') || l.id.startsWith('cont-'))) return false;
                     return true;
                   }).map(l => {
                     let lineOpacity = 1;
@@ -3670,7 +3984,7 @@
                         lineOpacity = 0.25;
                       }
                       // Asegurarnos de atenuar el Speech Act y Actual Focus si el foco está en los Operadores
-                      if (projectionFocus === 'OP' && (l.id.startsWith('info-line-') || l.id.startsWith('info-bracket-') || l.id.startsWith('pfd-') || l.id.startsWith('afd-'))) {
+                      if (projectionFocus === 'OP' && (l.id.startsWith('info-line-') || l.id.startsWith('info-bracket-') || l.id.startsWith('pfd-') || l.id.startsWith('afd-') || l.id.startsWith('comp-') || l.id.startsWith('cont-'))) {
                         lineOpacity = 0.25;
                       }
                     }
@@ -3687,7 +4001,7 @@
                               width={112} height={24}
                               fill="transparent"
                               style={{ cursor: 'pointer' }}
-                              onClick={(e) => { e.stopPropagation(); setSelectedId('speech-act'); setEditingId(null); }}
+                              onClick={(e) => { e.stopPropagation(); setSelectedId(null); setEditingId(null); setFocusSelectionMode(null); setShowFocusDomains(true); }}
                             />
                           )}
                           {isSelected && (
@@ -3711,7 +4025,7 @@
                               opacity: lineOpacity,
                               cursor: l.isSpeechAct ? 'pointer' : 'default'
                             }}
-                            onClick={l.isSpeechAct ? (e) => { e.stopPropagation(); setSelectedId('speech-act'); setEditingId(null); } : undefined}
+                            onClick={l.isSpeechAct ? (e) => { e.stopPropagation(); setSelectedId(null); setEditingId(null); setFocusSelectionMode(null); setShowFocusDomains(true); } : undefined}
                           >
                             {l.text}
                           </text>
@@ -3721,9 +4035,31 @@
 
                     // Renderizado nativo robusto para dominios de foco y corchetes
                     if (l.isPath) {
+                      if (l.isHatchedV) {
+                        const clipId = `clip-${l.id}`;
+                        return (
+                          <g key={l.id} style={{ transition: 'opacity 0.3s ease', opacity: lineOpacity }}>
+                            <defs>
+                              <clipPath id={clipId}>
+                                <polygon points={l.clipPoints} />
+                              </clipPath>
+                            </defs>
+                            <rect
+                              x={l.clipPoints.split(' ').reduce((min, p) => Math.min(min, parseFloat(p.split(',')[0])), Infinity)}
+                              y={l.clipPoints.split(' ').reduce((min, p) => Math.min(min, parseFloat(p.split(',')[1])), Infinity)}
+                              width={l.clipPoints.split(' ').reduce((max, p) => Math.max(max, parseFloat(p.split(',')[0])), -Infinity) - l.clipPoints.split(' ').reduce((min, p) => Math.min(min, parseFloat(p.split(',')[0])), Infinity)}
+                              height={l.clipPoints.split(' ').reduce((max, p) => Math.max(max, parseFloat(p.split(',')[1])), -Infinity) - l.clipPoints.split(' ').reduce((min, p) => Math.min(min, parseFloat(p.split(',')[1])), Infinity)}
+                              fill={`url(#${l.fillPattern})`}
+                              clipPath={`url(#${clipId})`}
+                            />
+                            <path d={l.d} fill="none" stroke={l.stroke} strokeWidth={l.strokeWidth} />
+                          </g>
+                        );
+                      }
                       return (
                         <path 
-                          key={l.id} d={l.d} fill="none" 
+                          key={l.id} d={l.d} 
+                          fill={l.fillPattern ? `url(#${l.fillPattern})` : "none"}
                           stroke={l.stroke || "#343a40"} 
                           strokeWidth={l.strokeWidth || "1.5"} 
                           strokeDasharray={l.isDashed ? "6 4" : null}
@@ -3927,9 +4263,9 @@
                   const incomingLinks = getIncomingLinks(selectedId);
                   return (
                     <div className="sidebar-section">
-                      <div className="sidebar-title">Incoming Links</div>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '2px' }}>Incoming Links</div>
                       {incomingLinks.length === 0 ? (
-                        <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>No incoming links.</span>
+                        <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>No incoming links</span>
                       ) : (
                         <div style={{display:'flex', flexDirection:'column', gap:'6px', maxHeight:'350px', overflowY:'auto', padding:'6px 0'}}>
                           {incomingLinks.map((link) => (
@@ -4011,18 +4347,11 @@
                       + Add Operator Layer Below
                     </button>
 
-                    <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '12px', marginBottom: '4px'}}>Add operator:</span>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '2px', marginTop: '12px' }}>Add operator</div>
                     <div className="action-row">
                       <button onClick={() => addOperatorToLayer(selectedId, 'left')} style={{ fontWeight: 'normal' }}>Add operator →</button>
                       <button onClick={() => addOperatorToLayer(selectedId, 'right')} style={{ fontWeight: 'normal' }}>← Add operator</button>
                     </div>
-
-                    <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '12px', marginBottom: '4px'}}>Vertical position:</span>
-                    <div className="action-row">
-                      <button onClick={() => moveOperatorLayerVertical(selectedId, -1)} disabled={!canMoveUp} style={{ fontWeight: 'normal' }}>↑ Move Up</button>
-                      <button onClick={() => moveOperatorLayerVertical(selectedId, 1)} style={{ fontWeight: 'normal' }}>↓ Move Down</button>
-                    </div>
-
                     <div style={{borderTop: '1px solid var(--border-light)', paddingTop: '12px', marginTop: '12px'}}>
                       <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block'}}>Cross-spine link:</span>
                       {currentLayer?.superiorLayerId ? (
@@ -4079,11 +4408,6 @@
                       <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '4px'}}>
                         Attached to layer {info.layerIndex + 1}
                       </span>
-                      <div className="action-row" style={{marginTop: '8px'}}>
-                        <button onClick={() => moveOperatorNode(selectedId, -1)} disabled={!canMoveOpLeft} style={{ fontWeight: 'normal' }}>← Move Left</button>
-                        <button onClick={() => moveOperatorNode(selectedId, 1)} disabled={!canMoveOpRight} style={{ fontWeight: 'normal' }}>Move Right →</button>
-                      </div>
-
                       <div style={{borderTop: '1px solid var(--border-light)', paddingTop: '12px', marginTop: '12px', marginBottom: '8px'}}>
                         <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>Linking to expression item:</span>
                       </div>
@@ -4145,90 +4469,74 @@
                         <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>Span across items:</span>
                       </div>
                       
-                      <div className="action-row" style={{marginBottom: '6px'}}>
-                        <button onClick={() => updateSpan(1, 0)} disabled={!canGrowLeft} style={{ fontWeight: 'normal' }}>← Grow Left</button>
-                        <button onClick={() => updateSpan(-1, 0)} disabled={!canShrinkLeft} style={{ fontWeight: 'normal' }}>Shrink Left →</button>
-                      </div>
-                      <div className="action-row">
-                        <button onClick={() => updateSpan(0, -1)} disabled={!canShrinkRight} style={{ fontWeight: 'normal' }}>← Shrink Right</button>
-                        <button onClick={() => updateSpan(0, 1)} disabled={!canGrowRight} style={{ fontWeight: 'normal' }}>Grow Right →</button>
-                      </div>
+                      <div className="joined-row" style={{marginBottom: '6px'}}>
+  <button onClick={() => updateSpan(1, 0)} disabled={!canGrowLeft} style={{ fontWeight: 'normal' }}>← Grow Left</button>
+  <button onClick={() => updateSpan(0, 1)} disabled={!canGrowRight} style={{ fontWeight: 'normal' }}>Grow Right →</button>
+</div>
+<div className="joined-row">
+  <button onClick={() => updateSpan(-1, 0)} disabled={!canShrinkLeft} style={{ fontWeight: 'normal' }}>→ Shrink Left</button>
+  <button onClick={() => updateSpan(0, -1)} disabled={!canShrinkRight} style={{ fontWeight: 'normal' }}>Shrink Right ←</button>
+</div>
                       
                       <div style={{textAlign: 'center', fontSize: '0.8rem', color: 'var(--accent)', marginTop: '8px'}}>
                         Covering {1 + sLeft + sRight} item(s)
                       </div>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', margin: '12px 0', padding: '12px 0', borderTop: '1px solid var(--border-light)', borderBottom: '1px solid var(--border-light)' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', cursor: 'pointer' }}>
-                          <input 
-                            type="checkbox" 
-                            checked={!!currentUnit?.isPotentialFocus}
-                            onChange={() => {
-                              const newExprs = [...diagram.expressions];
-                              newExprs[info.exprIndex] = {
-                                ...currentExpr,
-                                infoUnit: { ...currentUnit, isPotentialFocus: !currentUnit.isPotentialFocus }
-                              };
-                              commitChange({ ...diagram, expressions: newExprs });
-                            }}
-                          />
-                          Part of the Potential Focus Domain
-                        </label>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', cursor: 'pointer' }}>
-                          <input 
-                            type="checkbox" 
-                            checked={!!currentUnit?.isActualFocus}
-                            onChange={() => {
-                              const newExprs = [...diagram.expressions];
-                              newExprs[info.exprIndex] = {
-                                ...currentExpr,
-                                infoUnit: { ...currentUnit, isActualFocus: !currentUnit.isActualFocus }
-                              };
-                              commitChange({ ...diagram, expressions: newExprs });
-                            }}
-                          />
-                          Part of the Actual Focus Domain
-                        </label>
-                      </div>
 
-                      <button 
-                        className="btn" 
-                        onClick={() => deleteInfoUnit(info.anchorExprId)} 
-                        style={{ width: '100%', fontWeight: 'normal', color: 'var(--danger)', borderColor: 'rgba(220,53,69,0.3)' }}
-                      >
-                        ✕ Remove Information Unit
-                      </button>
+
                     </div>
                   );
                 })()}
-
-                {isSpeechAct && (
-                  <div className="sidebar-section">
-                    <div className="sidebar-title">Information Structure</div>
-                    <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '4px'}}>
-                      Speech Act node
-                    </span>
-
-                    <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '12px', marginBottom: '4px'}}>Vertical position:</span>
-                    <div className="action-row">
-                      <button onClick={() => moveSpeechActVertical(-1)} style={{ fontWeight: 'normal' }}>↑ Move Up</button>
-                      <button onClick={() => moveSpeechActVertical(1)} style={{ fontWeight: 'normal' }}>↓ Move Down</button>
-                    </div>
-                    {(diagram.speechActYOffset || 0) !== 0 && (
-                      <button 
-                        className="btn"
-                        onClick={() => commitChange({ ...diagram, speechActYOffset: 0 })}
-                        style={{ width: '100%', fontWeight: 'normal', marginTop: '8px', fontSize: '0.85rem' }}
-                      >
-                        Reset position
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {!isInfoUnit && !isSpeechAct && (
                 <div className="sidebar-section" style={{marginTop: '10px'}}>
                   <div className="sidebar-title">Position & Alignment</div>
+                  
+                  {isOperator && (() => {
+                    const currentLayer = diagram.expressions[info.exprIndex]?.operatorLayers?.[info.layerIndex];
+                    const canMoveUp = (currentLayer?.manualYOffset || 0) > 0;
+                    return (
+                      <div style={{ marginTop: '8px' }}>
+                        <div className="action-row">
+                          <button onClick={() => moveOperatorLayerVertical(selectedId, -1)} disabled={!canMoveUp} style={{ fontWeight: 'normal' }}>↑ Move Up</button>
+                          <button onClick={() => moveOperatorLayerVertical(selectedId, 1)} style={{ fontWeight: 'normal' }}>↓ Move Down</button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {isOperatorNode && (() => {
+                    const layer = diagram.expressions[info.exprIndex]?.operatorLayers?.[info.layerIndex];
+                    const op = layer?.operators?.[info.opIndex];
+                    const offset = op?.manualXOffset || 0;
+                    const canMoveOpLeft = op?.side === 'left' || offset > 0;
+                    const canMoveOpRight = op?.side === 'right' || offset < 0;
+                    return (
+                      <div style={{ marginTop: '8px' }}>
+                        <div className="action-row">
+                          <button onClick={() => moveOperatorNode(selectedId, -1)} disabled={!canMoveOpLeft} style={{ fontWeight: 'normal' }}>← Move Left</button>
+                          <button onClick={() => moveOperatorNode(selectedId, 1)} disabled={!canMoveOpRight} style={{ fontWeight: 'normal' }}>Move Right →</button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {isSpeechAct && (
+                    <div style={{ marginTop: '8px' }}>
+                      <div className="action-row">
+                        <button onClick={() => moveSpeechActVertical(-1)} disabled={!diagram.expressions.some(e => e.infoUnit?.isPotentialFocus)} style={{ fontWeight: 'normal' }}>↑ Move Up</button>
+                        <button onClick={() => moveSpeechActVertical(1)} disabled={!diagram.expressions.some(e => e.infoUnit?.isPotentialFocus)} style={{ fontWeight: 'normal' }}>↓ Move Down</button>
+                      </div>
+                      {(diagram.speechActYOffset || 0) !== 0 && (
+                        <button 
+                          className="btn"
+                          onClick={() => commitChange({ ...diagram, speechActYOffset: 0 })}
+                          style={{ width: '100%', fontWeight: 'normal', marginTop: '8px', fontSize: '0.85rem' }}
+                        >
+                          Reset position
+                        </button>
+                      )}
+                    </div>
+                  )}
+
                   
                   {isSyntax && info.parent && (
                     <button 
@@ -4251,14 +4559,14 @@
                     <div className="action-row">
                       <button 
                         onClick={() => moveItem(-1)} 
-                        disabled={!canMoveLeft || (isSyntax && getNodeLinkIds(selectedNodeData).length > 0)} 
+                        disabled={!canMoveLeft || (isSyntax && subtreeHasEquatorLink(selectedNodeData))} 
                         style={{ fontWeight: 'normal' }}
                       >
                         ← Swap Left
                       </button>
                       <button 
                         onClick={() => moveItem(1)} 
-                        disabled={!canMoveRight || (isSyntax && getNodeLinkIds(selectedNodeData).length > 0)} 
+                        disabled={!canMoveRight || (isSyntax && subtreeHasEquatorLink(selectedNodeData))} 
                         style={{ fontWeight: 'normal' }}
                       >
                         Swap Right →
@@ -4272,79 +4580,336 @@
                     </div>
                   )}
                 </div>
-                )}
                 
                 <div style={{ color: '#adb5bd', textAlign: 'center', marginTop: '40px' }}>
-                  Click any node to select and edit its text.
+                  Click any node to select and edit its text
                 </div>
               </>
+            ) : showFocusDomains ? (
+              <div className="sidebar-section">
+                <div className="sidebar-title">Information Structure</div>
+                <div style={{ marginTop: '10px' }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>Speech Act</div>
+                  <div className="action-row" style={{ marginTop: '6px' }}>
+                    <button onClick={() => moveSpeechActVertical(-1)} disabled={!diagram.expressions.some(e => e.infoUnit?.isPotentialFocus)} style={{ fontWeight: 'normal' }}>↑ Move Up</button>
+                    <button onClick={() => moveSpeechActVertical(1)} disabled={!diagram.expressions.some(e => e.infoUnit?.isPotentialFocus)} style={{ fontWeight: 'normal' }}>↓ Move Down</button>
+                  </div>
+                  {(diagram.speechActYOffset || 0) !== 0 && (
+                    <button
+                      className="btn"
+                      onClick={() => commitChange({ ...diagram, speechActYOffset: 0 })}
+                      style={{ width: '100%', fontWeight: 'normal', marginTop: '8px', fontSize: '0.85rem' }}
+                    >
+                      Reset position
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ marginTop: '4px' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '10px' }}>Focus domains</div>
+                    <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', fontWeight: 600, marginBottom: '6px' }}>Potential Focus Domain</div>
+                    <button
+                      className="btn"
+                      style={{
+                        width: '100%', fontWeight: focusSelectionMode === 'pfd' ? 700 : 'normal', fontSize: '0.85rem',
+                        background: focusSelectionMode === 'pfd' ? 'var(--accent)' : 'white',
+                        color: focusSelectionMode === 'pfd' ? 'white' : 'var(--text)',
+                        borderColor: focusSelectionMode === 'pfd' ? 'var(--accent)' : 'var(--border)',
+                      }}
+                      onClick={() => { setFocusSelectionMode(focusSelectionMode === 'pfd' ? null : 'pfd'); setSelectedId(null); setEditingId(null); }}
+                    >
+                      {focusSelectionMode === 'pfd' ? '● Selecting PFD IU(s)… (click to stop)' : 'Select IU(s) as part of the PFD'}
+                    </button>
+                    {diagram.expressions.some(e => e.infoUnit?.isPotentialFocus) && (
+                      <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                        {diagram.expressions.filter(e => e.infoUnit?.isPotentialFocus).map(expr => {
+                          const ei = diagram.expressions.indexOf(expr);
+                          const sL = expr.infoUnit?.spanLeft || 0;
+                          const sR = expr.infoUnit?.spanRight || 0;
+                          const coveredLabels = [];
+                          for (let i = Math.max(0, ei - sL); i <= Math.min(diagram.expressions.length - 1, ei + sR); i++) {
+                            coveredLabels.push(diagram.expressions[i].label || '…');
+                          }
+                          return (
+                            <label key={expr.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.84rem', cursor: 'pointer', paddingLeft: '4px' }}>
+                              <input type="checkbox" checked={true} onChange={() => {
+                                const newExprs = diagram.expressions.map(e => e.id !== expr.id ? e : { ...e, infoUnit: { ...e.infoUnit, isPotentialFocus: false } });
+                                commitChange({ ...diagram, expressions: newExprs });
+                              }} style={{ width: 14, height: 14, accentColor: 'var(--accent)', cursor: 'pointer' }} />
+                              {coveredLabels.length > 1 ? coveredLabels.join(' · ') : (expr.label || '…')}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* --- Actual Focus Domain --- */}
+                    {(() => {
+                      const hasSpecialized = diagram.expressions.some(e => e.infoUnit && (e.infoUnit.focusType === 'completive' || e.infoUnit.focusType === 'contrastive'));
+                      return (
+                        <>
+                          <div style={{ fontSize: '0.82rem', color: hasSpecialized ? '#adb5bd' : 'var(--text-secondary)', fontWeight: 600, marginTop: '14px', marginBottom: '6px' }}>Actual Focus Domain</div>
+                          <button
+                            className="btn"
+                            disabled={hasSpecialized}
+                            style={{
+                              width: '100%', fontWeight: focusSelectionMode === 'afd' ? 700 : 'normal', fontSize: '0.85rem',
+                              background: focusSelectionMode === 'afd' ? 'var(--accent)' : 'white',
+                              color: focusSelectionMode === 'afd' ? 'white' : hasSpecialized ? '#adb5bd' : 'var(--text)',
+                              borderColor: focusSelectionMode === 'afd' ? 'var(--accent)' : 'var(--border)',
+                              opacity: hasSpecialized ? 0.5 : 1,
+                            }}
+                            onClick={() => { setFocusSelectionMode(focusSelectionMode === 'afd' ? null : 'afd'); setSelectedId(null); setEditingId(null); }}
+                          >
+                            {focusSelectionMode === 'afd' ? '● Selecting AFD IU(s)… (click to stop)' : 'Select IU(s) as part of the AFD'}
+                          </button>
+                          {hasSpecialized && <p style={{ fontSize: '0.78rem', color: '#adb5bd', marginTop: '3px', fontStyle: 'italic' }}>Disabled: specialized focus is active</p>}
+                          {!hasSpecialized && diagram.expressions.some(e => e.infoUnit?.isActualFocus) && (
+                            <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                              {diagram.expressions.filter(e => e.infoUnit?.isActualFocus).map(expr => {
+                                const ei = diagram.expressions.indexOf(expr);
+                                const sL = expr.infoUnit?.spanLeft || 0;
+                                const sR = expr.infoUnit?.spanRight || 0;
+                                const coveredLabels = [];
+                                for (let i = Math.max(0, ei - sL); i <= Math.min(diagram.expressions.length - 1, ei + sR); i++) {
+                                  coveredLabels.push(diagram.expressions[i].label || '…');
+                                }
+                                return (
+                                  <label key={expr.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.84rem', cursor: 'pointer', paddingLeft: '4px' }}>
+                                    <input type="checkbox" checked={true} onChange={() => {
+                                      const newExprs = diagram.expressions.map(e => e.id !== expr.id ? e : { ...e, infoUnit: { ...e.infoUnit, isActualFocus: false, focusType: undefined } });
+                                      commitChange({ ...diagram, expressions: newExprs });
+                                    }} style={{ width: 14, height: 14, accentColor: 'var(--accent)', cursor: 'pointer' }} />
+                                    {coveredLabels.length > 1 ? coveredLabels.join(' · ') : (expr.label || '…')}
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
+                                        
+                    <div className="sidebar-section" style={{ marginTop: '14px' }}>
+                      <div style={{ fontSize: '0.82rem', color: diagram.expressions.some(e => e.infoUnit?.focusType === 'actual') ? '#adb5bd' : 'var(--text-secondary)', fontWeight: 600, marginBottom: '6px' }}>Special Focus Domains</div>
+                      {diagram.expressions.some(e => e.infoUnit?.focusType === 'actual') && <p style={{ fontSize: '0.78rem', color: '#adb5bd', marginTop: '-2px', marginBottom: '6px', fontStyle: 'italic' }}>Disabled: actual focus is active</p>}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <button
+                          className="btn"
+                          style={{
+                            width: '100%',
+                            fontWeight: focusSelectionMode === 'completive' ? 700 : 'normal',
+                            fontSize: '0.85rem',
+                            background: (diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')) ? 'rgba(0,0,0,0.04)' : (focusSelectionMode === 'completive' ? 'var(--accent)' : 'white'),
+                            color: (diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')) ? 'var(--text-secondary)' : (focusSelectionMode === 'completive' ? 'white' : 'var(--text)'),
+                            borderColor: (diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')) ? 'var(--border)' : (focusSelectionMode === 'completive' ? 'var(--accent)' : 'var(--border)'),
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            opacity: (diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')) ? 0.6 : 1,
+                            cursor: (diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')) ? 'not-allowed' : 'pointer',
+                          }}
+                          disabled={diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')}
+                          onClick={() => {
+                            if (diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')) return;
+
+                            setFocusSelectionMode(focusSelectionMode === 'completive' ? null : 'completive');
+                            setSelectedId(null);
+                            setEditingId(null);
+                          }}
+                        >
+                          {focusSelectionMode === 'completive' ? '● Selecting completive IU… (click to stop)' : 'Mark IU as Completive Focus'}
+                          <svg style={{ width: 16, height: 12, border: '1px solid currentColor', borderRadius: 2, flexShrink: 0, opacity: 0.7 }} viewBox="0 0 16 12">
+                            <line x1="0" y1="3" x2="16" y2="3" stroke="currentColor" strokeWidth="0.8"/>
+                            <line x1="0" y1="6" x2="16" y2="6" stroke="currentColor" strokeWidth="0.8"/>
+                            <line x1="0" y1="9" x2="16" y2="9" stroke="currentColor" strokeWidth="0.8"/>
+                          </svg>
+                        </button>
+
+                        {diagram.expressions.some(e => e.infoUnit?.focusType === 'completive') && (
+                          <div style={{ fontSize: '0.84rem', paddingLeft: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ color: 'var(--accent)', fontWeight: 600 }}>✓</span>
+                            {(() => {
+                              const ex = diagram.expressions.find(e => e.infoUnit?.focusType === 'completive');
+                              if (!ex) return '…';
+                              const ei = diagram.expressions.indexOf(ex);
+                              const sL = ex.infoUnit?.spanLeft || 0;
+                              const sR = ex.infoUnit?.spanRight || 0;
+                              const labels = [];
+                              for (let i = Math.max(0, ei - sL); i <= Math.min(diagram.expressions.length - 1, ei + sR); i++) labels.push(diagram.expressions[i].label || '…');
+                              return labels.length > 1 ? labels.join(' · ') : (ex.label || '…');
+                            })()}
+                            <span
+                              style={{ color: 'var(--danger)', cursor: 'pointer', fontSize: '0.78rem', marginLeft: 'auto' }}
+                              onClick={() => {
+                                const newExprs = diagram.expressions.map(e => e.infoUnit?.focusType === 'completive'
+                                  ? { ...e, infoUnit: { ...e.infoUnit, isActualFocus: false, focusType: undefined } }
+                                  : e
+                                );
+                                commitChange({ ...diagram, expressions: newExprs });
+                              }}
+                            >
+                              ✕ remove
+                            </span>
+                          </div>
+                        )}
+
+                        <button
+                          className="btn"
+                          style={{
+                            width: '100%',
+                            fontWeight: focusSelectionMode === 'contrastive' ? 700 : 'normal',
+                            fontSize: '0.85rem',
+                            background: (diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')) ? 'rgba(0,0,0,0.04)' : (focusSelectionMode === 'contrastive' ? 'var(--accent)' : 'white'),
+                            color: (diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')) ? 'var(--text-secondary)' : (focusSelectionMode === 'contrastive' ? 'white' : 'var(--text)'),
+                            borderColor: (diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')) ? 'var(--border)' : (focusSelectionMode === 'contrastive' ? 'var(--accent)' : 'var(--border)'),
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            opacity: (diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')) ? 0.6 : 1,
+                            cursor: (diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')) ? 'not-allowed' : 'pointer',
+                          }}
+                          disabled={diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')}
+                          onClick={() => {
+                            if (diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')) return;
+
+                            setFocusSelectionMode(focusSelectionMode === 'contrastive' ? null : 'contrastive');
+                            setSelectedId(null);
+                            setEditingId(null);
+                          }}
+                        >
+                          {focusSelectionMode === 'contrastive' ? '● Selecting contrastive IU… (click to stop)' : 'Mark IU as Contrastive Focus'}
+                          <svg style={{ width: 16, height: 12, border: '1px solid currentColor', borderRadius: 2, flexShrink: 0, opacity: 0.7 }} viewBox="0 0 16 12">
+                            <line x1="2" y1="0" x2="2" y2="12" stroke="currentColor" strokeWidth="0.8"/>
+                            <line x1="6" y1="0" x2="6" y2="12" stroke="currentColor" strokeWidth="0.8"/>
+                            <line x1="10" y1="0" x2="10" y2="12" stroke="currentColor" strokeWidth="0.8"/>
+                            <line x1="14" y1="0" x2="14" y2="12" stroke="currentColor" strokeWidth="0.8"/>
+                          </svg>
+                        </button>
+
+                        {diagram.expressions.some(e => e.infoUnit?.focusType === 'contrastive') && (
+                          <div style={{ fontSize: '0.84rem', paddingLeft: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ color: 'var(--accent)', fontWeight: 600 }}>✓</span>
+                            {(() => {
+                              const ex = diagram.expressions.find(e => e.infoUnit?.focusType === 'contrastive');
+                              if (!ex) return '…';
+                              const ei = diagram.expressions.indexOf(ex);
+                              const sL = ex.infoUnit?.spanLeft || 0;
+                              const sR = ex.infoUnit?.spanRight || 0;
+                              const labels = [];
+                              for (let i = Math.max(0, ei - sL); i <= Math.min(diagram.expressions.length - 1, ei + sR); i++) labels.push(diagram.expressions[i].label || '…');
+                              return labels.length > 1 ? labels.join(' · ') : (ex.label || '…');
+                            })()}
+                            <span
+                              style={{ color: 'var(--danger)', cursor: 'pointer', fontSize: '0.78rem', marginLeft: 'auto' }}
+                              onClick={() => {
+                                const newExprs = diagram.expressions.map(e => e.infoUnit?.focusType === 'contrastive'
+                                  ? { ...e, infoUnit: { ...e.infoUnit, isActualFocus: false, focusType: undefined } }
+                                  : e
+                                );
+                                commitChange({ ...diagram, expressions: newExprs });
+                              }}
+                            >
+                              ✕ remove
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                  </div>
+              </div>
             ) : (
               <div className="sidebar-section">
                 <div className="sidebar-title">Projections</div>
                 
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '12px' }}>
-                  <input 
-                    type="checkbox" 
-                    checked={showConstituent} 
-                    onChange={(e) => setShowConstituent(e.target.checked)} 
-                    disabled={!diagram.root}
-                    style={{ marginTop: '10px', width: '16px', height: '16px', cursor: diagram.root ? 'pointer' : 'not-allowed', accentColor: 'var(--accent)', flexShrink: 0 }}
-                  />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, marginTop: '10px' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={diagram.root ? 'var(--text-secondary)' : 'var(--border)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} title="Toggle visibility"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <input 
+                      type="checkbox" 
+                      checked={showConstituent} 
+                      onChange={(e) => setShowConstituent(e.target.checked)} 
+                      disabled={!diagram.root}
+                      style={{ width: '16px', height: '16px', cursor: diagram.root ? 'pointer' : 'not-allowed', accentColor: 'var(--accent)' }}
+                    />
+                  </div>
                   <div style={{ flex: 1 }}>
                     <button 
-                      className="btn" 
-                      style={{ width: '100%', textAlign: 'left', fontWeight: 'bold', borderColor: diagram.root ? 'var(--accent)' : 'var(--border)', borderRadius: '8px' }}
+                      className="btn btn-no-hover" 
+                      style={{ width: '100%', textAlign: 'left', fontWeight: diagram.root ? 'bold' : 'normal', borderColor: diagram.root ? 'var(--accent)' : 'var(--border)', borderRadius: '8px', cursor: 'default' }}
                       onClick={initializeConstituentProjection}
                     >
                       {diagram.root ? '✓ Constituent Projection' : 'Constituent Projection'}
                     </button>
-                    {!diagram.root && <p style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px'}}>Click to start building the syntactic tree.</p>}
+                    {!diagram.root ? (
+                      <p style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px'}}>Click to start building the syntactic tree</p>
+                    ) : (
+                      <p style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px'}}>Click on any node of the Constituent Projection to see options</p>
+                    )}
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '12px' }}>
-                  <input 
-                    type="checkbox" 
-                    checked={showOperators} 
-                    onChange={(e) => setShowOperators(e.target.checked)} 
-                    disabled={!diagram.expressions.some(e => e.operatorLayers?.length)}
-                    style={{ marginTop: '10px', width: '16px', height: '16px', cursor: diagram.expressions.some(e => e.operatorLayers?.length) ? 'pointer' : 'not-allowed', accentColor: 'var(--accent)', flexShrink: 0 }}
-                  />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, marginTop: '10px' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={diagram.expressions.some(e => e.operatorLayers?.length) ? 'var(--text-secondary)' : 'var(--border)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} title="Toggle visibility"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <input 
+                      type="checkbox" 
+                      checked={showOperators} 
+                      onChange={(e) => setShowOperators(e.target.checked)} 
+                      disabled={!diagram.expressions.some(e => e.operatorLayers?.length)}
+                      style={{ width: '16px', height: '16px', cursor: diagram.expressions.some(e => e.operatorLayers?.length) ? 'pointer' : 'not-allowed', accentColor: 'var(--accent)' }}
+                    />
+                  </div>
                   <div style={{ flex: 1 }}>
                     <button 
-                      className="btn" 
-                      style={{ width: '100%', textAlign: 'left', borderRadius: '8px', fontWeight: diagram.expressions.some(e => e.operatorLayers?.length) ? 'bold' : 'normal', borderColor: diagram.expressions.some(e => e.operatorLayers?.length) ? 'var(--accent)' : 'var(--border)' }}
-                      disabled
+                      className="btn btn-no-hover" 
+                      style={{ width: '100%', textAlign: 'left', borderRadius: '8px', fontWeight: diagram.expressions.some(e => e.operatorLayers?.length) ? 'bold' : 'normal', borderColor: diagram.expressions.some(e => e.operatorLayers?.length) ? 'var(--accent)' : 'var(--border)', opacity: diagram.expressions.some(e => e.operatorLayers?.length) ? 1 : 0.45, cursor: 'default' }}
                     >
                       {diagram.expressions.some(e => e.operatorLayers?.length) ? '✓ Operator Projection' : 'Operator Projection'}
                     </button>
-                    <p style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px'}}>Select any item of the expression to add operator layers.</p>
+                    {diagram.expressions.some(e => e.operatorLayers?.length) ? (
+                      <p style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px'}}>Click on any node of the Operator Projection to see options</p>
+                    ) : (
+                      <p style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px'}}>Select any item of the expression to add operator layers</p>
+                    )}
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '12px' }}>
-                  <input 
-                    type="checkbox" 
-                    checked={showInfoStructure} 
-                    onChange={(e) => setShowInfoStructure(e.target.checked)} 
-                    disabled={!diagram.expressions.some(e => e.infoUnit)}
-                    style={{ marginTop: '10px', width: '16px', height: '16px', cursor: diagram.expressions.some(e => e.infoUnit) ? 'pointer' : 'not-allowed', accentColor: 'var(--accent)', flexShrink: 0 }}
-                  />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, marginTop: '10px' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={diagram.expressions.some(e => e.infoUnit) ? 'var(--text-secondary)' : 'var(--border)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} title="Toggle visibility"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <input 
+                      type="checkbox" 
+                      checked={showInfoStructure} 
+                      onChange={(e) => setShowInfoStructure(e.target.checked)} 
+                      disabled={!diagram.expressions.some(e => e.infoUnit)}
+                      style={{ width: '16px', height: '16px', cursor: diagram.expressions.some(e => e.infoUnit) ? 'pointer' : 'not-allowed', accentColor: 'var(--accent)' }}
+                    />
+                  </div>
                   <div style={{ flex: 1 }}>
                     <button 
                       className="btn" 
-                      style={{ width: '100%', textAlign: 'left', borderRadius: '8px', fontWeight: diagram.expressions.some(e => e.infoUnit) ? 'bold' : 'normal', borderColor: diagram.expressions.some(e => e.infoUnit) ? 'var(--accent)' : 'var(--border)' }}
-                      disabled
+                      disabled={!diagram.expressions.some(e => e.infoUnit)}
+                      style={{ width: '100%', textAlign: 'left', borderRadius: '8px', fontWeight: diagram.expressions.some(e => e.infoUnit) ? 'bold' : 'normal', borderColor: (diagram.expressions.some(e => e.infoUnit) || showFocusDomains) ? 'var(--accent)' : 'var(--border)', opacity: diagram.expressions.some(e => e.infoUnit) ? 1 : 0.45 }}
+                      onClick={() => setShowFocusDomains(!showFocusDomains)}
                     >
                       {diagram.expressions.some(e => e.infoUnit) ? '✓ Information Structure' : 'Information Structure'}
                     </button>
-                    <p style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px'}}>Select any item of the expression to mark as information unit.</p>
+                    {!diagram.expressions.some(e => e.infoUnit) ? (
+                      <p style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px'}}>Select any item of the expression to mark it as Information Unit</p>
+                    ) : (
+                      <p style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px'}}>Click to see Information Structure options</p>
+                    )}
                   </div>
                 </div>
 
+
                 {showOperators && showInfoStructure && diagram.expressions.some(e => e.operatorLayers?.length) && diagram.expressions.some(e => e.infoUnit) && (
                   <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-light)' }}>
-                  <div className="sidebar-title">Dim projections</div>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '2px' }}>Dim projections</div>
                     <select 
                       className="node-select" 
                       style={{ marginTop: '8px' }}
@@ -4360,7 +4925,7 @@
 
                 {diagram.root && (
                   <div style={{ color: '#adb5bd', textAlign: 'center', marginTop: '40px' }}>
-                    Select a node in the diagram to view its tools.
+                    Select a node in the diagram to view its tools
                   </div>
                 )}
               </div>

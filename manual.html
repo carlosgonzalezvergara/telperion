@@ -171,10 +171,6 @@
         <li>Click <span class="ui-element">Generate Initial Expression</span> to proceed to the workspace canvas.</li>
       </ol>
 
-      <div class="note">
-        <strong>Tip:</strong> segmentation happens <em>before</em> you enter the canvas, but you do <em>not</em> necessarily need to start over if you detect that the initial expression is incomplete. When you select any base item on the canvas, Telperion offers an option to add the <em>missing base nodes</em> so you can keep working on the same diagram.
-      </div>
-
       <h3>Load an existing diagram</h3>
       <p>You can drag and drop a <span class="ui-element">.tlp</span> file directly into the right-hand box, or click <span class="ui-element">Load .tlp File</span> to browse your computer’s files.</p>
     </section>
@@ -195,6 +191,13 @@
         <li><strong>Edit a label:</strong> Click on any label to select it and start typing.</li>
       </ul>
 
+      <h3>Editing the Base Expression (Lexical Equator)</h3>
+      <p>If you realize you missed a word or segment after generating the initial tree, you can add it directly on the canvas without starting over:</p>
+      <ul>
+        <li>Select any base item (word) in the diagram's lexical equator.</li>
+        <li>In the sidebar, under <strong>Expression Items</strong>, click <span class="ui-element">← Insert Left</span> or <span class="ui-element">Insert Right →</span> to add a new empty base node adjacent to your selection.</li>
+      </ul>
+
       <h3>Global Projection Controls</h3>
       <p>When you deselect all nodes (by clicking on empty space), the sidebar displays the global projection controls:</p>
       <ul>
@@ -210,6 +213,8 @@
       <h3>Building the tree</h3>
       <ul>
         <li><strong>Daughter nodes:</strong> select any node and use the <span class="ui-element">Number selector</span> control in the sidebar to add or subtract daughter nodes.</li>
+        <li><strong>Add Parent:</strong> select a node and click <span class="ui-element">+ Add Parent</span> to wrap it under a new superior node.</li>
+        <li><strong>Add Periphery:</strong> select a node and use the <span class="ui-element">Add Left →</span> or <span class="ui-element">← Add Right</span> buttons to attach a peripheral node to that structural level.</li>
         <li><strong>Delete nodes:</strong> select the node in the canvas, then click the red <span class="ui-element">✕ Delete Node</span> button in the right sidebar (this removes the node and its descendants).</li>
         <li><strong>Spine alignment:</strong> for syntactic nodes, you can center the node vertically (spine) when the option is available in the sidebar.</li>
         <li><strong>Swapping nodes:</strong> you can swap nodes in the constituent tree using the <span class="ui-element">← Swap Left</span> or <span class="ui-element">Swap Right →</span> buttons. <em>Note: this action is only available before linking the node to the base items.</em></li>
@@ -218,7 +223,7 @@
       <h3>Editing labels (Applicable to all projections)</h3>
       <p>Telperion makes it easy to assign and format labels across the Constituent, Operator, and Information Structure projections:</p>
       <ul>
-        <li><strong>Dropdowns & Free Typing:</strong> When you edit a label, a dropdown list will appear offering context-appropriate RRG labels. You can click to select from the list, or simply <strong>type freely</strong> to enter any custom text.</li>
+        <li><strong>Dropdowns & Free Typing:</strong> When you click a label to edit it, an input field appears with a chevron (arrow) on the right side. Clicking this chevron toggles a dropdown list offering context-appropriate RRG labels. As you type, the list filters automatically. You can click to select from the list, or simply <strong>type freely</strong> to enter any custom text.</li>
         <li><strong>Subscripts:</strong> You can automatically generate subscript formatting by using an underscore (<code>_</code>). For example, typing <code>CORE_P</code> will render the "P" as a subscript in the canvas.</li>
         <li>Press <span class="keyboard-shortcut">Enter</span> to confirm a label edit.</li>
         <li>Press <span class="keyboard-shortcut">Esc</span> to cancel an edit or close an open dropdown menu.</li>
@@ -238,7 +243,7 @@
       <ol>
         <li>Select a base expression item (a word) in the lexical equator.</li>
         <li>Look at the <strong>Incoming Links</strong> section in the right sidebar.</li>
-        <li>You will see a list of all syntactic nodes and operators that are currently pointing to this item. Uncheck the boxes to instantly unlink them.</li>
+        <li>You will see a list of all syntactic nodes <strong>and operator nodes</strong> that are currently pointing to this item. Uncheck the boxes to instantly unlink them from their respective projection.</li>
       </ol>
     </section>
 
@@ -275,13 +280,16 @@
       </ul>
 
       <h3>Focus domains and Speech Act</h3>
-      <ul>
-        <li>With an IU selected, check the boxes to include it within the Potential Focus Domain (<strong>PFD</strong>) and/or Actual Focus Domain (<strong>AFD</strong>).</li>
-        <li>Telperion draws lines towards the virtual <span class="ui-element">Speech Act</span> node.</li>
-      </ul>
+      <p>Telperion features an interactive selection mode for assigning focus domains without cluttering the interface:</p>
+      <ol>
+        <li>Make sure no specific node is selected on the canvas to view the global Information Structure options in the sidebar.</li>
+        <li><strong>Potential & Actual Focus:</strong> Click the <span class="ui-element">Select IU(s) as part of the PFD</span> or <span class="ui-element">Select IU(s) as part of the AFD</span> button to enter selection mode, then click the target Information Unit(s) directly on the canvas. The PFD is drawn as a dashed triangle, and the AFD as a solid one.</li>
+        <li><strong>Special Focus Domains:</strong> For specific focus types, click <span class="ui-element">Mark IU as Completive Focus</span> (horizontal hatching) or <span class="ui-element">Mark IU as Contrastive Focus</span> (vertical hatching), then click the target IU on the canvas.</li>
+        <li>Telperion automatically calculates the geometry of the triangles to prevent visual overlaps and draws lines towards the virtual <span class="ui-element">Speech Act</span> node.</li>
+      </ol>
 
       <h3>Speech Act node position</h3>
-      <p>Select the Speech Act label to adjust its vertical position using <span class="ui-element">↑ Move Up</span> / <span class="ui-element">↓ Move Down</span>. Use <span class="ui-element">Reset position</span> to return to the default.</p>
+      <p>Select the Speech Act label on the canvas to adjust its vertical position using <span class="ui-element">↑ Move Up</span> / <span class="ui-element">↓ Move Down</span> in the sidebar. Use <span class="ui-element">Reset position</span> to return to the default.</p>
     </section>
 
     <section id="exporting">
@@ -316,5 +324,6 @@
       <p>Departamento de Ciencias del Lenguaje &bull; Facultad de Letras <br> Pontificia Universidad Católica de Chile</p>
     </footer>
 
-  </div> </body>
+  </div>
+</body>
 </html>
