@@ -1,11 +1,12 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User Manual - Telperion</title>
-  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet" />
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>User Manual - Telperion</title>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&amp;family=Source+Sans+3:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<style>
     :root {
       --bg-color: #ffffff;
       --surface: #f5faf7;
@@ -144,186 +145,157 @@
   </style>
 </head>
 <body>
-
-  <div class="container">
-    <header>
-      <h1>Telperion</h1>
-      <p style="font-size: 1.2rem; color: var(--text-secondary); margin: 0; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">User Manual</p>
-    </header>
-
-    <section id="introduction">
-      <h2>1. Introduction</h2>
-      <p><strong>Telperion</strong> is a specialized tool for building and analyzing syntactic trees under the <strong>Role and Reference Grammar (RRG)</strong> model. The application allows you to manage the three fundamental projections of the clause in a single workspace: <strong>Constituent Projection</strong>, <strong>Operator Projection</strong>, and <strong>Information Structure</strong>.</p>
-      <p><strong>Initial morphosyntactic expression:</strong> every diagram starts from a segmented expression (one or more “base items”, typically corresponding to words or multiword blocks). These base items act as anchors for both operator layers and information-structure units.</p>
-    </section>
-
-    <section id="getting-started">
-      <h2>2. Start Screen and Segmentation</h2>
-      <p>Upon launching Telperion, you will be greeted by the welcome screen where you can generate a new diagram or load an existing one.</p>
-
-      <h3>Create a new diagram</h3>
-      <ol>
-        <li>Enter your full sentence in the text input field.</li>
-        <li><strong>IPA Characters:</strong> If you need to include phonetic symbols, click the <span class="ui-element">IPA</span> button next to the input field. This opens a comprehensive character picker that allows you to insert International Phonetic Alphabet symbols directly into your text.</li>
-        <li>Telperion will automatically separate the sentence by spaces (initial tokenization).</li>
-        <li><strong>Adjust segments:</strong> to group or split tokens, click the space between items in the <span class="ui-element">word-flow</span> area. This toggles the boundary at that position.</li>
-        <li>Use <span class="ui-element">Split All</span> to separate all words individually, or <span class="ui-element">Clear</span> to merge them all into a single block.</li>
-        <li>Click <span class="ui-element">Generate Initial Expression</span> to proceed to the workspace canvas.</li>
-      </ol>
-
-      <h3>Load an existing diagram</h3>
-      <p>You can drag and drop a <span class="ui-element">.tlp</span> file directly into the right-hand box, or click <span class="ui-element">Load .tlp File</span> to browse your computer’s files.</p>
-    </section>
-
-    <section id="interface">
-      <h2>3. The Workspace Canvas</h2>
-      <p>The main interface is divided into three key areas:</p>
-      <ul>
-        <li><strong>Top Bar:</strong> global actions such as load, save, export, undo/redo, and new diagram.</li>
-        <li><strong>Central Canvas:</strong> the diagram area where you create and edit the three projections. Floating zoom controls are located in the top right corner of this area.</li>
-        <li><strong>Right Sidebar:</strong> context-sensitive tools; what you see depends on the selected node and active projection mode.</li>
-      </ul>
-
-      <h3>Navigation and selection</h3>
-      <ul>
-        <li><strong>Pan / scroll:</strong> use your trackpad/mouse wheel to scroll. If the diagram becomes wider than the window, horizontal scrolling becomes available.</li>
-        <li><strong>Select:</strong> click a node/label to select it. Click on empty space to clear selection.</li>
-        <li><strong>Edit a label:</strong> Click on any label to select it and start typing.</li>
-      </ul>
-
-      <h3>Editing the Base Expression (Lexical Equator)</h3>
-      <p>If you realize you missed a word or segment after generating the initial tree, you can add it directly on the canvas without starting over:</p>
-      <ul>
-        <li>Select any base item (word) in the diagram's lexical equator.</li>
-        <li>In the sidebar, under <strong>Expression Items</strong>, click <span class="ui-element">← Insert Left</span> or <span class="ui-element">Insert Right →</span> to add a new empty base node adjacent to your selection.</li>
-      </ul>
-
-      <h3>Global Projection Controls</h3>
-      <p>When you deselect all nodes (by clicking on empty space), the sidebar displays the global projection controls:</p>
-      <ul>
-        <li><strong>Toggle Visibility:</strong> you can hide or show any of the three projections by clicking the checkbox next to each one. This is useful for focusing on specific layers while presenting or analyzing.</li>
-        <li><strong>Dimming Projections:</strong> when both Operator Projection and Information Structure are active simultaneously, the visual space below the equator can become crowded. Under <strong>Dim projections</strong>, you can select whether to dim the operators or the information structure lines, making the active focus clearer.</li>
-      </ul>
-    </section>
-
-    <section id="constituent-projection">
-      <h2>4. Constituent Projection</h2>
-      <p>The constituent projection represents the hierarchical structure of the clause. Activate <span class="ui-element">Constituent Projection</span> in the sidebar to begin working in this layer.</p>
-
-      <h3>Building the tree</h3>
-      <ul>
-        <li><strong>Daughter nodes:</strong> select any node and use the <span class="ui-element">Number selector</span> control in the sidebar to add or subtract daughter nodes.</li>
-        <li><strong>Add Parent:</strong> select a node and click <span class="ui-element">+ Add Parent</span> to wrap it under a new superior node.</li>
-        <li><strong>Add Periphery:</strong> select a node and use the <span class="ui-element">Add Left →</span> or <span class="ui-element">← Add Right</span> buttons to attach a peripheral node to that structural level.</li>
-        <li><strong>Delete nodes:</strong> select the node in the canvas, then click the red <span class="ui-element">✕ Delete Node</span> button in the right sidebar (this removes the node and its descendants).</li>
-        <li><strong>Spine alignment:</strong> for syntactic nodes, you can center the node vertically (spine) when the option is available in the sidebar.</li>
-        <li><strong>Swapping nodes:</strong> you can swap nodes in the constituent tree using the <span class="ui-element">← Swap Left</span> or <span class="ui-element">Swap Right →</span> buttons. <em>Note: this action is only available before linking the node to the base items.</em></li>
-      </ul>
-
-      <h3>Editing labels (Applicable to all projections)</h3>
-      <p>Telperion makes it easy to assign and format labels across the Constituent, Operator, and Information Structure projections:</p>
-      <ul>
-        <li><strong>Dropdowns & Free Typing:</strong> When you click a label to edit it, an input field appears with a chevron (arrow) on the right side. Clicking this chevron toggles a dropdown list offering context-appropriate RRG labels. As you type, the list filters automatically. You can click to select from the list, or simply <strong>type freely</strong> to enter any custom text.</li>
-        <li><strong>Subscripts:</strong> You can automatically generate subscript formatting by using an underscore (<code>_</code>). For example, typing <code>CORE_P</code> will render the "P" as a subscript in the canvas.</li>
-        <li>Press <span class="keyboard-shortcut">Enter</span> to confirm a label edit.</li>
-        <li>Press <span class="keyboard-shortcut">Esc</span> to cancel an edit or close an open dropdown menu.</li>
-      </ul>
-
-      <h3>Links to the morphosyntactic expression</h3>
-      <p>To link your syntactic structure with the expression items (base segments):</p>
-      <ol>
-        <li>Select the terminal node (the lowest node in a branch).</li>
-        <li>In the sidebar, under <strong>Linking to expression item</strong>, choose the corresponding item from the dropdown.</li>
-        <li><strong>Peripheries:</strong> a periphery may link to multiple expression items using checkboxes.</li>
-        <li><strong>Draw link as triangle:</strong> when a node dominates a full phrase, enable <span class="ui-element">Draw link as triangle</span> to replace multiple word-links with a single triangle over the relevant span.</li>
-      </ol>
-
-      <h3>Incoming Links (Managing connections from the base)</h3>
-      <p>If you need to review or quickly remove links pointing to a specific item from the syntax or operators:</p>
-      <ol>
-        <li>Select a base expression item (a word) in the lexical equator.</li>
-        <li>Look at the <strong>Incoming Links</strong> section in the right sidebar.</li>
-        <li>You will see a list of all syntactic nodes <strong>and operator nodes</strong> that are currently pointing to this item. Uncheck the boxes to instantly unlink them from their respective projection.</li>
-      </ol>
-    </section>
-
-    <section id="operator-projection">
-      <h2>5. Operator Projection</h2>
-      <p>The operator projection is built downwards from the morphosyntactic expression. Click on any base node to begin adding operator layers.</p>
-
-      <h3>Layer and operator creation</h3>
-      <ul>
-        <li><strong>Add a layer:</strong> select a base item and click <span class="ui-element">+ Add Operator Layer</span> (e.g., NUC, CORE, CLAUSE).</li>
-        <li><strong>Add operators:</strong> select the created layer and click <span class="ui-element">Add operator →</span> or <span class="ui-element">← Add operator</span> (e.g., ASP, TNS, MOD).</li>
-        <li><strong>Position adjustment:</strong> move layers vertically (<span class="ui-element">↑ Move Up</span> / <span class="ui-element">↓ Move Down</span>) to create space. Operators can be moved horizontally using <span class="ui-element">← Move Left</span> or <span class="ui-element">Move Right →</span> to make the diagram clearer and avoid overlapping lines.</li>
-      </ul>
-
-      <h3>Cross-spine links</h3>
-      <p>Telperion supports links between operator projections of different nuclei (useful in juncture/nexus configurations):</p>
-      <ol>
-        <li>Select the source layer.</li>
-        <li>In the sidebar, click <span class="ui-element">Link to secondary superior node</span>.</li>
-        <li>An on-screen indicator will appear. Click the target layer in another spine or a base node to generate the transversal link.</li>
-        <li><strong>Cancel linking mode:</strong> press <span class="keyboard-shortcut">Esc</span> (or click the linking button again) to exit without creating a link.</li>
-      </ol>
-    </section>
-
-    <section id="information-structure">
-      <h2>6. Information Structure</h2>
-      <p>To analyze how information is distributed, click on any base node to activate <span class="ui-element">Information Structure</span> options.</p>
-
-      <h3>Information Units (IU)</h3>
-      <ul>
-        <li>Select a base item and click <span class="ui-element">+ Mark as Information Unit</span>.</li>
-        <li><strong>Span across multiple items:</strong> use <span class="ui-element">Grow Left/Right</span> or <span class="ui-element">Shrink Left/Right</span>. If the IU covers more than one item, Telperion draws a bounding bracket automatically.</li>
-        <li><strong>Remove an IU:</strong> with the IU selected, click <span class="ui-element">✕ Remove Information Unit</span>.</li>
-      </ul>
-
-      <h3>Focus domains and Speech Act</h3>
-      <p>Telperion features an interactive selection mode for assigning focus domains without cluttering the interface:</p>
-      <ol>
-        <li>Make sure no specific node is selected on the canvas to view the global Information Structure options in the sidebar.</li>
-        <li><strong>Potential & Actual Focus:</strong> Click the <span class="ui-element">Select IU(s) as part of the PFD</span> or <span class="ui-element">Select IU(s) as part of the AFD</span> button to enter selection mode, then click the target Information Unit(s) directly on the canvas. The PFD is drawn as a dashed triangle, and the AFD as a solid one.</li>
-        <li><strong>Special Focus Domains:</strong> For specific focus types, click <span class="ui-element">Mark IU as Completive Focus</span> (horizontal hatching) or <span class="ui-element">Mark IU as Contrastive Focus</span> (vertical hatching), then click the target IU on the canvas.</li>
-        <li>Telperion automatically calculates the geometry of the triangles to prevent visual overlaps and draws lines towards the virtual <span class="ui-element">Speech Act</span> node.</li>
-      </ol>
-
-      <h3>Speech Act node position</h3>
-      <p>Select the Speech Act label on the canvas to adjust its vertical position using <span class="ui-element">↑ Move Up</span> / <span class="ui-element">↓ Move Down</span> in the sidebar. Use <span class="ui-element">Reset position</span> to return to the default.</p>
-    </section>
-
-    <section id="exporting">
-      <h2>7. Saving and Exporting</h2>
-      <ul>
-        <li><span class="ui-element">Save</span>: downloads a <code>.tlp</code> file. This is Telperion’s native, fully editable format. Use it to continue work later or move diagrams between computers.</li>
-        <li><span class="ui-element">Export PNG</span>: generates a high-resolution image with clean rendering (selection outlines and UI-only controls are hidden) and appropriate padding. Useful for papers and slides.</li>
-      </ul>
-
-      <div class="note">
-        <strong>Auto-save:</strong> Telperion periodically stores recent work in your browser to help recover from accidental tab closes. It is a safety net, not a replacement for saving a <code>.tlp</code> when you finish.
-      </div>
-    </section>
-
-    <section id="shortcuts">
-      <h2>8. Keyboard Shortcuts</h2>
-      <p>Telperion supports quick shortcuts to improve your workflow:</p>
-      <ul>
-        <li><span class="keyboard-shortcut">Ctrl / ⌘ + S</span> : Save file (<code>.tlp</code>)</li>
-        <li><span class="keyboard-shortcut">Ctrl / ⌘ + Z</span> : Undo</li>
-        <li><span class="keyboard-shortcut">Ctrl / ⌘ + Y</span> or <span class="keyboard-shortcut">Ctrl / ⌘ + Shift + Z</span> : Redo</li>
-        <li><span class="keyboard-shortcut">Ctrl / ⌘ + +</span> : Zoom In</li>
-        <li><span class="keyboard-shortcut">Ctrl / ⌘ + -</span> : Zoom Out</li>
-        <li><span class="keyboard-shortcut">Ctrl / ⌘ + 0</span> : Reset Zoom to 100%</li>
-        <li><span class="keyboard-shortcut">Enter</span> : Confirm label edit</li>
-        <li><span class="keyboard-shortcut">Esc</span> : Cancel edit / exit modes / close dropdown</li>
-      </ul>
-    </section>
-
-    <footer>
-      <p>Developed by <strong>Carlos González Vergara</strong> (<a href="mailto:cgonzalv@uc.cl">cgonzalv@uc.cl</a>)</p>
-      <p>Departamento de Ciencias del Lenguaje &bull; Facultad de Letras <br> Pontificia Universidad Católica de Chile</p>
-    </footer>
-
-  </div>
+<div class="container">
+<header>
+<h1>Telperion</h1>
+<p style="font-size: 1.2rem; color: var(--text-secondary); margin: 0; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">User Manual</p>
+</header>
+<section id="introduction">
+<h2>1. Introduction</h2>
+<p><strong>Telperion</strong> is a specialized tool for building and analyzing syntactic trees under the <strong>Role and Reference Grammar (RRG)</strong> model. The application allows you to manage the three fundamental projections of the clause in a single workspace: <strong>Constituent Projection</strong>, <strong>Operator Projection</strong>, and <strong>Information Structure</strong>.</p>
+<p><strong>Initial morphosyntactic expression:</strong> every diagram starts from a segmented expression (one or more “base items”, typically corresponding to words or multiword blocks). These base items act as anchors for both operator layers and information-structure units.</p>
+</section>
+<section id="getting-started">
+<h2>2. Start Screen and Segmentation</h2>
+<p>Upon launching Telperion, you will be greeted by the welcome screen where you can generate a new diagram or load an existing one.</p>
+<h3>Create a new diagram</h3>
+<ol>
+<li>Enter your full sentence in the text input field.</li>
+<li><strong>IPA Characters:</strong> Click the <span class="ui-element">IPA</span> button to open the IPA picker. You can use it on the start screen (sentence entry) and also later on the canvas while editing base items or node labels.</li>
+<li><strong>Adjust segments:</strong> to group or split tokens, click the space between items in the <span class="ui-element">word-flow</span> area. This toggles the boundary at that position.</li>
+<li>Use <span class="ui-element">Split All</span> to separate all words individually, or <span class="ui-element">Clear</span> to merge them all into a single block.</li>
+<li>Click <span class="ui-element">Generate Initial Expression</span> to proceed to the workspace canvas.</li>
+</ol>
+<h3>Load an existing diagram</h3>
+<p>You can drag and drop a <span class="ui-element">.tlp</span> file directly into the right-hand box, or click <span class="ui-element">Load .tlp File</span> to browse your computer’s files.</p>
+</section>
+<section id="interface">
+<h2>3. The Workspace Canvas</h2>
+<p>The main interface is divided into three key areas:</p>
+<ul>
+<li><strong>Top Bar:</strong> global actions such as load, save, export, undo/redo, and new diagram.</li>
+<li><strong>Central Canvas:</strong> the diagram area where you create and edit the three projections. Floating zoom controls are located in the top right corner of this area.</li>
+<li><strong>Right Sidebar:</strong> context-sensitive tools; what you see depends on the selected node and active projection mode.</li>
+</ul>
+<h3>Navigation and selection</h3>
+<ul>
+<li><strong>Pan / scroll:</strong> use your trackpad/mouse wheel to scroll. If the diagram becomes wider than the window, horizontal scrolling becomes available.</li>
+<li><strong>Select:</strong> click a node/label to select it. Click on empty space to clear selection.</li>
+<li><strong>Edit a label:</strong> Click on any label to select it and start typing.</li>
+</ul>
+<h3>Editing the Base Expression (Lexical Equator)</h3>
+<p>If you realize you missed a word or segment after generating the initial tree, you can add it directly on the canvas without starting over:</p>
+<ul>
+<li>Select any base item (word) in the diagram's lexical equator.</li>
+<li>In the sidebar, under <strong>Expression Items</strong>, click <span class="ui-element">← Insert Left</span> or <span class="ui-element">Insert Right →</span> to add a new empty base node adjacent to your selection.</li>
+<li><strong>IPA while editing:</strong> When you edit a base item directly on the canvas, an IPA button is available next to the text field, allowing you to insert IPA symbols at the cursor position.</li></ul>
+<h3>Global Projection Controls</h3>
+<p>When you deselect all nodes (by clicking on empty space), the sidebar displays the global projection controls:</p>
+<ul>
+<li><strong>Toggle Visibility:</strong> you can hide or show any of the three projections by clicking the checkbox next to each one. This is useful for focusing on specific layers while presenting or analyzing.</li>
+<li><strong>Dimming Projections:</strong> when both Operator Projection and Information Structure are active simultaneously, the visual space below the equator can become crowded. Under <strong>Dim projections</strong>, you can select whether to dim the operators or the information structure lines, making the active focus clearer.</li>
+</ul>
+</section>
+<section id="constituent-projection">
+<h2>4. Constituent Projection</h2>
+<p>The constituent projection represents the hierarchical structure of the clause. Activate <span class="ui-element">Constituent Projection</span> in the sidebar to begin working in this layer.</p>
+<h3>Building the tree</h3>
+<ul>
+<li><strong>Daughter nodes:</strong> select any node and use the <span class="ui-element">Number selector</span> control in the sidebar to add or subtract daughter nodes.</li>
+<li><strong>Add Parent:</strong> select a node and click <span class="ui-element">+ Add Parent</span> to wrap it under a new superior node.</li>
+<li><strong>Add Periphery:</strong> select a node and use the <span class="ui-element">Add Left →</span> or <span class="ui-element">← Add Right</span> buttons to attach a peripheral node to that structural level.</li>
+<li><strong>Delete nodes:</strong> select the node in the canvas, then click the red <span class="ui-element">✕ Delete Node</span> button in the right sidebar (this removes the node and its descendants).</li>
+<li><strong>Spine alignment:</strong> for syntactic nodes, you can center the node vertically (spine) when the option is available in the sidebar.</li>
+<li><strong>Swapping nodes:</strong> you can swap nodes in the constituent tree using the <span class="ui-element">← Swap Left</span> or <span class="ui-element">Swap Right →</span> buttons. <em>Note: this action is only available before linking the node to the base items.</em></li>
+</ul><h3>Node hover controls (quick buttons)</h3><p>In addition to the right sidebar controls, Telperion provides small green “quick action” buttons that appear when you hover over a node (and remain visible when the node is selected). These buttons are designed to speed up tree building without moving your cursor to the sidebar.</p><ul><li><strong>Add child (+): </strong>When you hover/select a constituent node, a small green + appears centered on the bottom edge. Click it to create new daughters nodes under that node.</li><li><strong>Visibility: </strong>The quick buttons are shown on hover; they are always available while the node remains selected.</li><li><strong>Scope: </strong>These hover buttons apply to nodes in the Constituent Projection.</li></ul>
+<h3>Editing labels (Applicable to all projections)</h3>
+<p>Telperion makes it easy to assign and format labels across the Constituent, Operator, and Information Structure projections:</p>
+<ul>
+<li><strong>Dropdowns &amp; Free Typing:</strong> When you click a label to edit it, an input field appears with a chevron (arrow) on the right side. Clicking this chevron toggles a dropdown list offering context-appropriate RRG labels. As you type, the list filters automatically. You can click to select from the list, or simply <strong>type freely</strong> to enter any custom text.</li>
+<li><strong>Subscripts:</strong> In free edition mode, you can automatically generate subscript formatting by using an underscore (<code>_</code>). For example, typing <code>CORE_P</code> will render the "P" as a subscript in the canvas.</li>
+<li>Press <span class="keyboard-shortcut">Enter</span> to confirm a label edit.</li>
+<li>Press <span class="keyboard-shortcut">Esc</span> to cancel an edit or close an open dropdown menu.</li>
+</ul>
+<h3>Links to the morphosyntactic expression</h3>
+<p>To link your syntactic structure with the expression items (base segments):</p>
+<ol>
+<li>Select the terminal node (the lowest node in a branch).</li>
+<li>In the sidebar, under <strong>Linking to expression item</strong>, choose the corresponding item from the dropdown.</li>
+<li><strong>Peripheries:</strong> a periphery may link to multiple expression items using checkboxes.</li>
+<li><strong>Draw link as triangle:</strong> when a node dominates a full phrase, enable <span class="ui-element">Draw link as triangle</span> to replace multiple word-links with a single triangle over the relevant span.</li>
+</ol>
+<h3>Incoming Links (Managing connections from the base)</h3>
+<p>If you need to review or quickly remove links pointing to a specific item from the syntax or operators:</p>
+<ol>
+<li>Select a base expression item (a word) in the lexical equator.</li>
+<li>Look at the <strong>Incoming Links</strong> section in the right sidebar.</li>
+<li>You will see a list of all syntactic nodes <strong>and operator nodes</strong> that are currently pointing to this item. Uncheck the boxes to instantly unlink them from their respective projection.</li>
+</ol>
+</section>
+<section id="operator-projection">
+<h2>5. Operator Projection</h2>
+<p>The operator projection is built downwards from the morphosyntactic expression. Click on any base node to begin adding operator layers.</p>
+<h3>Layer and operator creation</h3>
+<ul>
+<li><strong>Add a layer:</strong> select a base item and click <span class="ui-element">+ Add Operator Layer</span> (e.g., NUC, CORE, CLAUSE).</li>
+<li><strong>Add operators:</strong> select the created layer and click <span class="ui-element">Add operator →</span> or <span class="ui-element">← Add operator</span> (e.g., ASP, TNS, MOD).</li>
+<li><strong>Position adjustment:</strong> move layers vertically (<span class="ui-element">↑ Move Up</span> / <span class="ui-element">↓ Move Down</span>) to create space. Operators can be moved horizontally using <span class="ui-element">← Move Left</span> or <span class="ui-element">Move Right →</span> to make the diagram clearer and avoid overlapping lines.</li>
+</ul><h3>Layer hover controls (quick buttons)</h3><p>Operator layers also include green hover buttons to accelerate common actions directly on the canvas.</p><ul><li><strong>Add child (+): </strong>When a layer node is hovered/selected, a green + appears on its bottom edge. Click it to add the next (single) layer below that stratum.</li><li><strong>Add operator on the left (→): </strong>A green button on the left edge adds an operator node to the left of the selected stratum.</li><li><strong>Add operator on the right (←): </strong>A green button on the right edge adds an operator node to the right of the selected stratum.</li><li><strong>Visibility: </strong>These buttons are visible on hover and remain available while the stratum is selected.</li></ul>
+<h3>Cross-spine links</h3>
+<p>Telperion supports links between operator projections of different nuclei (useful in juncture/nexus configurations):</p>
+<ol>
+<li>Select the source layer.</li>
+<li>In the sidebar, click <span class="ui-element">Link to secondary superior node</span>.</li>
+<li>An on-screen indicator will appear. Click the target layer in another spine or a base node to generate the transversal link.</li>
+<li><strong>Cancel linking mode:</strong> press <span class="keyboard-shortcut">Esc</span> (or click the linking button again) to exit without creating a link.</li>
+</ol>
+</section>
+<section id="information-structure">
+<h2>6. Information Structure</h2>
+<p>To analyze how information is distributed, click on any base node to activate <span class="ui-element">Information Structure</span> options.</p>
+<h3>Information Units (IU)</h3>
+<ul>
+<li>Select a base item and click <span class="ui-element">+ Mark as Information Unit</span>.</li>
+<li><strong>Span across multiple items:</strong> use <span class="ui-element">Grow Left/Right</span> or <span class="ui-element">Shrink Left/Right</span>. If the IU covers more than one item, Telperion draws a bounding bracket automatically.</li>
+<li><strong>Remove an IU:</strong> with the IU selected, click <span class="ui-element">✕ Remove Information Unit</span>.</li>
+</ul>
+<h3>Focus domains and Speech Act</h3>
+<p>Telperion features an interactive selection mode for assigning focus domains without cluttering the interface:</p>
+<ol>
+<li>Make sure no specific node is selected on the canvas to view the global Information Structure options in the sidebar.</li>
+<li><strong>Potential &amp; Actual Focus:</strong> Click the <span class="ui-element">Select IU(s) as part of the PFD</span> or <span class="ui-element">Select IU(s) as part of the AFD</span> button to enter selection mode, then click the target Information Unit(s) directly on the canvas. The PFD is drawn as a dashed triangle, and the AFD as a solid one.</li>
+<li><strong>Special Focus Domains:</strong> For specific focus types, click <span class="ui-element">Mark IU as Completive Focus</span> (horizontal hatching) or <span class="ui-element">Mark IU as Contrastive Focus</span> (vertical hatching), then click the target IU on the canvas.</li>
+<li>Telperion automatically calculates the geometry of the triangles to prevent visual overlaps and draws lines towards the virtual <span class="ui-element">Speech Act</span> node.</li>
+</ol>
+<h3>Speech Act node position</h3>
+<p>Select the Speech Act label on the canvas to adjust its vertical position using <span class="ui-element">↑ Move Up</span> / <span class="ui-element">↓ Move Down</span> in the sidebar. Use <span class="ui-element">Reset position</span> to return to the default.</p>
+</section>
+<section id="exporting">
+<h2>7. Saving and Exporting</h2>
+<ul>
+<li><span class="ui-element">Save</span>: downloads a <code>.tlp</code> file. This is Telperion’s native, fully editable format. Use it to continue work later or move diagrams between computers.</li>
+<li><span class="ui-element">Export PNG</span>: generates a high-resolution image with clean rendering (selection outlines and UI-only controls are hidden) and appropriate padding. Useful for papers and slides.</li>
+<li><strong>Auto-save:</strong> Telperion periodically stores recent work in your browser to help recover from accidental tab closes. It is a safety net, not a replacement for saving a <code>.tlp</code> when you finish.</li>
+</ul>      
+</section>
+<section id="shortcuts">
+<h2>8. Keyboard Shortcuts</h2>
+<p>Telperion supports quick shortcuts to improve your workflow:</p>
+<ul>
+<li><span class="keyboard-shortcut">Ctrl / ⌘ + S</span> : Save file (<code>.tlp</code>)</li>
+<li><span class="keyboard-shortcut">Ctrl / ⌘ + Z</span> : Undo</li>
+<li><span class="keyboard-shortcut">Ctrl / ⌘ + Y</span> or <span class="keyboard-shortcut">Ctrl / ⌘ + Shift + Z</span> : Redo</li>
+<li><span class="keyboard-shortcut">Ctrl / ⌘ + +</span> : Zoom In</li>
+<li><span class="keyboard-shortcut">Ctrl / ⌘ + -</span> : Zoom Out</li>
+<li><span class="keyboard-shortcut">Ctrl / ⌘ + 0</span> : Reset Zoom to 100%</li>
+<li><span class="keyboard-shortcut">Enter</span> : Confirm label edit</li>
+<li><span class="keyboard-shortcut">Esc</span> : Cancel edit / exit modes / close dropdown</li>
+</ul>
+</section>
+<footer>
+<p>Developed by <strong>Carlos González Vergara</strong> (<a href="mailto:cgonzalv@uc.cl">cgonzalv@uc.cl</a>)</p>
+<p>Departamento de Ciencias del Lenguaje • Facultad de Letras <br/> Pontificia Universidad Católica de Chile</p>
+</footer>
+</div>
 </body>
 </html>

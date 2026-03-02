@@ -66,8 +66,13 @@
     
     .tree-wrapper { position: relative; display: flex; flex-direction: column; align-items: center; width: max-content; box-sizing: border-box; padding: 0 32px; transform-origin: 0 0; }
     
-    /* La capa SVG no debe interceptar eventos */
-    .svg-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; overflow: visible; }
+    /* Capas SVG (separadas):
+       - back: líneas que deben poder quedar tapadas por los nodos (p.ej., periphery -> core)
+       - front: líneas que deben quedar SIEMPRE visibles aunque crucen nodos (p.ej., enlaces punteados de operadores)
+    */
+    .svg-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+    .svg-layer-back { z-index: 1; }
+    .svg-layer-front { z-index: 60; }
 
     .svg-layer path, .svg-layer polygon {
       stroke-linejoin: round;
@@ -502,7 +507,24 @@
     .ipa-toggle-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
     .ipa-toggle-btn.active:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 
-    .ipa-panel {
+    
+.ipa-inline-btn{
+  padding: 4px 8px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+}
+.ipa-inline-btn:hover{
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.ipa-panel {
       background: white;
       border: 1.5px solid var(--border);
       border-radius: 10px;
@@ -721,7 +743,22 @@
     };
 
     // --- Syntactic Node Component (Top) ---
-    const TreeNode = ({ 
+    
+    // IPA categories (shared: initial panel + equator inline editor)
+    const IPA_CATEGORIES = [
+      { title: 'Vowels', chars: 'i y ɨ ʉ ɯ u ɪ ʏ ʊ e ø ɘ ɵ ɤ o ə ɛ œ ɜ ɞ ʌ ɔ æ ɐ a ɶ ɑ ɒ'.split(' ') },
+      { title: 'Plosives', chars: 'p b t d ʈ ɖ c ɟ k ɡ q ɢ ʔ'.split(' ') },
+      { title: 'Nasals', chars: 'm ɱ n ɳ ɲ ŋ ɴ'.split(' ') },
+      { title: 'Fricatives', chars: 'ɸ β f v θ ð s z ʃ ʒ ʂ ʐ ç ʝ x ɣ χ ʁ ħ ʕ h ɦ'.split(' ') },
+      { title: 'Approximants', chars: 'ʋ ɹ ɻ j ɰ l ɭ ʎ ʟ'.split(' ') },
+      { title: 'Others', chars: 'ʙ r ʀ ⱱ ɾ ɽ ɬ ɮ ɺ ʘ ǀ ǃ ǂ ǁ ɓ ɗ ʄ ɠ ʛ'.split(' ') },
+      { title: 'Suprasegmentals', chars: 'ˈ ˌ ː ˑ ̆  ‿ | ‖'.split(' ') },
+      { title: 'Diacritics', chars: '̥ ̬ ̤ ̰ ̼ ʰ ʷ ʲ ˠ ˤ ⁿ ˡ ̹ ̜ ̟ ̠ ̈ ̽ ̩ ̯ ˞ ̃ ̴'.split(' ') },
+      { title: 'Tones', chars: '˥ ˦ ˧ ˨ ˩ ↗ ↘'.split(' ') },
+      { title: 'Brackets', chars: '/ [ ]'.split(' ') },
+    ];
+
+const TreeNode = ({ 
       node, selectedId, editingId, shifts = {}, 
       onNodeClick, onLabelChange, onEditEnd, onAddChild
     }) => {
@@ -914,15 +951,35 @@
       const isSelected = selectedId === expr.id;
       const isEditing = editingId === expr.id;
       const [localVal, setLocalVal] = useState(expr.label);
+      const inputRef = useRef(null);
+      const [showIPAInline, setShowIPAInline] = useState(false);
 
       useEffect(() => { if (isEditing) setLocalVal(expr.label); }, [isEditing, expr.label]);
+      useEffect(() => { if (!isEditing) setShowIPAInline(false); }, [isEditing]);
       
-      const shiftStyle = { 
+      
+const insertIPAInlineChar = (char) => {
+  const input = inputRef.current;
+  const start = input && typeof input.selectionStart === 'number' ? input.selectionStart : localVal.length;
+  const end = input && typeof input.selectionEnd === 'number' ? input.selectionEnd : start;
+  const newVal = localVal.substring(0, start) + char + localVal.substring(end);
+  setLocalVal(newVal);
+  setTimeout(() => {
+    if (!inputRef.current) return;
+    inputRef.current.focus();
+    const pos = start + char.length;
+    inputRef.current.setSelectionRange(pos, pos);
+  }, 0);
+};
+
+const shiftStyle = { 
         transform: shifts[expr.id] ? `translateX(${shifts[expr.id]}px)` : 'none',
         zIndex: isEditing ? 10000 : ''
       };
 
       const isPlaceholder = !expr.label || expr.label === '...' || expr.label === '∅';
+      const inputWidth = Math.max(140, (localVal.length + 3) * 11);
+
 
       const hasOps = expr.operatorLayers && expr.operatorLayers.length > 0;
       const hasIS = !!expr.infoUnit;
@@ -941,17 +998,76 @@
               </div>
 
               {isEditing && (
-                <input 
-                  className="node-input equator-item"
-                  style={{ width: `${Math.max(140, (localVal.length + 3) * 11)}px`, left: '50%', transform: 'translateX(-50%)' }}
-                  autoFocus value={localVal} size={Math.max(3, localVal.length)}
-                  onChange={(e) => setLocalVal(e.target.value)}
-                  onBlur={(e) => { onChange(expr.id, e.target.value || '∅'); onEndEdit(); }}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'Escape') e.target.blur(); }}
-                  onFocus={(e) => e.target.select()} 
-                />
-              )}
+  <>
+    <input 
+      ref={inputRef}
+      className="node-input equator-item"
+      style={{ width: `${inputWidth}px`, left: '50%', transform: 'translateX(-50%)' }}
+      autoFocus value={localVal} size={Math.max(3, localVal.length)}
+      onChange={(e) => setLocalVal(e.target.value)}
+      onBlur={(e) => { onChange(expr.id, e.target.value); onEndEdit(); }}
+      onKeyDown={(e) => { 
+        if (e.key === 'Enter') { e.preventDefault(); onChange(expr.id, localVal); onEndEdit(); }
+        if (e.key === 'Escape') { e.preventDefault(); setLocalVal(expr.label); onEndEdit(); }
+      }}
+    />
+
+    <button
+      type="button"
+      className="ipa-inline-btn"
+      title="Insert IPA character"
+      onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowIPAInline(prev => !prev); }}
+      style={{
+        position: 'absolute',
+        top: '0%',
+        left: `calc(50% + ${Math.round(inputWidth/2) + 6}px)`,
+        transform: 'none',
+        zIndex: 10002,
+        background: 'var(--accent)',
+        color: '#ffffff',
+        border: 'none',
+        width: '22px',
+        height: '22px',
+        borderRadius: '6px',
+        fontWeight: 800,
+        lineHeight: '22px',
+        cursor: 'pointer',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.25)'
+      }}
+    >
+      ə
+    </button>
+
+    {showIPAInline && (
+      <div
+        className="ipa-panel ipa-panel-inline"
+        onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+        style={{
+          position: 'absolute',
+          top: '0',
+          left: `calc(50% + ${Math.round(inputWidth/2) + 32}px)`,
+          transform: 'none',
+          zIndex: 10003,
+          width: '380px'
+        }}
+      >
+        {IPA_CATEGORIES.map((cat) => (
+          <div key={cat.title}>
+            <div className="ipa-category-title">{cat.title}</div>
+            <div className="ipa-grid">
+              {cat.chars.map((ch, j) => (
+                <button key={j} type="button" className="ipa-char-btn" onClick={() => insertIPAInlineChar(ch)} title={ch}>
+                  {ch}
+                </button>
+              ))}
             </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </>
+)}            </div>
           </div>
 
           {/* Contenedor de Proyecciones Paralelas (Bifurcación) */}
@@ -1448,18 +1564,7 @@
       // IPA character picker
       const [showIPA, setShowIPA] = useState(false);
 
-      const ipaCategories = [
-        { title: 'Vowels', chars: 'i y ɨ ʉ ɯ u ɪ ʏ ʊ e ø ɘ ɵ ɤ o ə ɛ œ ɜ ɞ ʌ ɔ æ ɐ a ɶ ɑ ɒ'.split(' ') },
-        { title: 'Plosives', chars: 'p b t d ʈ ɖ c ɟ k ɡ q ɢ ʔ'.split(' ') },
-        { title: 'Nasals', chars: 'm ɱ n ɳ ɲ ŋ ɴ'.split(' ') },
-        { title: 'Fricatives', chars: 'ɸ β f v θ ð s z ʃ ʒ ʂ ʐ ç ʝ x ɣ χ ʁ ħ ʕ h ɦ'.split(' ') },
-        { title: 'Approximants', chars: 'ʋ ɹ ɻ j ɰ l ɭ ʎ ʟ'.split(' ') },
-        { title: 'Others', chars: 'ʙ r ʀ ⱱ ɾ ɽ ɬ ɮ ɺ ʘ ǀ ǃ ǂ ǁ ɓ ɗ ʄ ɠ ʛ'.split(' ') },
-        { title: 'Suprasegmentals', chars: 'ˈ ˌ ː ˑ ̆  ‿ | ‖'.split(' ') },
-        { title: 'Diacritics', chars: '̥ ̬ ̤ ̰ ̼ ʰ ʷ ʲ ˠ ˤ ⁿ ˡ ̹ ̜ ̟ ̠ ̈ ̽ ̩ ̯ ˞ ̃ ̴'.split(' ') },
-        { title: 'Tones', chars: '˥ ˦ ˧ ˨ ˩ ↗ ↘'.split(' ') },
-        { title: 'Brackets', chars: '/ [ ]'.split(' ') },
-      ];
+      const ipaCategories = IPA_CATEGORIES;
 
       const insertIPAChar = (char) => {
         const input = sentenceInputRef.current;
@@ -1772,10 +1877,9 @@
         const offX = Math.round(PAD - minX);
         const offY = Math.round(PAD - minY);
 
-        // ── 4) Rasterize SVG layer from the LIVE DOM (coords are correct) ──
-        const svgEl = el.querySelector('svg.svg-layer');
-        let svgImg = null;
-        if (svgEl) {
+        // ── 4) Rasterize SVG layers from the LIVE DOM (coords are correct) ──
+        const rasterizeSvgEl = async (svgEl) => {
+          if (!svgEl) return null;
           const svgClone = svgEl.cloneNode(true);
           svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
 
@@ -1814,14 +1918,19 @@
           const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
           const svgUrl = URL.createObjectURL(svgBlob);
           try {
-            svgImg = await new Promise((resolve) => {
+            return await new Promise((resolve) => {
               const img = new Image();
               img.onload = () => resolve(img);
               img.onerror = () => { console.warn('SVG rasterize failed'); resolve(null); };
               img.src = svgUrl;
             });
           } finally { URL.revokeObjectURL(svgUrl); }
-        }
+        };
+
+        const svgBackEl = el.querySelector('svg.svg-layer-back');
+        const svgFrontEl = el.querySelector('svg.svg-layer-front');
+        const svgBackImg = await rasterizeSvgEl(svgBackEl);
+        const svgFrontImg = await rasterizeSvgEl(svgFrontEl);
 
         // ── 5) Clone the wrapper into an offscreen container sized to the computed bounds ──
         const clone = el.cloneNode(true);
@@ -1861,9 +1970,8 @@
         spacer.style.paddingTop = `${offY}px`;
         spacer.style.boxSizing = 'border-box';
 
-        // Hide SVG inside the clone (we’ll composite it from svgImg to avoid double rendering)
-        const cloneSvg = clone.querySelector('svg.svg-layer');
-        if (cloneSvg) cloneSvg.style.visibility = 'hidden';
+        // Hide SVGs inside the clone (we’ll composite them from rasterized SVG imgs to avoid double rendering)
+        clone.querySelectorAll('svg.svg-layer').forEach(s => { s.style.visibility = 'hidden'; });
 
         spacer.appendChild(clone);
         container.appendChild(spacer);
@@ -1894,7 +2002,7 @@
           if (document.body.contains(container)) document.body.removeChild(container);
         }
 
-        // ── 7) Composite SVG (behind) + HTML (front) ──
+        // ── 7) Composite: back SVG (behind nodes) + HTML (nodes/labels) + front SVG (always-on-top lines) ──
         const finalPxW = Math.round(totalW * SCALE);
         const finalPxH = Math.round(totalH * SCALE);
         const finalCanvas = document.createElement('canvas');
@@ -1902,11 +2010,14 @@
         finalCanvas.height = finalPxH;
         const ctx = finalCanvas.getContext('2d');
 
-        // 1) SVG first (lines / arrowheads)
-        if (svgImg) ctx.drawImage(svgImg, 0, 0, finalPxW, finalPxH);
+        // 1) Back SVG first (constituent lines that may be covered by nodes)
+        if (svgBackImg) ctx.drawImage(svgBackImg, 0, 0, finalPxW, finalPxH);
 
         // 2) HTML above (nodes / labels)
         ctx.drawImage(htmlCanvas, 0, 0);
+
+        // 3) Front SVG last (operator↔base dashed lines, etc.)
+        if (svgFrontImg) ctx.drawImage(svgFrontImg, 0, 0, finalPxW, finalPxH);
 
         // ── 8) Restore UI state ──
         selectedEls.forEach(x => x.classList.add('selected'));
@@ -3805,7 +3916,7 @@
 
                   {showIPA && (
                     <div className="ipa-panel">
-                      {ipaCategories.map((cat) => (
+                      {IPA_CATEGORIES.map((cat) => (
                         <div key={cat.title}>
                           <div className="ipa-category-title">{cat.title}</div>
                           <div className="ipa-grid">
@@ -4075,31 +4186,40 @@
               <div style={{ minWidth: wrapperNaturalSize.w ? wrapperNaturalSize.w * (zoomLevel / 100) : '100%', minHeight: wrapperNaturalSize.h ? wrapperNaturalSize.h * (zoomLevel / 100) : '100%', position: 'relative' }}>
               <div className="tree-wrapper" ref={wrapperRef} style={{ paddingTop: `${BASE_TREE_PADDING_TOP + extraTopPadding}px`, paddingRight: `${TREE_PADDING_SIDE}px`, paddingBottom: `${TREE_PADDING_BOTTOM}px`, paddingLeft: `${TREE_PADDING_SIDE}px`, transform: `scale(${zoomLevel / 100})`, transformOrigin: '0 0' }}>
                 
-                <svg className="svg-layer">
-                  <defs>
-                    <pattern id="hatch-horizontal" patternUnits="userSpaceOnUse" width="6" height="6">
-                      <line x1="0" y1="3" x2="6" y2="3" stroke="#343a40" strokeWidth="0.8" />
-                    </pattern>
-                    <pattern id="hatch-vertical" patternUnits="userSpaceOnUse" width="6" height="6">
-                      <line x1="3" y1="0" x2="3" y2="6" stroke="#343a40" strokeWidth="0.8" />
-                    </pattern>
-                  </defs>
-                  {svgLines.filter(l => {
+                {(() => {
+                  const isOperatorSvg = (id) => (
+                    id.startsWith('op-line-') || id.startsWith('oparrow-') || id.startsWith('oplink-') || id.startsWith('crosslink-')
+                  );
+
+                  const defsBlock = (
+                    <defs>
+                      <pattern id="hatch-horizontal" patternUnits="userSpaceOnUse" width="6" height="6">
+                        <line x1="0" y1="3" x2="6" y2="3" stroke="#343a40" strokeWidth="0.8" />
+                      </pattern>
+                      <pattern id="hatch-vertical" patternUnits="userSpaceOnUse" width="6" height="6">
+                        <line x1="3" y1="0" x2="3" y2="6" stroke="#343a40" strokeWidth="0.8" />
+                      </pattern>
+                    </defs>
+                  );
+
+                  const visibleLines = svgLines.filter(l => {
                     if (!showConstituent && (
-                      l.id.startsWith('line-') || l.id.startsWith('perif-') || 
+                      l.id.startsWith('line-') || l.id.startsWith('perif-') ||
                       l.id.startsWith('expr-line-') || l.id.startsWith('expr-triangle-')
                     )) return false;
-                    if (!showOperators && (
-                      l.id.startsWith('op-line-') || l.id.startsWith('oparrow-') || 
-                      l.id.startsWith('oplink-') || l.id.startsWith('crosslink-')
-                    )) return false;
+                    if (!showOperators && isOperatorSvg(l.id)) return false;
                     // Asegurarnos de ocultar el Speech Act y Actual Focus si se apaga la proyección IS
                     if (!showInfoStructure && (l.id.startsWith('info-line-') || l.id.startsWith('info-bracket-') || l.id.startsWith('pfd-') || l.id.startsWith('afd-') || l.id.startsWith('comp-') || l.id.startsWith('cont-'))) return false;
                     return true;
-                  }).map(l => {
+                  });
+
+                  const backLines = visibleLines.filter(l => !isOperatorSvg(l.id));
+                  const frontLines = visibleLines.filter(l => isOperatorSvg(l.id));
+
+                  const renderLine = (l) => {
                     let lineOpacity = 1;
                     if (showOperators && showInfoStructure) {
-                      if (projectionFocus === 'IS' && (l.id.startsWith('op-line-') || l.id.startsWith('oparrow-') || l.id.startsWith('oplink-') || l.id.startsWith('crosslink-'))) {
+                      if (projectionFocus === 'IS' && isOperatorSvg(l.id)) {
                         lineOpacity = 0.25;
                       }
                       // Asegurarnos de atenuar el Speech Act y Actual Focus si el foco está en los Operadores
@@ -4139,8 +4259,8 @@
                             fontSize="16px"
                             fontWeight="400"
                             fontFamily="var(--font-sans)"
-                            style={{ 
-                              transition: 'opacity 0.3s ease', 
+                            style={{
+                              transition: 'opacity 0.3s ease',
                               opacity: lineOpacity,
                               cursor: l.isSpeechAct ? 'pointer' : 'default'
                             }}
@@ -4176,11 +4296,11 @@
                         );
                       }
                       return (
-                        <path 
-                          key={l.id} d={l.d} 
+                        <path
+                          key={l.id} d={l.d}
                           fill={l.fillPattern ? `url(#${l.fillPattern})` : "none"}
-                          stroke={l.stroke || "#343a40"} 
-                          strokeWidth={l.strokeWidth || "1.5"} 
+                          stroke={l.stroke || "#343a40"}
+                          strokeWidth={l.strokeWidth || "1.5"}
                           strokeDasharray={l.isDashed ? "6 4" : null}
                           style={{ transition: 'opacity 0.3s ease', opacity: lineOpacity }}
                         />
@@ -4189,7 +4309,7 @@
 
                     // Polígonos y líneas normales de la sintaxis
                     return l.isTriangle ? (
-                      <polygon 
+                      <polygon
                         key={l.id}
                         points={l.points}
                         fill="none"
@@ -4200,17 +4320,30 @@
                         style={{ transition: 'opacity 0.3s ease', opacity: lineOpacity }}
                       />
                     ) : (
-                      <line 
-                        key={l.id} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} 
-                        stroke="#343a40" strokeWidth="1.5" 
-                        strokeDasharray={l.isDashed ? "6 4" : (l.isDotted ? "0 4" : null)} 
+                      <line
+                        key={l.id} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2}
+                        stroke="#343a40" strokeWidth="1.5"
+                        strokeDasharray={l.isDashed ? "6 4" : (l.isDotted ? "0 4" : null)}
                         strokeLinecap={l.isDotted ? "round" : undefined}
                         markerEnd={l.isArrow ? "url(#arrowhead)" : null}
                         style={{ transition: 'opacity 0.3s ease', opacity: lineOpacity }}
                       />
-                    )
-                  })}
-                </svg>
+                    );
+                  };
+
+                  return (
+                    <>
+                      <svg className="svg-layer svg-layer-back">
+                        {defsBlock}
+                        {backLines.map(renderLine)}
+                      </svg>
+                      <svg className="svg-layer svg-layer-front">
+                        {defsBlock}
+                        {frontLines.map(renderLine)}
+                      </svg>
+                    </>
+                  );
+                })()}
                 
                 {diagram.root && showConstituent && (
                   <div className="syntax-tree-container" style={{ zIndex: editingType === 'node' ? 1000 : 2 }}>
@@ -4948,6 +5081,7 @@
                 
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, marginTop: '10px' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={diagram.root ? 'var(--text-secondary)' : 'var(--border)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} title="Toggle visibility"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                     <input 
                       type="checkbox" 
                       checked={showConstituent} 
@@ -4955,7 +5089,6 @@
                       disabled={!diagram.root}
                       style={{ width: '16px', height: '16px', cursor: diagram.root ? 'pointer' : 'not-allowed', accentColor: 'var(--accent)' }}
                     />
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={diagram.root ? 'var(--text-secondary)' : 'var(--border)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} title="Toggle visibility"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   </div>
                   <div style={{ flex: 1 }}>
                     <button 
@@ -4975,6 +5108,7 @@
 
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, marginTop: '10px' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={diagram.expressions.some(e => e.operatorLayers?.length) ? 'var(--text-secondary)' : 'var(--border)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} title="Toggle visibility"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                     <input 
                       type="checkbox" 
                       checked={showOperators} 
@@ -4982,7 +5116,6 @@
                       disabled={!diagram.expressions.some(e => e.operatorLayers?.length)}
                       style={{ width: '16px', height: '16px', cursor: diagram.expressions.some(e => e.operatorLayers?.length) ? 'pointer' : 'not-allowed', accentColor: 'var(--accent)' }}
                     />
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={diagram.expressions.some(e => e.operatorLayers?.length) ? 'var(--text-secondary)' : 'var(--border)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} title="Toggle visibility"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   </div>
                   <div style={{ flex: 1 }}>
                     <button 
@@ -5000,7 +5133,8 @@
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, marginTop: '10px' }}>                    
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, marginTop: '10px' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={diagram.expressions.some(e => e.infoUnit) ? 'var(--text-secondary)' : 'var(--border)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} title="Toggle visibility"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                     <input 
                       type="checkbox" 
                       checked={showInfoStructure} 
@@ -5008,7 +5142,6 @@
                       disabled={!diagram.expressions.some(e => e.infoUnit)}
                       style={{ width: '16px', height: '16px', cursor: diagram.expressions.some(e => e.infoUnit) ? 'pointer' : 'not-allowed', accentColor: 'var(--accent)' }}
                     />
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={diagram.expressions.some(e => e.infoUnit) ? 'var(--text-secondary)' : 'var(--border)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} title="Toggle visibility"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   </div>
                   <div style={{ flex: 1 }}>
                     <button 
