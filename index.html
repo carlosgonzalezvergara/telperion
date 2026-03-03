@@ -5185,11 +5185,23 @@ const shiftStyle = {
                   </div>
                   <div style={{ flex: 1 }}>
                     <button 
-                      className="btn btn-no-hover" 
-                      style={{ width: '100%', textAlign: 'left', fontWeight: diagram.root ? 'bold' : 'normal', borderColor: diagram.root ? 'var(--accent)' : 'var(--border)', borderRadius: '8px', cursor: 'default' }}
+                      className={diagram.root ? "btn btn-no-hover" : "btn"} 
+                      style={{ 
+                        width: '100%', 
+                        textAlign: 'left', 
+                        borderRadius: '8px', 
+                        fontWeight: 'bold', 
+                        borderColor: diagram.root ? 'var(--accent)' : 'var(--border)', 
+                        cursor: diagram.root ? 'default' : 'pointer',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        boxShadow: diagram.root ? 'none' : '0 2px 4px rgba(0,0,0,0.04)'
+                      }}
                       onClick={initializeConstituentProjection}
                     >
-                      {diagram.root ? '✓ Constituent Projection' : 'Constituent Projection'}
+                      <span>{diagram.root ? '✓ Constituent Projection' : 'Constituent Projection'}</span>
+                      {!diagram.root && <div style={{ width: '16px', height: '16px' }}></div>}
                     </button>
                     {!diagram.root ? (
                       <p style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px'}}>Click to start building the syntactic tree</p>

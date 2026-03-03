@@ -153,7 +153,7 @@
 <section id="introduction">
 <h2>1. Introduction</h2>
 <p><strong>Telperion</strong> is a specialized tool for building and analyzing syntactic trees under the <strong>Role and Reference Grammar (RRG)</strong> model. The application allows you to manage the three fundamental projections of the clause in a single workspace: <strong>Constituent Projection</strong>, <strong>Operator Projection</strong>, and <strong>Information Structure</strong>.</p>
-<p><strong>Initial morphosyntactic expression:</strong> every diagram starts from a segmented expression (one or more “base items”, typically corresponding to words or multiword blocks). These base items act as anchors for both operator layers and information-structure units.</p>
+<p><strong>Initial morphosyntactic expression:</strong> Every diagram starts from a segmented expression (one or more “base items”, typically corresponding to words or multiword blocks). These base items act as anchors for both operator layers and information-structure units.</p>
 </section>
 <section id="getting-started">
 <h2>2. Start Screen and Segmentation</h2>
@@ -162,7 +162,7 @@
 <ol>
 <li>Enter your full sentence in the text input field.</li>
 <li><strong>IPA Characters:</strong> Click the <span class="ui-element">IPA</span> button to open the IPA picker. You can use it on the start screen (sentence entry) and also later on the canvas while editing base items or node labels.</li>
-<li><strong>Adjust segments:</strong> to group or split tokens, click the space between items in the <span class="ui-element">word-flow</span> area. This toggles the boundary at that position.</li>
+<li><strong>Adjust segments:</strong> To group or split tokens, click the space between items in the <span class="ui-element">word-flow</span> area. This toggles the boundary at that position.</li>
 <li>Use <span class="ui-element">Split All</span> to separate all words individually, or <span class="ui-element">Clear</span> to merge them all into a single block.</li>
 <li>Click <span class="ui-element">Generate Initial Expression</span> to proceed to the workspace canvas.</li>
 </ol>
@@ -179,7 +179,7 @@
 </ul>
 <h3>Navigation and selection</h3>
 <ul>
-<li><strong>Pan / scroll:</strong> use your trackpad/mouse wheel to scroll. If the diagram becomes wider than the window, horizontal scrolling becomes available.</li>
+<li><strong>Pan / scroll:</strong> Use your trackpad/mouse wheel to scroll. If the diagram becomes wider than the window, horizontal scrolling becomes available.</li>
 <li><strong>Select:</strong> click a node/label to select it. Click on empty space to clear selection.</li>
 <li><strong>Edit a label:</strong> Click on any label to select it and start typing.</li>
 </ul>
@@ -198,13 +198,13 @@
 </section>
 <section id="constituent-projection">
 <h2>4. Constituent Projection</h2>
-<p>The constituent projection represents the hierarchical structure of the clause. Activate <span class="ui-element">Constituent Projection</span> in the sidebar to begin working in this layer.</p>
+<p>The constituent projection represents the hierarchical structure of the clause. Click <span class="ui-element">Constituent Projection</span> in the sidebar to initialize the tree. Once started, this button turns into a status indicator <strong>(✓)</strong>, and you can build the tree by interacting directly with the nodes.</p>
 <h3>Building the tree</h3>
 <ul>
-<li><strong>Daughter nodes:</strong> select any node and use the <span class="ui-element">Number selector</span> control in the sidebar to add or subtract daughter nodes.</li>
-<li><strong>Add Parent:</strong> select a node and click <span class="ui-element">+ Add Parent</span> to wrap it under a new superior node.</li>
-<li><strong>Add Periphery:</strong> select a node and use the <span class="ui-element">Add Left →</span> or <span class="ui-element">← Add Right</span> buttons to attach a peripheral node to that structural level.</li>
-<li><strong>Delete nodes:</strong> select the node in the canvas, then click the red <span class="ui-element">✕ Delete Node</span> button in the right sidebar (this removes the node and its descendants).</li>
+<li><strong>Daughter nodes:</strong> Select any node and use the <span class="ui-element">Number selector</span> control in the sidebar to add or subtract daughter nodes.</li>
+<li><strong>Add Parent:</strong> Select a node and click <span class="ui-element">+ Add Parent</span> to wrap it under a new superior node.</li>
+<li><strong>Add Periphery:</strong> Select a node and use the <span class="ui-element">Add Left →</span> or <span class="ui-element">← Add Right</span> buttons to attach a peripheral node to that structural level.</li>
+<li><strong>Delete nodes:</strong> Select the node in the canvas, then click the red <span class="ui-element">✕ Delete Node</span> button in the right sidebar (this removes the node and its descendants).</li>
 <li><strong>Spine alignment:</strong> for syntactic nodes, you can center the node vertically (spine) when the option is available in the sidebar.</li>
 <li><strong>Swapping nodes:</strong> you can swap nodes in the constituent tree using the <span class="ui-element">← Swap Left</span> or <span class="ui-element">Swap Right →</span> buttons. <em>Note: this action is only available before linking the node to the base items.</em></li>
 </ul><h3>Node hover controls (quick buttons)</h3><p>In addition to the right sidebar controls, Telperion provides small green “quick action” buttons that appear when you hover over a node (and remain visible when the node is selected). These buttons are designed to speed up tree building without moving your cursor to the sidebar.</p><ul><li><strong>Add child (+): </strong>When you hover/select a constituent node, a small green + appears centered on the bottom edge. Click it to create new daughters nodes under that node.</li><li><strong>Visibility: </strong>The quick buttons are shown on hover; they are always available while the node remains selected.</li><li><strong>Scope: </strong>These hover buttons apply to nodes in the Constituent Projection.</li></ul>
@@ -212,7 +212,7 @@
 <p>Telperion makes it easy to assign and format labels across the Constituent, Operator, and Information Structure projections:</p>
 <ul>
 <li><strong>Dropdowns &amp; Free Typing:</strong> When you click a label to edit it, an input field appears with a chevron (arrow) on the right side. Clicking this chevron toggles a dropdown list offering context-appropriate RRG labels. As you type, the list filters automatically. You can click to select from the list, or simply <strong>type freely</strong> to enter any custom text.</li>
-<li><strong>Subscripts:</strong> In free edition mode, you can automatically generate subscript formatting by using an underscore (<code>_</code>). For example, typing <code>CORE_P</code> will render the "P" as a subscript in the canvas.</li>
+<li><strong>Subscripts:</strong> In free editing mode, you can automatically generate subscript formatting by using an underscore (<code>_</code>). For example, typing <code>CORE_P</code> will render the "P" as a subscript in the canvas.</li>
 <li>Press <span class="keyboard-shortcut">Enter</span> to confirm a label edit.</li>
 <li>Press <span class="keyboard-shortcut">Esc</span> to cancel an edit or close an open dropdown menu.</li>
 </ul>
@@ -237,10 +237,10 @@
 <p>The operator projection is built downwards from the morphosyntactic expression. Click on any base node to begin adding operator layers.</p>
 <h3>Layer and operator creation</h3>
 <ul>
-<li><strong>Add a layer:</strong> select a base item and click <span class="ui-element">+ Add Operator Layer</span> (e.g., NUC, CORE, CLAUSE).</li>
-<li><strong>Add operators:</strong> select the created layer and click <span class="ui-element">Add operator →</span> or <span class="ui-element">← Add operator</span> (e.g., ASP, TNS, MOD).</li>
+<li><strong>Add a layer:</strong> Select a base item and click <span class="ui-element">+ Add Operator Layer</span> (e.g., NUC, CORE, CLAUSE).</li>
+<li><strong>Add operators:</strong> Select the created layer and click <span class="ui-element">Add operator →</span> or <span class="ui-element">← Add operator</span> (e.g., ASP, TNS, MOD).</li>
 <li><strong>Position adjustment:</strong> move layers vertically (<span class="ui-element">↑ Move Up</span> / <span class="ui-element">↓ Move Down</span>) to create space. Operators can be moved horizontally using <span class="ui-element">← Move Left</span> or <span class="ui-element">Move Right →</span> to make the diagram clearer and avoid overlapping lines.</li>
-</ul><h3>Layer hover controls (quick buttons)</h3><p>Operator layers also include green hover buttons to accelerate common actions directly on the canvas.</p><ul><li><strong>Add child (+): </strong>When a layer node is hovered/selected, a green + appears on its bottom edge. Click it to add the next (single) layer below that stratum.</li><li><strong>Add operator on the left (→): </strong>A green button on the left edge adds an operator node to the left of the selected stratum.</li><li><strong>Add operator on the right (←): </strong>A green button on the right edge adds an operator node to the right of the selected stratum.</li><li><strong>Visibility: </strong>These buttons are visible on hover and remain available while the stratum is selected.</li></ul>
+</ul><h3>Layer hover controls (quick buttons)</h3><p>Operator layers also include green hover buttons to accelerate common actions directly on the canvas.</p><ul><li><strong>Add child (+): </strong>When a layer node is hovered/selected, a green + appears on its bottom edge. Click it to add the next (single) layer below.</li><li><strong>Add operator on the left (→): </strong>A green button on the left edge adds an operator node to the left of the selected layer.</li><li><strong>Add operator on the right (←): </strong>A green button on the right edge adds an operator node to the right of the selected layer.</li><li><strong>Visibility: </strong>These buttons are visible on hover and remain available while the node is selected.</li></ul>
 <h3>Cross-spine links</h3>
 <p>Telperion supports links between operator projections of different nuclei (useful in juncture/nexus configurations):</p>
 <ol>
@@ -262,7 +262,7 @@
 <h3>Focus domains and Speech Act</h3>
 <p>Telperion features an interactive selection mode for assigning focus domains without cluttering the interface:</p>
 <ol>
-<li>Make sure no specific node is selected on the canvas to view the global Information Structure options in the sidebar.</li>
+<li>Make sure no specific node is selected on the canvas, then click the <span class="ui-element">Information Structure</span> button in the main sidebar to open the Focus Domains panel.</li>
 <li><strong>Potential &amp; Actual Focus:</strong> Click the <span class="ui-element">Select IU(s) as part of the PFD</span> or <span class="ui-element">Select IU(s) as part of the AFD</span> button to enter selection mode, then click the target Information Unit(s) directly on the canvas. The PFD is drawn as a dashed triangle, and the AFD as a solid one.</li>
 <li><strong>Special Focus Domains:</strong> For specific focus types, click <span class="ui-element">Mark IU as Completive Focus</span> (horizontal hatching) or <span class="ui-element">Mark IU as Contrastive Focus</span> (vertical hatching), then click the target IU on the canvas.</li>
 <li>Telperion automatically calculates the geometry of the triangles to prevent visual overlaps and draws lines towards the virtual <span class="ui-element">Speech Act</span> node.</li>
