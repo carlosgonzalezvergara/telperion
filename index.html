@@ -3145,7 +3145,7 @@
                         <g key={l.id} style={{ pointerEvents: l.isSpeechAct ? 'auto' : 'none' }}>
                           {l.isSpeechAct && (<rect x={l.x - 56} y={l.y - 16} width={112} height={24} fill="transparent" style={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); setSelectedId(null); setEditingId(null); setFocusSelectionMode(null); setShowFocusDomains(true); }} />)}
                           {isSelected && (<rect x={l.x - 52} y={l.y - 14} width={104} height={20} rx="3" ry="3" fill="var(--accent)" fillOpacity="0.12" stroke="var(--accent)" strokeWidth="1.5" />)}
-                          <text x={l.x} y={l.y} textAnchor="middle" fill="var(--text)" fontSize="16px" fontWeight="400" style={{ fontFamily: 'var(--font-sans)', transition: 'opacity 0.3s ease', opacity: lineOpacity, cursor: l.isSpeechAct ? 'pointer' : 'default' }} onClick={l.isSpeechAct ? (e) => { e.stopPropagation(); setSelectedId(null); setEditingId(null); setFocusSelectionMode(null); setShowFocusDomains(true); } : undefined}>
+                          <text x={l.x} y={l.y} textAnchor="middle" fill="var(--text)" fontSize="16px" fontWeight="400" style={{ fontFamily: "'Source Sans 3', system-ui, sans-serif", transition: 'opacity 0.3s ease', opacity: lineOpacity, cursor: l.isSpeechAct ? 'pointer' : 'default' }} onClick={l.isSpeechAct ? (e) => { e.stopPropagation(); setSelectedId(null); setEditingId(null); setFocusSelectionMode(null); setShowFocusDomains(true); } : undefined}>
                             {l.text}
                           </text>
                         </g>
