@@ -58,15 +58,15 @@
     .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
     .btn-primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
 
-    .main-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; grid-template-rows: 1fr; flex: 1; overflow: hidden; min-width: 0; min-height: 0; width: 100%; }
+    .main-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; grid-template-rows: 1fr; flex: 1; overflow: hidden; min-width: 0; min-height: 0; width: 100%; isolation: isolate; }
 
-    .canvas-container { width: 100%; min-width: 0; min-height: 0; flex: 1 1 0; overflow-x: auto; overflow-y: auto; position: relative; background: var(--bg-color); display: block; }
+    .canvas-container { width: 100%; min-width: 0; min-height: 0; flex: 1 1 0; overflow-x: auto; overflow-y: auto; position: relative; background: var(--bg-color); display: block; isolation: isolate; }
     
-    .tree-wrapper { position: relative; display: flex; flex-direction: column; align-items: center; width: max-content; box-sizing: border-box; padding: 0 32px; transform-origin: 0 0; }
+    .tree-wrapper { position: relative; display: flex; flex-direction: column; align-items: center; width: max-content; box-sizing: border-box; padding: 0 32px; transform-origin: 0 0; isolation: isolate; }
     
     .svg-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
     .svg-layer-back { z-index: 1; }
-    .svg-layer-front { z-index: 60; }
+    .svg-layer-front { z-index: 80; }
 
     .svg-layer path, .svg-layer polygon { stroke-linejoin: round; }
 
@@ -104,8 +104,8 @@
     .joined-row button:last-child { border-top-left-radius: 0; border-bottom-left-radius: 0; }
     .joined-row button + button { margin-left: -1px; }
 
-    .tree-node { display: flex; flex-direction: column; align-items: center; position: relative; flex: 0 0 auto; pointer-events: none; }
-    .node-content { margin-bottom: var(--level-gap); position: relative; display: flex; justify-content: center; align-items: center; min-height: 32px; }
+    .tree-node { display: flex; flex-direction: column; align-items: center; position: relative; flex: 0 0 auto; pointer-events: none; overflow: visible; }
+    .node-content { margin-bottom: var(--level-gap); position: relative; display: flex; justify-content: center; align-items: center; min-height: 32px; overflow: visible; isolation: isolate; }
     
     .node-label { 
       position: relative; 
@@ -174,7 +174,7 @@
     .dropdown-list {
       position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: white;
       border: 1px solid var(--border-light); border-radius: 10px; box-shadow: var(--shadow-float); max-height: 240px;
-      overflow-y: auto; z-index: 9999; width: max-content; min-width: 160px; max-width: 280px; padding: 10px;
+      overflow-y: auto; z-index: 20000; width: max-content; min-width: 160px; max-width: 280px; padding: 10px;
       list-style: none; pointer-events: auto;
     }
     .dropdown-list .no-label { display: block; font-size: 12px; color: var(--text-secondary); cursor: pointer; font-style: italic; text-align: center; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--border-light); transition: color 0.15s ease; }
@@ -228,7 +228,7 @@
     .ipa-inline-btn{ padding: 4px 8px; border: 1.5px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-family: var(--font-sans); font-size: 12px; line-height: 1; box-shadow: 0 1px 6px rgba(0,0,0,0.08); }
     .ipa-inline-btn:hover{ border-color: var(--accent); color: var(--accent); }
 
-    .ipa-panel { background: white; border: 1.5px solid var(--border); border-radius: 10px; padding: 12px; margin-top: 8px; box-shadow: var(--shadow-soft); max-height: 260px; overflow-y: auto; }
+    .ipa-panel { background: white; border: 1.5px solid var(--border); border-radius: 10px; padding: 12px; margin-top: 8px; box-shadow: var(--shadow-soft); max-height: 260px; overflow-y: auto; position: relative; z-index: 20001; }
     .ipa-category-title { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); margin-top: 8px; margin-bottom: 4px; padding-left: 2px; }
     .ipa-category-title:first-child { margin-top: 0; }
     .ipa-grid { display: flex; flex-wrap: wrap; gap: 3px; }
@@ -2724,6 +2724,10 @@
               dynamicPadRight = Math.max(17, specializedPad + (visualGap * hypRatioRight));
             }
 
+            const pfdInset = 7;
+            dynamicPadLeft = Math.max(9, dynamicPadLeft - pfdInset);
+            dynamicPadRight = Math.max(9, dynamicPadRight - pfdInset);
+
             globalPfdMidX = midX; globalPfdVertexY = vertexY;
             pfdLeftX = minLeft - dynamicPadLeft; pfdRightX = maxRight + dynamicPadRight;
             pfdBaseY = baseY; pfdVertexX = midX; pfdVtxY = vertexY;
@@ -3129,8 +3133,9 @@
                     return true;
                   });
 
-                  const backLines = visibleLines.filter(l => !isOperatorSvg(l.id));
-                  const frontLines = visibleLines.filter(l => isOperatorSvg(l.id));
+                  const backLines = visibleLines.filter(l => !isOperatorSvg(l.id) && !l.isText);
+                  const frontLines = visibleLines.filter(l => isOperatorSvg(l.id) && !l.isText);
+                  const textLines = visibleLines.filter(l => l.isText);
 
                   const renderLine = (l) => {
                     let lineOpacity = 1;
@@ -3183,7 +3188,39 @@
                     <>
                       <svg className="svg-layer svg-layer-back">{defsBlock}{backLines.map(renderLine)}</svg>
                       <svg className="svg-layer svg-layer-front">{defsBlock}{frontLines.map(renderLine)}</svg>
-                    </>
+                      {textLines.map(l => {
+                        let lineOpacity = 1;
+                        if (showOperators && showInfoStructure) {
+                        if (projectionFocus === 'OP' && l.id.startsWith('pfd-')) lineOpacity = 0.25;
+                      }
+                      const isSelected = l.isSpeechAct && selectedId === 'speech-act';
+                      return (
+                      <div key={l.id} 
+                        style={{ 
+                          position: 'absolute', 
+                          left: l.x, 
+                          top: l.y, 
+                          transform: 'translate(-50%, -75%)', 
+                          color: 'var(--text)', 
+                          fontSize: '16px', 
+                          fontFamily: 'var(--font-sans)', 
+                          opacity: lineOpacity, 
+                          transition: 'opacity 0.3s ease', 
+                          cursor: l.isSpeechAct ? 'pointer' : 'default', 
+                          pointerEvents: l.isSpeechAct ? 'auto' : 'none', 
+                          zIndex: 65, 
+                          padding: '2px 8px', 
+                          borderRadius: '4px', 
+                          backgroundColor: isSelected ? 'rgba(15, 81, 50, 0.12)' : 'transparent', 
+                          border: isSelected ? '1.5px solid var(--accent)' : '1.5px solid transparent',
+                          whiteSpace: 'nowrap'
+                        }} 
+                      onClick={l.isSpeechAct ? (e) => { e.stopPropagation(); setSelectedId(null); setEditingId(null); setFocusSelectionMode(null); setShowFocusDomains(true); } : undefined}>
+                    {l.text}
+                    </div>
+                  );
+                  })}
+                  </>
                   );
                 })()}
                 
