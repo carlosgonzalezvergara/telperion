@@ -177,6 +177,9 @@
       overflow-y: auto; z-index: 20000; width: max-content; min-width: 160px; max-width: 280px; padding: 10px;
       list-style: none; pointer-events: auto;
     }
+    .dropdown-list.dropdown-portal {
+      position: fixed;
+    }
     .dropdown-list .no-label { display: block; font-size: 12px; color: var(--text-secondary); cursor: pointer; font-style: italic; text-align: center; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--border-light); transition: color 0.15s ease; }
     .dropdown-list .no-label:hover { color: var(--danger); }
     .dropdown-list .pills-container { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
@@ -253,6 +256,7 @@
 </head>
 <body>
   <div id="root"></div>
+  <div id="dropdown-portal"></div>
 
   <script type="text/babel">
     const { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } = React;
@@ -419,15 +423,113 @@
       { title: 'Brackets', chars: '/ [ ]'.split(' ') },
     ];
 
+    const EditableLabel = ({
+      id, label, isSelected, isEditing, onSelect, onChange, onEndEdit,
+      labelList, renderFn = renderLabel, className = '', actionButtons = null, pillStyle = null
+    }) => {
+      const [localVal, setLocalVal] = useState(label === '...' ? '' : (label || ''));
+      const [showDropdown, setShowDropdown] = useState(false);
+      const [dropdownPos, setDropdownPos] = useState(null);
+      const inputRef = useRef(null);
+      const labelRef = useRef(null);
+
+      useEffect(() => {
+        if (isEditing) {
+          setLocalVal(label === '...' ? '' : (label || ''));
+          setTimeout(() => { if (inputRef.current) inputRef.current.focus(); }, 0);
+        } else { setShowDropdown(false); }
+      }, [isEditing, label]);
+
+      // Cerrar dropdown al hacer scroll en el canvas
+      useEffect(() => {
+        if (!showDropdown) return;
+        const canvas = document.querySelector('.canvas-container');
+        if (!canvas) return;
+        const onScroll = () => setShowDropdown(false);
+        canvas.addEventListener('scroll', onScroll, { passive: true });
+        return () => canvas.removeEventListener('scroll', onScroll);
+      }, [showDropdown]);
+
+      // Calcular posición fija del dropdown al abrirse
+      useEffect(() => {
+        if (showDropdown && labelRef.current) {
+          const rect = labelRef.current.getBoundingClientRect();
+          setDropdownPos({ top: rect.bottom + 8, left: rect.left + rect.width / 2 });
+        } else if (!showDropdown) {
+          setDropdownPos(null);
+        }
+      }, [showDropdown]);
+
+      const selectLabel = (lbl) => {
+        const finalLabel = lbl === 'NO LABEL' ? '...' : lbl;
+        onChange(id, finalLabel); setLocalVal(finalLabel === '...' ? '' : finalLabel);
+        setShowDropdown(false); onEndEdit();
+      };
+
+      const handleLabelClick = (e) => { e.stopPropagation(); if (!isEditing) onSelect(e, id); };
+
+      const handleChevronMouseDown = (e) => {
+        e.preventDefault(); e.stopPropagation();
+        if (!isEditing) { onSelect(e, id); setShowDropdown(true); }
+        else { setShowDropdown(prev => !prev); if (inputRef.current) inputRef.current.focus(); }
+      };
+
+      const isPlaceholder = !label || label === '...';
+      const filteredLabels = labelList.filter(l => l.toLowerCase().includes(localVal.toLowerCase()));
+      const inputWidth = Math.max(100, (localVal.length + 1) * 10);
+
+      const portalTarget = document.getElementById('dropdown-portal');
+      const dropdownContent = showDropdown && dropdownPos && portalTarget && ReactDOM.createPortal(
+        <div className="dropdown-list dropdown-portal"
+          style={{ top: dropdownPos.top, left: dropdownPos.left, transform: 'translateX(-50%)' }}
+          onMouseDown={(e) => e.preventDefault()}
+        >
+          <div className="no-label" onMouseDown={(e) => { e.preventDefault(); selectLabel('NO LABEL'); }}>no label</div>
+          <div className="pills-container">
+            {filteredLabels.map(lbl => (
+              <span key={lbl} className="pill-item" style={pillStyle} onMouseDown={(e) => { e.preventDefault(); selectLabel(lbl); }}>{renderFn(lbl)}</span>
+            ))}
+          </div>
+        </div>,
+        portalTarget
+      );
+
+      return (
+        <div ref={labelRef} className={`node-label ${className} ${isSelected && !isEditing ? 'selected' : ''} ${isEditing ? 'is-editing' : ''}`} onClick={handleLabelClick}>
+          <div className={`node-display ${isPlaceholder ? 'placeholder' : ''}`}>
+            {isPlaceholder ? '...' : renderFn(label)}
+          </div>
+          {!isEditing && actionButtons}
+          {isEditing && (
+            <>
+              <input
+                ref={inputRef} className="node-input"
+                style={{ width: `${inputWidth}px`, left: '50%', transform: 'translateX(-50%)', paddingRight: '24px' }}
+                value={localVal} size={Math.max(3, localVal.length)}
+                onChange={(e) => { setLocalVal(e.target.value); setShowDropdown(true); }}
+                onBlur={(e) => { onChange(id, e.target.value || '...'); onEndEdit(); }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') { onChange(id, localVal || '...'); onEndEdit(); }
+                  else if (e.key === 'Escape') { if (showDropdown) { setShowDropdown(false); e.stopPropagation(); } else { onEndEdit(); } }
+                }}
+                onFocus={(e) => e.target.select()}
+              />
+              <div className={`node-chevron ${showDropdown ? 'active' : ''}`} onMouseDown={handleChevronMouseDown} onClick={(e) => e.stopPropagation()} style={{ right: `calc(50% - ${inputWidth / 2}px + 4px)` }}>
+                <svg viewBox="0 0 10 6"><path d="M1 1L5 5L9 1"/></svg>
+              </div>
+              {dropdownContent}
+            </>
+          )}
+        </div>
+      );
+    };
+
     const TreeNode = ({ 
       node, selectedId, editingId, shifts = {}, 
       onNodeClick, onLabelChange, onEditEnd, onAddChild
     }) => {
       const isSelected = selectedId === node.id;
       const isEditing = editingId === node.id;
-      const [localVal, setLocalVal] = useState(node.label === '...' ? '' : node.label);
-      const [showDropdown, setShowDropdown] = useState(false);
-      const inputRef = useRef(null);
 
       const isEditingAncestor = useMemo(() => {
         if (!editingId) return false;
@@ -441,40 +543,6 @@
         return node.children?.some(check) || node.peripheries?.some(check);
       }, [node, editingId]);
 
-      useEffect(() => {
-        if (isEditing) {
-          setLocalVal(node.label === '...' ? '' : node.label);
-          setTimeout(() => { if (inputRef.current) inputRef.current.focus(); }, 0);
-        } else {
-          setShowDropdown(false);
-        }
-      }, [isEditing, node.label]);
-
-      const selectLabel = (lbl) => {
-        const finalLabel = lbl === 'NO LABEL' ? '...' : lbl;
-        onLabelChange(node.id, finalLabel);
-        setLocalVal(finalLabel === '...' ? '' : finalLabel);
-        setShowDropdown(false);
-        onEditEnd();
-      };
-
-      const handleLabelClick = (e) => {
-        e.stopPropagation();
-        if (!isEditing) onNodeClick(e, node.id);
-      };
-
-      const handleChevronMouseDown = (e) => {
-        e.preventDefault(); 
-        e.stopPropagation();
-        if (!isEditing) {
-          onNodeClick(e, node.id); 
-          setShowDropdown(true);   
-        } else {
-          setShowDropdown(prev => !prev);
-          if (inputRef.current) inputRef.current.focus();
-        }
-      };
-
       const offsetY = node.manualYOffset || 0;
       const offsetX = node.manualXOffset || 0;
       const shiftX = (shifts[node.id] || 0) + offsetX;
@@ -487,55 +555,19 @@
       const leftPerifs = (node.peripheries || []).filter(p => p.side === 'left');
       const rightPerifs = (node.peripheries || []).filter(p => p.side === 'right');
 
-      const isPlaceholder = !node.label || node.label === '...';
-      // Filtrado insensible a mayúsculas/minúsculas:
-      const filteredLabels = RRG_LABELS.filter(l => l.toLowerCase().includes(localVal.toLowerCase()));
-      const inputWidth = Math.max(100, (localVal.length + 1) * 10);
+      const addChildBtn = (
+        <div className="node-action-btn bottom-center" title="Add child" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }} onClick={(e) => { e.stopPropagation(); onAddChild && onAddChild(node.id); }}>+</div>
+      );
 
       const NodeCore = (
         <div className="tree-node" data-node-id={node.id} style={shiftStyle}>
           <div className="node-content" style={{ zIndex: isEditing ? 10000 : (isEditingAncestor ? 9999 : 2) }}>
-            <div className={`node-label ${isSelected && !isEditing ? 'selected' : ''} ${isEditing ? 'is-editing' : ''}`} onClick={handleLabelClick}>
-              <div className={`node-display ${isPlaceholder ? 'placeholder' : ''}`}>
-                {isPlaceholder ? '...' : renderLabel(node.label)}
-              </div>
-
-              {!isEditing && (
-                <div className="node-action-btn bottom-center" title="Add child" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }} onClick={(e) => { e.stopPropagation(); onAddChild && onAddChild(node.id); }}>+</div>
-              )}
-
-              {isEditing && (
-                <>
-                  <input 
-                    ref={inputRef} className="node-input"
-                    style={{ width: `${inputWidth}px`, left: '50%', transform: 'translateX(-50%)', paddingRight: '24px' }}
-                    value={localVal} size={Math.max(3, localVal.length)}
-                    onChange={(e) => { setLocalVal(e.target.value); setShowDropdown(true); }}
-                    onBlur={(e) => { onLabelChange(node.id, e.target.value || '...'); onEditEnd(); }}
-                    onKeyDown={(e) => { 
-                      if (e.key === 'Enter') { onLabelChange(node.id, localVal || '...'); onEditEnd(); }
-                      else if (e.key === 'Escape') { if (showDropdown) { setShowDropdown(false); e.stopPropagation(); } else { onEditEnd(); } }
-                    }}
-                    onFocus={(e) => e.target.select()}
-                  />
-
-                  <div className={`node-chevron ${showDropdown ? 'active' : ''}`} onMouseDown={handleChevronMouseDown} onClick={(e) => e.stopPropagation()} style={{ right: `calc(50% - ${inputWidth / 2}px + 4px)` }}>
-                    <svg viewBox="0 0 10 6"><path d="M1 1L5 5L9 1"/></svg>
-                  </div>
-
-                  {showDropdown && (
-                    <div className="dropdown-list">
-                      <div className="no-label" onMouseDown={(e) => { e.preventDefault(); selectLabel('NO LABEL'); }}>no label</div>
-                      <div className="pills-container">
-                        {filteredLabels.map(lbl => (
-                          <span key={lbl} className="pill-item" onMouseDown={(e) => { e.preventDefault(); selectLabel(lbl); }}>{renderLabel(lbl)}</span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+            <EditableLabel
+              id={node.id} label={node.label} isSelected={isSelected} isEditing={isEditing}
+              onSelect={(e, id) => { e.stopPropagation(); onNodeClick(e, id); }}
+              onChange={onLabelChange} onEndEdit={onEditEnd}
+              labelList={RRG_LABELS} actionButtons={addChildBtn}
+            />
           </div>
           
           {node.children && node.children.length > 0 && (
@@ -717,94 +749,28 @@
     const OperatorLayerItem = ({ layer, selectedId, editingId, onSelect, onChange, onEndEdit, canAddChild = false, onAddChildLayer, onAddOperatorLeft, onAddOperatorRight }) => {
       const isSelected = selectedId === layer.id;
       const isEditing = editingId === layer.id;
-      const [localVal, setLocalVal] = useState(layer.label === '...' ? '' : (layer.label || ''));
-      const [showDropdown, setShowDropdown] = useState(false);
-      const inputRef = useRef(null);
-
-      useEffect(() => { 
-        if (isEditing) {
-          setLocalVal(layer.label === '...' ? '' : (layer.label || ''));
-          setTimeout(() => { if (inputRef.current) inputRef.current.focus(); }, 0);
-        } else {
-          setShowDropdown(false);
-        }
-      }, [isEditing, layer.label]);
-
-      const selectLabel = (lbl) => {
-        const finalLabel = lbl === 'NO LABEL' ? '...' : lbl;
-        onChange(layer.id, finalLabel);
-        setLocalVal(finalLabel === '...' ? '' : finalLabel);
-        setShowDropdown(false);
-        onEndEdit();
-      };
-
-      const handleLabelClick = (e) => {
-        e.stopPropagation();
-        if (!isEditing) onSelect(e, layer.id);
-      };
-
-      const handleChevronMouseDown = (e) => {
-        e.preventDefault(); e.stopPropagation();
-        if (!isEditing) { onSelect(e, layer.id); setShowDropdown(true); } 
-        else { setShowDropdown(prev => !prev); if (inputRef.current) inputRef.current.focus(); }
-      };
-
-      const isPlaceholder = !layer.label || layer.label === '...';
-      const filteredLabels = RRG_OPERATOR_STRATA.filter(l => l.toLowerCase().includes(localVal.toLowerCase()));
-      const inputWidth = Math.max(100, (localVal.length + 1) * 10);
       const leftOps = (layer.operators || []).filter(o => o.side === 'left');
       const rightOps = (layer.operators || []).filter(o => o.side === 'right');
       const hasOps = leftOps.length > 0 || rightOps.length > 0;
 
+      const actionButtons = (
+        <>
+          {canAddChild && (
+            <div className="node-action-btn bottom-center" title="Add child layer" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }} onClick={(e) => { e.stopPropagation(); onAddChildLayer && onAddChildLayer(layer.id); }}>+</div>
+          )}
+          <div className="node-action-btn left-center arrow" title="Add operator (left)" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }} onClick={(e) => { e.stopPropagation(); onAddOperatorLeft && onAddOperatorLeft(layer.id); }}>→</div>
+          <div className="node-action-btn right-center arrow" title="Add operator (right)" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }} onClick={(e) => { e.stopPropagation(); onAddOperatorRight && onAddOperatorRight(layer.id); }}>←</div>
+        </>
+      );
+
       return (
         <div className="node-content operator-layer-content" data-operator-id={layer.id} style={{marginBottom: 0, position: hasOps ? 'relative' : undefined, marginTop: `${16 + (layer.manualYOffset || 0)}px`}}>
-          <div className={`node-label operator-label ${isSelected && !isEditing ? 'selected' : ''} ${isEditing ? 'is-editing' : ''}`} onClick={handleLabelClick}>
-            <div className={`node-display ${isPlaceholder ? 'placeholder' : ''}`}>
-              {isPlaceholder ? '...' : renderLabel(layer.label)}
-            </div>
-
-            {!isEditing && (
-              <>
-                {canAddChild && (
-                  <div className="node-action-btn bottom-center" title="Add child layer" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }} onClick={(e) => { e.stopPropagation(); onAddChildLayer && onAddChildLayer(layer.id); }}>+</div>
-                )}
-                <div className="node-action-btn left-center arrow" title="Add operator (left)" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }} onClick={(e) => { e.stopPropagation(); onAddOperatorLeft && onAddOperatorLeft(layer.id); }}>→</div>
-                <div className="node-action-btn right-center arrow" title="Add operator (right)" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }} onClick={(e) => { e.stopPropagation(); onAddOperatorRight && onAddOperatorRight(layer.id); }}>←</div>
-              </>
-            )}
-
-            {isEditing && (
-              <>
-                <input 
-                  ref={inputRef} className="node-input"
-                  style={{ width: `${inputWidth}px`, left: '50%', transform: 'translateX(-50%)', paddingRight: '24px' }}
-                  value={localVal} size={Math.max(3, localVal.length)}
-                  onChange={(e) => { setLocalVal(e.target.value); setShowDropdown(true); }}
-                  onBlur={(e) => { onChange(layer.id, e.target.value || '...'); onEndEdit(); }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') { onChange(layer.id, localVal || '...'); onEndEdit(); } 
-                    else if (e.key === 'Escape') { if (showDropdown) { setShowDropdown(false); e.stopPropagation(); } else { onEndEdit(); } }
-                  }}
-                  onFocus={(e) => e.target.select()}
-                />
-
-                <div className={`node-chevron ${showDropdown ? 'active' : ''}`} onMouseDown={handleChevronMouseDown} onClick={(e) => e.stopPropagation()} style={{ right: `calc(50% - ${inputWidth / 2}px + 4px)` }}>
-                  <svg viewBox="0 0 10 6"><path d="M1 1L5 5L9 1"/></svg>
-                </div>
-
-                {showDropdown && (
-                  <div className="dropdown-list">
-                    <div className="no-label" onMouseDown={(e) => { e.preventDefault(); selectLabel('NO LABEL'); }}>no label</div>
-                    <div className="pills-container">
-                      {filteredLabels.map(lbl => (
-                        <span key={lbl} className="pill-item" onMouseDown={(e) => { e.preventDefault(); selectLabel(lbl); }}>{renderLabel(lbl)}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+          <EditableLabel
+            id={layer.id} label={layer.label} isSelected={isSelected} isEditing={isEditing}
+            onSelect={onSelect} onChange={onChange} onEndEdit={onEndEdit}
+            labelList={RRG_OPERATOR_STRATA} className="operator-label"
+            actionButtons={actionButtons}
+          />
 
           {leftOps.length > 0 && (
             <div style={{ position: 'absolute', right: '100%', top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: '8px', paddingRight: '40px', flexDirection: 'row-reverse' }}>
@@ -823,70 +789,14 @@
     const OperatorNode = ({ op, selectedId, editingId, onSelect, onChange, onEndEdit }) => {
       const isSelected = selectedId === op.id;
       const isEditing = editingId === op.id;
-      const [localVal, setLocalVal] = useState(op.label === '...' ? '' : (op.label || ''));
-      const [showDropdown, setShowDropdown] = useState(false);
-      const inputRef = useRef(null);
-
-      useEffect(() => {
-        if (isEditing) {
-          setLocalVal(op.label === '...' ? '' : (op.label || ''));
-          setTimeout(() => { if (inputRef.current) inputRef.current.focus(); }, 0);
-        } else { setShowDropdown(false); }
-      }, [isEditing, op.label]);
-
-      const selectLabel = (lbl) => {
-        const finalLabel = lbl === 'NO LABEL' ? '...' : lbl;
-        onChange(op.id, finalLabel); setLocalVal(finalLabel === '...' ? '' : finalLabel);
-        setShowDropdown(false); onEndEdit();
-      };
-
-      const handleLabelClick = (e) => { e.stopPropagation(); if (!isEditing) onSelect(e, op.id); };
-
-      const handleChevronMouseDown = (e) => {
-        e.preventDefault(); e.stopPropagation();
-        if (!isEditing) { onSelect(e, op.id); setShowDropdown(true); } 
-        else { setShowDropdown(prev => !prev); if (inputRef.current) inputRef.current.focus(); }
-      };
-
-      const isPlaceholder = !op.label || op.label === '...';
-      const filteredLabels = RRG_OPERATOR_LABELS.filter(l => l.toLowerCase().includes(localVal.toLowerCase()));
-      const inputWidth = Math.max(100, (localVal.length + 1) * 10);
 
       return (
         <div className="node-content operator-layer-content" data-opnode-id={op.id} style={{marginBottom: 0, marginTop: 0, transform: (op.manualXOffset ? `translateX(${op.manualXOffset}px)` : 'none')}}>
-          <div className={`node-label operator-label ${isSelected && !isEditing ? 'selected' : ''} ${isEditing ? 'is-editing' : ''}`} onClick={handleLabelClick}>
-            <div className={`node-display ${isPlaceholder ? 'placeholder' : ''}`}>{isPlaceholder ? '...' : renderLabel(op.label)}</div>
-
-            {isEditing && (
-              <>
-                <input 
-                  ref={inputRef} className="node-input"
-                  style={{ width: `${inputWidth}px`, left: '50%', transform: 'translateX(-50%)', paddingRight: '24px' }}
-                  value={localVal} size={Math.max(3, localVal.length)}
-                  onChange={(e) => { setLocalVal(e.target.value); setShowDropdown(true); }}
-                  onBlur={(e) => { onChange(op.id, e.target.value || '...'); onEndEdit(); }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') { onChange(op.id, localVal || '...'); onEndEdit(); } 
-                    else if (e.key === 'Escape') { if (showDropdown) { setShowDropdown(false); e.stopPropagation(); } else { onEndEdit(); } }
-                  }}
-                  onFocus={(e) => e.target.select()}
-                />
-
-                <div className={`node-chevron ${showDropdown ? 'active' : ''}`} onMouseDown={handleChevronMouseDown} onClick={(e) => e.stopPropagation()} style={{ right: `calc(50% - ${inputWidth / 2}px + 4px)` }}>
-                  <svg viewBox="0 0 10 6"><path d="M1 1L5 5L9 1"/></svg>
-                </div>
-
-                {showDropdown && (
-                  <div className="dropdown-list">
-                    <div className="no-label" onMouseDown={(e) => { e.preventDefault(); selectLabel('NO LABEL'); }}>no label</div>
-                    <div className="pills-container">
-                      {filteredLabels.map(lbl => <span key={lbl} className="pill-item" onMouseDown={(e) => { e.preventDefault(); selectLabel(lbl); }}>{renderLabel(lbl)}</span>)}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+          <EditableLabel
+            id={op.id} label={op.label} isSelected={isSelected} isEditing={isEditing}
+            onSelect={onSelect} onChange={onChange} onEndEdit={onEndEdit}
+            labelList={RRG_OPERATOR_LABELS} className="operator-label"
+          />
         </div>
       );
     };
@@ -894,70 +804,15 @@
     const InfoStructureNode = ({ unit, selectedId, editingId, onSelect, onChange, onEndEdit }) => {
       const isSelected = selectedId === unit.id;
       const isEditing = editingId === unit.id;
-      const [localVal, setLocalVal] = useState(unit.label === '...' ? '' : (unit.label || ''));
-      const [showDropdown, setShowDropdown] = useState(false);
-      const inputRef = useRef(null);
-
-      useEffect(() => {
-        if (isEditing) {
-          setLocalVal(unit.label === '...' ? '' : (unit.label || ''));
-          setTimeout(() => { if (inputRef.current) inputRef.current.focus(); }, 0);
-        } else { setShowDropdown(false); }
-      }, [isEditing, unit.label]);
-
-      const selectLabel = (lbl) => {
-        const finalLabel = lbl === 'NO LABEL' ? '...' : lbl;
-        onChange(unit.id, finalLabel); setLocalVal(finalLabel === '...' ? '' : finalLabel);
-        setShowDropdown(false); onEndEdit();
-      };
-
-      const handleLabelClick = (e) => { e.stopPropagation(); if (!isEditing) onSelect(e, unit.id); };
-
-      const handleChevronMouseDown = (e) => {
-        e.preventDefault(); e.stopPropagation();
-        if (!isEditing) { onSelect(e, unit.id); setShowDropdown(true); } 
-        else { setShowDropdown(prev => !prev); if (inputRef.current) inputRef.current.focus(); }
-      };
-
-      const isPlaceholder = !unit.label || unit.label === '...';
-      const filteredLabels = RRG_INFO_STRUCTURE_LABELS.filter(l => l.toLowerCase().includes(localVal.toLowerCase()));
-      const inputWidth = Math.max(100, (localVal.length + 1) * 10);
 
       return (
         <div className="node-content operator-layer-content" data-info-id={unit.id} style={{ marginBottom: (unit.isPotentialFocus || unit.isActualFocus || unit.focusType) ? '220px' : 0, marginTop: '16px' }}>
-          <div className={`node-label operator-label ${isSelected && !isEditing ? 'selected' : ''} ${isEditing ? 'is-editing' : ''}`} onClick={handleLabelClick}>
-            <div className={`node-display ${isPlaceholder ? 'placeholder' : ''}`}>{isPlaceholder ? '...' : renderInfoLabel(unit.label)}</div>
-
-            {isEditing && (
-              <>
-                <input
-                  ref={inputRef} className="node-input"
-                  style={{ width: `${inputWidth}px`, left: '50%', transform: 'translateX(-50%)', paddingRight: '24px' }}
-                  value={localVal} size={Math.max(3, localVal.length)}
-                  onChange={(e) => { setLocalVal(e.target.value); setShowDropdown(true); }}
-                  onBlur={(e) => { onChange(unit.id, e.target.value || '...'); onEndEdit(); }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') { onChange(unit.id, localVal || '...'); onEndEdit(); } 
-                    else if (e.key === 'Escape') { if (showDropdown) { setShowDropdown(false); e.stopPropagation(); } else { onEndEdit(); } }
-                  }}
-                  onFocus={(e) => e.target.select()}
-                />
-
-                <div className={`node-chevron ${showDropdown ? 'active' : ''}`} onMouseDown={handleChevronMouseDown} onClick={(e) => e.stopPropagation()} style={{ right: `calc(50% - ${inputWidth / 2}px + 4px)` }}>
-                  <svg viewBox="0 0 10 6"><path d="M1 1L5 5L9 1"/></svg>
-                </div>
-
-                {showDropdown && (
-                  <div className="dropdown-list">
-                    <div className="no-label" onMouseDown={(e) => { e.preventDefault(); selectLabel('NO LABEL'); }}>no label</div>
-                    <div className="pills-container">
-                      {filteredLabels.map(lbl => <span key={lbl} className="pill-item" onMouseDown={(e) => { e.preventDefault(); selectLabel(lbl); }} style={{ fontStyle: 'normal' }}>{renderInfoLabel(lbl)}</span>)}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+          <EditableLabel
+            id={unit.id} label={unit.label} isSelected={isSelected} isEditing={isEditing}
+            onSelect={onSelect} onChange={onChange} onEndEdit={onEndEdit}
+            labelList={RRG_INFO_STRUCTURE_LABELS} className="operator-label"
+            renderFn={renderInfoLabel} pillStyle={{ fontStyle: 'normal' }}
+          />
         </div>
       );
     };
@@ -990,7 +845,6 @@
       const sentenceInputRef = useRef(null);
 
       const [showIPA, setShowIPA] = useState(false);
-      const ipaCategories = IPA_CATEGORIES;
 
       const insertIPAChar = (char) => {
         const input = sentenceInputRef.current;
@@ -1721,12 +1575,6 @@
           children: (rest.children || []).map(clearSpawnTargetDeep),
           peripheries: (rest.peripheries || []).map(clearSpawnTargetDeep)
         };
-      };
-
-      const clearSpawnTargetShallow = (node) => {
-        if (!node) return node;
-        const { spawnTargetX, ...rest } = node;
-        return rest;
       };
 
       const addLexicalItem = (direction) => {
@@ -2717,11 +2565,11 @@
               e.infoUnit && (e.infoUnit.isActualFocus || e.infoUnit.focusType === 'completive' || e.infoUnit.focusType === 'contrastive')
             );
 
-            let dynamicPadLeft = 17; let dynamicPadRight = 17;
+            let dynamicPadLeft = 5; let dynamicPadRight = 5;
             if (hasSolidFocusTriangle) {
-              const specializedPad = 9; const visualGap = 26; 
-              dynamicPadLeft = Math.max(17, specializedPad + (visualGap * hypRatioLeft));
-              dynamicPadRight = Math.max(17, specializedPad + (visualGap * hypRatioRight));
+              const specializedPad = 9; const visualGap = 10; 
+              dynamicPadLeft = Math.max(12, specializedPad + (visualGap * hypRatioLeft));
+              dynamicPadRight = Math.max(12, specializedPad + (visualGap * hypRatioRight));
             }
 
             const pfdInset = 7;
@@ -2795,7 +2643,7 @@
 
             const hasCompletiveFD = diagram.expressions.some(e => e.infoUnit && e.infoUnit.focusType === 'completive');
             const hasContrastiveFD = diagram.expressions.some(e => e.infoUnit && e.infoUnit.focusType === 'contrastive');
-            const shouldDrawAfdTriangle = !(hasCompletiveFD && hasContrastiveFD);
+            const shouldDrawAfdTriangle = !(hasCompletiveFD || hasContrastiveFD);
 
             if (shouldDrawAfdTriangle) {
               calculatedLines.push({
@@ -2817,10 +2665,10 @@
           }
         }
 
-        const compNodes = diagram.expressions.filter(e => e.infoUnit && e.infoUnit.focusType === 'completive');
-        if (compNodes.length > 0) {
+        const buildSpecializedFocusTriangle = (nodes, idPrefix, fillPattern, showSpeechActCondition) => {
+          if (nodes.length === 0) return;
           let minLeft = Infinity, maxRight = -Infinity, maxBottomY = -Infinity;
-          compNodes.forEach(expr => {
+          nodes.forEach(expr => {
             const infoLabel = getInfoEl(expr.infoUnit.id);
             if (infoLabel) {
               const rect = infoLabel.getBoundingClientRect();
@@ -2829,79 +2677,44 @@
               maxBottomY = Math.max(maxBottomY, rect.bottom - wrapperRect.top);
             }
           });
-          if (minLeft !== Infinity) {
-            const padX = 9; const speechActOffset = diagram.speechActYOffset || 0;
-            let cLX = minLeft - padX, cRX = maxRight + padX, cBY = maxBottomY + 16;
-            const cVX = globalPfdMidX !== null ? globalPfdMidX : (cLX + cRX) / 2;
-            let cVY = cBY + 145 + speechActOffset;
-            if (pfdVtxY !== null) { if (cVY > pfdVtxY - 15) cVY = pfdVtxY - 15; }
-            let strokeLeftSide = true, strokeRightSide = true;
-            if (pfdLeftX !== null && pfdRightX !== null && pfdBaseY !== null && pfdVtxY !== null) {
-              const pfdLeftAtCBY = pfdLeftX + (pfdVertexX - pfdLeftX) * (cBY - pfdBaseY) / (pfdVtxY - pfdBaseY);
-              const pfdRightAtCBY = pfdRightX + (pfdVertexX - pfdRightX) * (cBY - pfdBaseY) / (pfdVtxY - pfdBaseY);
-              if (cLX <= pfdLeftAtCBY + 15) strokeLeftSide = false;
-              if (cRX >= pfdRightAtCBY - 15) strokeRightSide = false;
-            }
-            let strokeD = '';
-            if (strokeLeftSide && strokeRightSide) strokeD = `M ${cLX} ${cBY} L ${cVX} ${cVY} L ${cRX} ${cBY} Z`;
-            else if (!strokeLeftSide && strokeRightSide) strokeD = `M ${cLX} ${cBY} L ${cRX} ${cBY} L ${cVX} ${cVY}`;
-            else if (strokeLeftSide && !strokeRightSide) strokeD = `M ${cVX} ${cVY} L ${cLX} ${cBY} L ${cRX} ${cBY}`;
-            else strokeD = `M ${cLX} ${cBY} L ${cRX} ${cBY}`;
-            
-            calculatedLines.push({
-              id: 'comp-triangle-path',
-              isPath: true, isHatchedV: true, fillPattern: 'hatch-horizontal',
-              clipPoints: `${cLX},${cBY} ${cRX},${cBY} ${cVX},${cVY}`,
-              d: strokeD, stroke: "#343a40", strokeWidth: "1.5"
-            });
-            if (globalPfdVertexY === null && !diagram.expressions.some(e => e.infoUnit?.isActualFocus)) {
-              calculatedLines.push({ id: 'pfd-text', isText: true, isSpeechAct: true, text: 'Speech Act', x: cVX, y: Math.max(cVY, pfdVtxY || 0) + 22 });
-            }
+          if (minLeft === Infinity) return;
+          const padX = 9; const speechActOffset = diagram.speechActYOffset || 0;
+          let cLX = minLeft - padX, cRX = maxRight + padX, cBY = maxBottomY + 16;
+          const cVX = globalPfdMidX !== null ? globalPfdMidX : (cLX + cRX) / 2;
+          let cVY = cBY + 145 + speechActOffset;
+          if (pfdVtxY !== null) { if (cVY > pfdVtxY - 15) cVY = pfdVtxY - 15; }
+          let strokeLeftSide = true, strokeRightSide = true;
+          if (pfdLeftX !== null && pfdRightX !== null && pfdBaseY !== null && pfdVtxY !== null) {
+            const pfdLeftAtCBY = pfdLeftX + (pfdVertexX - pfdLeftX) * (cBY - pfdBaseY) / (pfdVtxY - pfdBaseY);
+            const pfdRightAtCBY = pfdRightX + (pfdVertexX - pfdRightX) * (cBY - pfdBaseY) / (pfdVtxY - pfdBaseY);
+            if (cLX <= pfdLeftAtCBY + 15) strokeLeftSide = false;
+            if (cRX >= pfdRightAtCBY - 15) strokeRightSide = false;
           }
-        }
+          let strokeD = '';
+          if (strokeLeftSide && strokeRightSide) strokeD = `M ${cLX} ${cBY} L ${cVX} ${cVY} L ${cRX} ${cBY} Z`;
+          else if (!strokeLeftSide && strokeRightSide) strokeD = `M ${cLX} ${cBY} L ${cRX} ${cBY} L ${cVX} ${cVY}`;
+          else if (strokeLeftSide && !strokeRightSide) strokeD = `M ${cVX} ${cVY} L ${cLX} ${cBY} L ${cRX} ${cBY}`;
+          else strokeD = `M ${cLX} ${cBY} L ${cRX} ${cBY}`;
+          calculatedLines.push({
+            id: `${idPrefix}-triangle-path`,
+            isPath: true, isHatchedV: true, fillPattern,
+            clipPoints: `${cLX},${cBY} ${cRX},${cBY} ${cVX},${cVY}`,
+            d: strokeD, stroke: "#343a40", strokeWidth: "1.5"
+          });
+          if (showSpeechActCondition) {
+            calculatedLines.push({ id: 'pfd-text', isText: true, isSpeechAct: true, text: 'Speech Act', x: cVX, y: Math.max(cVY, pfdVtxY || 0) + 22 });
+          }
+        };
+
+        const compNodes = diagram.expressions.filter(e => e.infoUnit && e.infoUnit.focusType === 'completive');
+        buildSpecializedFocusTriangle(compNodes, 'comp', 'hatch-horizontal',
+          globalPfdVertexY === null && !diagram.expressions.some(e => e.infoUnit?.isActualFocus)
+        );
 
         const contNodes = diagram.expressions.filter(e => e.infoUnit && e.infoUnit.focusType === 'contrastive');
-        if (contNodes.length > 0) {
-          let minLeft = Infinity, maxRight = -Infinity, maxBottomY = -Infinity;
-          contNodes.forEach(expr => {
-            const infoLabel = getInfoEl(expr.infoUnit.id);
-            if (infoLabel) {
-              const rect = infoLabel.getBoundingClientRect();
-              minLeft = Math.min(minLeft, rect.left - wrapperRect.left);
-              maxRight = Math.max(maxRight, rect.right - wrapperRect.left);
-              maxBottomY = Math.max(maxBottomY, rect.bottom - wrapperRect.top);
-            }
-          });
-          if (minLeft !== Infinity) {
-            const padX = 9; const speechActOffset = diagram.speechActYOffset || 0;
-            let cLX = minLeft - padX, cRX = maxRight + padX, cBY = maxBottomY + 16;
-            const cVX = globalPfdMidX !== null ? globalPfdMidX : (cLX + cRX) / 2;
-            let cVY = cBY + 145 + speechActOffset;
-            if (pfdVtxY !== null) { if (cVY > pfdVtxY - 15) cVY = pfdVtxY - 15; }
-            let strokeLeftSide = true, strokeRightSide = true;
-            if (pfdLeftX !== null && pfdRightX !== null && pfdBaseY !== null && pfdVtxY !== null) {
-              const pfdLeftAtCBY = pfdLeftX + (pfdVertexX - pfdLeftX) * (cBY - pfdBaseY) / (pfdVtxY - pfdBaseY);
-              const pfdRightAtCBY = pfdRightX + (pfdVertexX - pfdRightX) * (cBY - pfdBaseY) / (pfdVtxY - pfdBaseY);
-              if (cLX <= pfdLeftAtCBY + 15) strokeLeftSide = false;
-              if (cRX >= pfdRightAtCBY - 15) strokeRightSide = false;
-            }
-            let strokeD = '';
-            if (strokeLeftSide && strokeRightSide) strokeD = `M ${cLX} ${cBY} L ${cVX} ${cVY} L ${cRX} ${cBY} Z`;
-            else if (!strokeLeftSide && strokeRightSide) strokeD = `M ${cLX} ${cBY} L ${cRX} ${cBY} L ${cVX} ${cVY}`;
-            else if (strokeLeftSide && !strokeRightSide) strokeD = `M ${cVX} ${cVY} L ${cLX} ${cBY} L ${cRX} ${cBY}`;
-            else strokeD = `M ${cLX} ${cBY} L ${cRX} ${cBY}`;
-            
-            calculatedLines.push({
-              id: 'cont-triangle-path',
-              isPath: true, isHatchedV: true, fillPattern: 'hatch-vertical',
-              clipPoints: `${cLX},${cBY} ${cRX},${cBY} ${cVX},${cVY}`,
-              d: strokeD, stroke: "#343a40", strokeWidth: "1.5"
-            });
-            if (globalPfdVertexY === null && !diagram.expressions.some(e => e.infoUnit?.isActualFocus) && compNodes.length === 0) {
-              calculatedLines.push({ id: 'pfd-text', isText: true, isSpeechAct: true, text: 'Speech Act', x: cVX, y: Math.max(cVY, pfdVtxY || 0) + 22 });
-            }
-          }
-        }
+        buildSpecializedFocusTriangle(contNodes, 'cont', 'hatch-vertical',
+          globalPfdVertexY === null && !diagram.expressions.some(e => e.infoUnit?.isActualFocus) && compNodes.length === 0
+        );
 
         setShifts(prev => JSON.stringify(prev) === JSON.stringify(localShifts) ? prev : localShifts);
         setSvgLines(prev => JSON.stringify(prev) === JSON.stringify(calculatedLines) ? prev : calculatedLines);
@@ -3044,6 +2857,9 @@
 
       const selectedNodeData = isSyntax ? findNode(diagram.root, selectedId) : null;
       const { syntaxMap, operatorMap } = getLinkedExpressionsMaps();
+      const hasOperatorLayers = diagram.expressions.some(e => e.operatorLayers?.length);
+      const hasInfoUnits = diagram.expressions.some(e => e.infoUnit);
+      const hasActualFocus = diagram.expressions.some(e => e.infoUnit?.focusType === 'actual');
 
       return (
         <>
@@ -3159,17 +2975,9 @@
 
                     if (l.isPath) {
                       if (l.isHatchedV) {
-                        const clipId = `clip-${l.id}`;
                         return (
                           <g key={l.id} style={{ transition: 'opacity 0.3s ease', opacity: lineOpacity }}>
-                            <defs><clipPath id={clipId}><polygon points={l.clipPoints} /></clipPath></defs>
-                            <rect
-                              x={l.clipPoints.split(' ').reduce((min, p) => Math.min(min, parseFloat(p.split(',')[0])), Infinity)}
-                              y={l.clipPoints.split(' ').reduce((min, p) => Math.min(min, parseFloat(p.split(',')[1])), Infinity)}
-                              width={l.clipPoints.split(' ').reduce((max, p) => Math.max(max, parseFloat(p.split(',')[0])), -Infinity) - l.clipPoints.split(' ').reduce((min, p) => Math.min(min, parseFloat(p.split(',')[0])), Infinity)}
-                              height={l.clipPoints.split(' ').reduce((max, p) => Math.max(max, parseFloat(p.split(',')[1])), -Infinity) - l.clipPoints.split(' ').reduce((min, p) => Math.min(min, parseFloat(p.split(',')[1])), Infinity)}
-                              fill={`url(#${l.fillPattern})`} clipPath={`url(#${clipId})`}
-                            />
+                            <polygon points={l.clipPoints} fill={`url(#${l.fillPattern})`} stroke="none" />
                             <path d={l.d} fill="none" stroke={l.stroke} strokeWidth={l.strokeWidth} />
                           </g>
                         );
@@ -3667,10 +3475,10 @@
                     })()}
                                         
                     <div className="sidebar-section" style={{ marginTop: '14px' }}>
-                      <div style={{ fontSize: '0.82rem', color: diagram.expressions.some(e => e.infoUnit?.focusType === 'actual') ? '#adb5bd' : 'var(--text-secondary)', fontWeight: 600, marginBottom: '6px' }}>Special Focus Domains</div>
-                      {diagram.expressions.some(e => e.infoUnit?.focusType === 'actual') && <p style={{ fontSize: '0.78rem', color: '#adb5bd', marginTop: '-2px', marginBottom: '6px', fontStyle: 'italic' }}>Disabled: actual focus is active</p>}
+                      <div style={{ fontSize: '0.82rem', color: hasActualFocus ? '#adb5bd' : 'var(--text-secondary)', fontWeight: 600, marginBottom: '6px' }}>Special Focus Domains</div>
+                      {hasActualFocus && <p style={{ fontSize: '0.78rem', color: '#adb5bd', marginTop: '-2px', marginBottom: '6px', fontStyle: 'italic' }}>Disabled: actual focus is active</p>}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <button className="btn" style={{ width: '100%', fontWeight: focusSelectionMode === 'completive' ? 700 : 'normal', fontSize: '0.85rem', background: (diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')) ? 'rgba(0,0,0,0.04)' : (focusSelectionMode === 'completive' ? 'var(--accent)' : 'white'), color: (diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')) ? 'var(--text-secondary)' : (focusSelectionMode === 'completive' ? 'white' : 'var(--text)'), borderColor: (diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')) ? 'var(--border)' : (focusSelectionMode === 'completive' ? 'var(--accent)' : 'var(--border)'), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', opacity: (diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')) ? 0.6 : 1, cursor: (diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')) ? 'not-allowed' : 'pointer' }} disabled={diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')} onClick={() => { if (diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')) return; setFocusSelectionMode(focusSelectionMode === 'completive' ? null : 'completive'); setSelectedId(null); setEditingId(null); }}>
+                        <button className="btn" style={{ width: '100%', fontWeight: focusSelectionMode === 'completive' ? 700 : 'normal', fontSize: '0.85rem', background: (hasActualFocus) ? 'rgba(0,0,0,0.04)' : (focusSelectionMode === 'completive' ? 'var(--accent)' : 'white'), color: (hasActualFocus) ? 'var(--text-secondary)' : (focusSelectionMode === 'completive' ? 'white' : 'var(--text)'), borderColor: (hasActualFocus) ? 'var(--border)' : (focusSelectionMode === 'completive' ? 'var(--accent)' : 'var(--border)'), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', opacity: (hasActualFocus) ? 0.6 : 1, cursor: (hasActualFocus) ? 'not-allowed' : 'pointer' }} disabled={hasActualFocus} onClick={() => { if (hasActualFocus) return; setFocusSelectionMode(focusSelectionMode === 'completive' ? null : 'completive'); setSelectedId(null); setEditingId(null); }}>
                           {focusSelectionMode === 'completive' ? '● Selecting completive IU… (click to stop)' : 'Mark IU as Completive Focus'}
                           <svg style={{ width: 16, height: 12, border: '1px solid currentColor', borderRadius: 2, flexShrink: 0, opacity: 0.7 }} viewBox="0 0 16 12"><line x1="0" y1="3" x2="16" y2="3" stroke="currentColor" strokeWidth="0.8"/><line x1="0" y1="6" x2="16" y2="6" stroke="currentColor" strokeWidth="0.8"/><line x1="0" y1="9" x2="16" y2="9" stroke="currentColor" strokeWidth="0.8"/></svg>
                         </button>
@@ -3691,7 +3499,7 @@
                           </div>
                         )}
 
-                        <button className="btn" style={{ width: '100%', fontWeight: focusSelectionMode === 'contrastive' ? 700 : 'normal', fontSize: '0.85rem', background: (diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')) ? 'rgba(0,0,0,0.04)' : (focusSelectionMode === 'contrastive' ? 'var(--accent)' : 'white'), color: (diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')) ? 'var(--text-secondary)' : (focusSelectionMode === 'contrastive' ? 'white' : 'var(--text)'), borderColor: (diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')) ? 'var(--border)' : (focusSelectionMode === 'contrastive' ? 'var(--accent)' : 'var(--border)'), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', opacity: (diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')) ? 0.6 : 1, cursor: (diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')) ? 'not-allowed' : 'pointer' }} disabled={diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')} onClick={() => { if (diagram.expressions.some(e => e.infoUnit?.focusType === 'actual')) return; setFocusSelectionMode(focusSelectionMode === 'contrastive' ? null : 'contrastive'); setSelectedId(null); setEditingId(null); }}>
+                        <button className="btn" style={{ width: '100%', fontWeight: focusSelectionMode === 'contrastive' ? 700 : 'normal', fontSize: '0.85rem', background: (hasActualFocus) ? 'rgba(0,0,0,0.04)' : (focusSelectionMode === 'contrastive' ? 'var(--accent)' : 'white'), color: (hasActualFocus) ? 'var(--text-secondary)' : (focusSelectionMode === 'contrastive' ? 'white' : 'var(--text)'), borderColor: (hasActualFocus) ? 'var(--border)' : (focusSelectionMode === 'contrastive' ? 'var(--accent)' : 'var(--border)'), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', opacity: (hasActualFocus) ? 0.6 : 1, cursor: (hasActualFocus) ? 'not-allowed' : 'pointer' }} disabled={hasActualFocus} onClick={() => { if (hasActualFocus) return; setFocusSelectionMode(focusSelectionMode === 'contrastive' ? null : 'contrastive'); setSelectedId(null); setEditingId(null); }}>
                           {focusSelectionMode === 'contrastive' ? '● Selecting contrastive IU… (click to stop)' : 'Mark IU as Contrastive Focus'}
                           <svg style={{ width: 16, height: 12, border: '1px solid currentColor', borderRadius: 2, flexShrink: 0, opacity: 0.7 }} viewBox="0 0 16 12"><line x1="2" y1="0" x2="2" y2="12" stroke="currentColor" strokeWidth="0.8"/><line x1="6" y1="0" x2="6" y2="12" stroke="currentColor" strokeWidth="0.8"/><line x1="10" y1="0" x2="10" y2="12" stroke="currentColor" strokeWidth="0.8"/><line x1="14" y1="0" x2="14" y2="12" stroke="currentColor" strokeWidth="0.8"/></svg>
                         </button>
@@ -3735,32 +3543,32 @@
 
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, marginTop: '10px' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={diagram.expressions.some(e => e.operatorLayers?.length) ? 'var(--text-secondary)' : 'var(--border)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} title="Toggle visibility"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                    <input type="checkbox" checked={showOperators} onChange={(e) => setShowOperators(e.target.checked)} disabled={!diagram.expressions.some(e => e.operatorLayers?.length)} style={{ width: '16px', height: '16px', cursor: diagram.expressions.some(e => e.operatorLayers?.length) ? 'pointer' : 'not-allowed', accentColor: 'var(--accent)' }} />
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={hasOperatorLayers ? 'var(--text-secondary)' : 'var(--border)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} title="Toggle visibility"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <input type="checkbox" checked={showOperators} onChange={(e) => setShowOperators(e.target.checked)} disabled={!hasOperatorLayers} style={{ width: '16px', height: '16px', cursor: hasOperatorLayers ? 'pointer' : 'not-allowed', accentColor: 'var(--accent)' }} />
                   </div>
                   <div style={{ flex: 1 }}>
-                    <button className="btn btn-no-hover" style={{ width: '100%', textAlign: 'left', borderRadius: '8px', fontWeight: diagram.expressions.some(e => e.operatorLayers?.length) ? 'bold' : 'normal', borderColor: diagram.expressions.some(e => e.operatorLayers?.length) ? 'var(--accent)' : 'var(--border)', opacity: diagram.expressions.some(e => e.operatorLayers?.length) ? 1 : 0.45, cursor: 'default' }}>
-                      {diagram.expressions.some(e => e.operatorLayers?.length) ? '✓ Operator Projection' : 'Operator Projection'}
+                    <button className="btn btn-no-hover" style={{ width: '100%', textAlign: 'left', borderRadius: '8px', fontWeight: hasOperatorLayers ? 'bold' : 'normal', borderColor: hasOperatorLayers ? 'var(--accent)' : 'var(--border)', opacity: hasOperatorLayers ? 1 : 0.45, cursor: 'default' }}>
+                      {hasOperatorLayers ? '✓ Operator Projection' : 'Operator Projection'}
                     </button>
-                    {diagram.expressions.some(e => e.operatorLayers?.length) ? (<p style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px'}}>Click on any node of the Operator Projection to see options</p>) : (<p style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px'}}>Select any item of the expression to add operator layers</p>)}
+                    {hasOperatorLayers ? (<p style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px'}}>Click on any node of the Operator Projection to see options</p>) : (<p style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px'}}>Select any item of the expression to add operator layers</p>)}
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, marginTop: '10px' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={diagram.expressions.some(e => e.infoUnit) ? 'var(--text-secondary)' : 'var(--border)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} title="Toggle visibility"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                    <input type="checkbox" checked={showInfoStructure} onChange={(e) => setShowInfoStructure(e.target.checked)} disabled={!diagram.expressions.some(e => e.infoUnit)} style={{ width: '16px', height: '16px', cursor: diagram.expressions.some(e => e.infoUnit) ? 'pointer' : 'not-allowed', accentColor: 'var(--accent)' }} />
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={hasInfoUnits ? 'var(--text-secondary)' : 'var(--border)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} title="Toggle visibility"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <input type="checkbox" checked={showInfoStructure} onChange={(e) => setShowInfoStructure(e.target.checked)} disabled={!hasInfoUnits} style={{ width: '16px', height: '16px', cursor: hasInfoUnits ? 'pointer' : 'not-allowed', accentColor: 'var(--accent)' }} />
                   </div>
                   <div style={{ flex: 1 }}>
-                    <button className="btn" disabled={!diagram.expressions.some(e => e.infoUnit)} style={{ width: '100%', textAlign: 'left', borderRadius: '8px', fontWeight: diagram.expressions.some(e => e.infoUnit) ? 'bold' : 'normal', borderColor: (diagram.expressions.some(e => e.infoUnit) || showFocusDomains) ? 'var(--accent)' : 'var(--border)', opacity: diagram.expressions.some(e => e.infoUnit) ? 1 : 0.45, display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.04)' }} onClick={() => setShowFocusDomains(true)}>
-                      <span>{diagram.expressions.some(e => e.infoUnit) ? '✓ Information Structure' : 'Information Structure'}</span>
+                    <button className="btn" disabled={!hasInfoUnits} style={{ width: '100%', textAlign: 'left', borderRadius: '8px', fontWeight: hasInfoUnits ? 'bold' : 'normal', borderColor: (hasInfoUnits || showFocusDomains) ? 'var(--accent)' : 'var(--border)', opacity: hasInfoUnits ? 1 : 0.45, display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.04)' }} onClick={() => setShowFocusDomains(true)}>
+                      <span>{hasInfoUnits ? '✓ Information Structure' : 'Information Structure'}</span>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </button>
-                    {!diagram.expressions.some(e => e.infoUnit) ? (<p style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px'}}>Select any item of the expression to mark it as Information Unit</p>) : (<p style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px'}}>Click to see Information Structure options</p>)}
+                    {!hasInfoUnits ? (<p style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px'}}>Select any item of the expression to mark it as Information Unit</p>) : (<p style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px'}}>Click to see Information Structure options</p>)}
                   </div>
                 </div>
 
-                {showOperators && showInfoStructure && diagram.expressions.some(e => e.operatorLayers?.length) && diagram.expressions.some(e => e.infoUnit) && (
+                {showOperators && showInfoStructure && hasOperatorLayers && hasInfoUnits && (
                   <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-light)' }}>
                   <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '2px' }}>Dim projections</div>
                     <select className="node-select" style={{ marginTop: '8px' }} value={projectionFocus} onChange={(e) => setProjectionFocus(e.target.value)}>
