@@ -42,7 +42,7 @@
     #root { display: flex; flex-direction: column; flex: 1; min-height: 0; }
     body { font-family: var(--font-sans); background: var(--bg-color); color: var(--text); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
     
-    .topbar { background: var(--surface); padding: 10px 24px; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; z-index: 10; }
+    .topbar { background: var(--surface); padding: 10px 24px 10px 24px; padding-right: 10px; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; z-index: 10; }
     
     .brand-header { display: flex; align-items: center; gap: 12px; }
     .brand-logo { height: 36px; width: auto; object-fit: contain; }
@@ -231,11 +231,11 @@
     .ipa-inline-btn{ padding: 4px 8px; border: 1.5px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-family: var(--font-sans); font-size: 12px; line-height: 1; box-shadow: 0 1px 6px rgba(0,0,0,0.08); }
     .ipa-inline-btn:hover{ border-color: var(--accent); color: var(--accent); }
 
-    .ipa-panel { background: white; border: 1.5px solid var(--border); border-radius: 10px; padding: 12px; margin-top: 8px; box-shadow: var(--shadow-soft); max-height: 260px; overflow-y: auto; position: relative; z-index: 20001; }
-    .ipa-category-title { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); margin-top: 8px; margin-bottom: 4px; padding-left: 2px; }
+    .ipa-panel { background: white; border: 1.5px solid var(--border); border-radius: 10px; padding: 10px; margin-top: 8px; box-shadow: var(--shadow-soft); max-height: 200px; overflow-y: auto; position: relative; z-index: 20001; }
+    .ipa-category-title { font-family: var(--font-sans); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); margin-top: 6px; margin-bottom: 3px; padding-left: 2px; }
     .ipa-category-title:first-child { margin-top: 0; }
-    .ipa-grid { display: flex; flex-wrap: wrap; gap: 3px; }
-    .ipa-char-btn { width: 32px; height: 32px; border: 1px solid var(--border-light); border-radius: 5px; background: var(--surface); cursor: pointer; font-family: var(--font-sans); font-size: 1.05rem; color: var(--text); display: flex; align-items: center; justify-content: center; transition: all 0.15s ease; padding: 0; }
+    .ipa-grid { display: flex; flex-wrap: wrap; gap: 2px; }
+    .ipa-char-btn { width: 27px; height: 27px; border: 1px solid var(--border-light); border-radius: 4px; background: var(--surface); cursor: pointer; font-family: var(--font-sans); font-size: 0.9rem; color: var(--text); display: flex; align-items: center; justify-content: center; transition: all 0.15s ease; padding: 0; }
     .ipa-char-btn:hover { background: var(--accent); color: white; border-color: var(--accent); transform: scale(1.12); }
     .ipa-char-btn:active { transform: scale(0.95); }
 
@@ -414,13 +414,24 @@
       { title: 'Vowels', chars: 'i y ɨ ʉ ɯ u ɪ ʏ ʊ e ø ɘ ɵ ɤ o ə ɛ œ ɜ ɞ ʌ ɔ æ ɐ a ɶ ɑ ɒ'.split(' ') },
       { title: 'Plosives', chars: 'p b t d ʈ ɖ c ɟ k ɡ q ɢ ʔ'.split(' ') },
       { title: 'Nasals', chars: 'm ɱ n ɳ ɲ ŋ ɴ'.split(' ') },
-      { title: 'Fricatives', chars: 'ɸ β f v θ ð s z ʃ ʒ ʂ ʐ ç ʝ x ɣ χ ʁ ħ ʕ h ɦ'.split(' ') },
-      { title: 'Approximants', chars: 'ʋ ɹ ɻ j ɰ l ɭ ʎ ʟ'.split(' ') },
-      { title: 'Others', chars: 'ʙ r ʀ ⱱ ɾ ɽ ɬ ɮ ɺ ʘ ǀ ǃ ǂ ǁ ɓ ɗ ʄ ɠ ʛ'.split(' ') },
-      { title: 'Suprasegmentals', chars: 'ˈ ˌ ː ˑ ̆  ‿ | ‖'.split(' ') },
-      { title: 'Diacritics', chars: '̥ ̬ ̤ ̰ ̼ ʰ ʷ ʲ ˠ ˤ ⁿ ˡ ̹ ̜ ̟ ̠ ̈ ̽ ̩ ̯ ˞ ̃ ̴'.split(' ') },
-      { title: 'Tones', chars: '˥ ˦ ˧ ˨ ˩ ↗ ↘'.split(' ') },
-      { title: 'Brackets', chars: '/ [ ]'.split(' ') },
+      { title: 'Fricatives', chars: 'ɸ β f v θ ð s z ʃ ʒ ʂ ʐ ɕ ʑ ç ʝ x ɣ χ ʁ ħ ʕ ʜ ʢ h ɦ'.split(' ') },
+      { title: 'Lateral Fricatives', chars: 'ɬ ɮ'.split(' ') },
+      { title: 'Approximants', chars: 'ʋ ɹ ɻ j ɰ'.split(' ') },
+      { title: 'Lateral Approximants', chars: 'l ɭ ʎ ʟ'.split(' ') },
+      { title: 'Trills & Taps', chars: 'ʙ r ʀ ⱱ ɾ ɽ ɺ'.split(' ') },
+      { title: 'Affricates', chars: 't͡s d͡z t͡ʃ d͡ʒ t͡ɕ d͡ʑ ʈ͡ʂ ɖ͡ʐ'.split(' ') },
+      { title: 'Clicks', chars: 'ʘ ǀ ǃ ǂ ǁ'.split(' ') },
+      { title: 'Implosives & Ejectives', chars: 'ɓ ɗ ʄ ɠ ʛ ʼ'.split(' ') },
+      { title: 'Co-articulated', chars: 'ʍ w ɥ ɧ'.split(' ') },
+      { title: 'Suprasegmentals', chars: 'ˈ ˌ ː ˑ ˘ ‿ | ‖ . ̆'.split(' ') },
+      { title: 'Diacritics – Voicing & Airstream', chars: '̥ ̬ ̤ ̰ ̼ ̚'.split(' ') },
+      { title: 'Diacritics – Place', chars: '̪ ̺ ̻ ̟ ̠ ̘ ̙'.split(' ') },
+      { title: 'Diacritics – Manner', chars: '̝ ̞ ̹ ̜ ̈ ̽ ̩ ̯ ˞ ̃ ̴'.split(' ') },
+      { title: 'Diacritics – Secondary', chars: 'ʰ ʷ ʲ ˠ ˤ ⁿ ˡ ˀ'.split(' ') },
+      { title: 'Tones – Level (Chao)', chars: '˥ ˦ ˧ ˨ ˩'.split(' ') },
+      { title: 'Tones – Diacritics', chars: '̋ ́ ̄ ̀ ̏'.split(' ') },
+      { title: 'Tones – Contour', chars: '̌ ̂ ᷄ ᷅ ᷈ ↗ ↘'.split(' ') },
+      { title: 'Brackets & Delimiters', chars: '/ [ ] ⟨ ⟩ { }'.split(' ') },
     ];
 
     const EditableLabel = ({
@@ -658,7 +669,7 @@
                     }}
                   />
 
-                  <button type="button" className="ipa-inline-btn" title="Insert IPA character" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowIPAInline(prev => !prev); }} style={{ position: 'absolute', top: '0%', left: `calc(50% + ${Math.round(inputWidth/2) + 6}px)`, transform: 'none', zIndex: 10002, background: 'var(--accent)', color: '#ffffff', border: 'none', width: '22px', height: '22px', borderRadius: '6px', fontWeight: 800, lineHeight: '22px', cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.25)' }}>ə</button>
+                  <button type="button" className="ipa-inline-btn" title="Insert IPA character" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowIPAInline(prev => !prev); }} style={{ position: 'absolute', top: '0%', left: `calc(50% + ${Math.round(inputWidth/2) + 6}px)`, transform: 'none', zIndex: 10002, background: 'var(--accent)', color: '#ffffff', border: 'none', width: '22px', height: '22px', borderRadius: '6px', fontWeight: 800, lineHeight: '22px', cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.25)' }}>t͡ʃ</button>
 
                   {showIPAInline && (
                     <div className="ipa-panel ipa-panel-inline" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }} style={{ position: 'absolute', top: '0', left: `calc(50% + ${Math.round(inputWidth/2) + 32}px)`, transform: 'none', zIndex: 10003, width: '380px' }}>
@@ -2739,7 +2750,7 @@
                 <form onSubmit={(e) => e.preventDefault()} style={{display: 'flex', flexDirection: 'column', flex: 1}}>
                   <div style={{display: 'flex', gap: '8px', alignItems: 'stretch'}}>
                     <input type="text" className="sentence-input" placeholder="e.g. The big dog ran quickly through the park" value={rawText} onChange={handleRawTextChange} ref={sentenceInputRef} autoFocus style={{flex: 1}} onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }} />
-                    <button type="button" className={`ipa-toggle-btn${showIPA ? ' active' : ''}`} onClick={() => setShowIPA(prev => !prev)} title="IPA character picker"><span style={{fontSize: '1.05rem'}}>ə</span> IPA</button>
+                    <button type="button" className={`ipa-toggle-btn${showIPA ? ' active' : ''}`} onClick={() => setShowIPA(prev => !prev)} title="IPA character picker"><span style={{fontSize: '1.05rem'}}>t͡ʃ</span> IPA</button>
                   </div>
                   {showIPA && (
                     <div className="ipa-panel">
@@ -3376,7 +3387,7 @@
                 {/* --- RECORDATORIO DE FORMATO --- */}
                 <div className="sidebar-section" style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border-light)' }}>
                   <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '8px' }}>Text Formatting Guide</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 8px', alignItems: 'center' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 8px', alignItems: 'center', border: '1.5px solid var(--border)', borderRadius: '8px', padding: '10px 12px' }}>
                     
                     <code style={{ color: 'var(--accent)', background: 'var(--surface-warm)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', justifySelf: 'start' }}>
                       *text*
