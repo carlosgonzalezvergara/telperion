@@ -335,6 +335,7 @@
       
       // "Interruptores" de estilo
       let isItalic = false;
+      let isBold = false;
       let isSmallCaps = false;
       let isSubscript = false;
       let isSuperscript = false;
@@ -345,10 +346,11 @@
         
         const style = {};
         if (isItalic) style.fontStyle = 'italic';
+        if (isBold) style.fontWeight = 700;
         if (isSmallCaps) {
           style.fontVariant = 'small-caps';
           style.textTransform = 'lowercase';
-          style.fontWeight = 500;
+          style.fontWeight = isBold ? 700 : 500;
           style.fontSize = (isSubscript || isSuperscript) ? '0.75em' : '1.05em';
         } else if (isSubscript || isSuperscript) {
           style.fontSize = '0.7em';
@@ -371,6 +373,14 @@
           pushElement(i);
           isSuperscript = !isSuperscript; 
           i++; // Nos saltamos el segundo guion bajo
+          continue;
+        }
+
+        // Detectar doble asterisco ** para negritas
+        if (char === '*' && text[i+1] === '*') {
+          pushElement(i);
+          isBold = !isBold;
+          i++; // Nos saltamos el segundo asterisco
           continue;
         }
 
@@ -1394,10 +1404,11 @@
           }
         }
 
-        const wrappedChild = { ...currentNode, isSpine: true, manualYOffset: currentNode.manualYOffset || 0 };
+        const parentOffset = -(insertedLevelOffset) + requiredRootShift;
+        const wrappedChild = { ...currentNode, isSpine: true, manualYOffset: 0 };
         const newParent = {
           id: generateId(), label: '', children: [wrappedChild], peripheries: [], isSpine: false,
-          manualYOffset: -(insertedLevelOffset) + requiredRootShift
+          manualYOffset: parentOffset
         };
 
         commitChange({ ...diagram, root: newParent });
@@ -2689,27 +2700,25 @@
             }
           });
           if (minLeft === Infinity) return;
-          const padX = 9; const speechActOffset = diagram.speechActYOffset || 0;
-          let cLX = minLeft - padX, cRX = maxRight + padX, cBY = maxBottomY + 16;
-          const cVX = globalPfdMidX !== null ? globalPfdMidX : (cLX + cRX) / 2;
+          const padX = 9; const gap = 15; const speechActOffset = diagram.speechActYOffset || 0;
+          let cLX = minLeft - padX, cRX = maxRight + padX;
+          let cBY = maxBottomY + 16;
+          const cMidX = (cLX + cRX) / 2;
+          const cVX = globalPfdMidX !== null ? globalPfdMidX : cMidX;
           let cVY = cBY + 145 + speechActOffset;
-          if (pfdVtxY !== null) { if (cVY > pfdVtxY - 15) cVY = pfdVtxY - 15; }
-          let strokeLeftSide = true, strokeRightSide = true;
-          if (pfdLeftX !== null && pfdRightX !== null && pfdBaseY !== null && pfdVtxY !== null) {
-            const pfdLeftAtCBY = pfdLeftX + (pfdVertexX - pfdLeftX) * (cBY - pfdBaseY) / (pfdVtxY - pfdBaseY);
-            const pfdRightAtCBY = pfdRightX + (pfdVertexX - pfdRightX) * (cBY - pfdBaseY) / (pfdVtxY - pfdBaseY);
-            if (cLX <= pfdLeftAtCBY + 15) strokeLeftSide = false;
-            if (cRX >= pfdRightAtCBY - 15) strokeRightSide = false;
+
+          /* Align base and vertex with PFD triangle (mirrors AFD logic) */
+          if (pfdBaseY !== null && pfdVtxY !== null) {
+            cBY = pfdBaseY;
+            cVY = pfdVtxY - gap;
           }
-          let strokeD = '';
-          if (strokeLeftSide && strokeRightSide) strokeD = `M ${cLX} ${cBY} L ${cVX} ${cVY} L ${cRX} ${cBY} Z`;
-          else if (!strokeLeftSide && strokeRightSide) strokeD = `M ${cLX} ${cBY} L ${cRX} ${cBY} L ${cVX} ${cVY}`;
-          else if (strokeLeftSide && !strokeRightSide) strokeD = `M ${cVX} ${cVY} L ${cLX} ${cBY} L ${cRX} ${cBY}`;
-          else strokeD = `M ${cLX} ${cBY} L ${cRX} ${cBY}`;
+
+          const bY = cBY - 2;   /* small upward offset like AFD */
+          const strokeD = `M ${cLX} ${bY} L ${cVX} ${cVY} L ${cRX} ${bY} Z`;
           calculatedLines.push({
             id: `${idPrefix}-triangle-path`,
             isPath: true, isHatchedV: true, fillPattern,
-            clipPoints: `${cLX},${cBY} ${cRX},${cBY} ${cVX},${cVY}`,
+            clipPoints: `${cLX},${bY} ${cRX},${bY} ${cVX},${cVY}`,
             d: strokeD, stroke: "#343a40", strokeWidth: "1.5"
           });
           if (showSpeechActCondition) {
@@ -3069,9 +3078,10 @@
               <>
                 {isSyntax && (
                   <div className="sidebar-section">
-                    <div className="btn btn-no-hover" style={{ width: '100%', textAlign: 'left', fontWeight: 'bold', borderColor: 'var(--accent)', borderRadius: '8px', backgroundColor: 'transparent', marginBottom: '12px', cursor: 'default' }}>
-                      Constituent Projection
-                    </div>
+                    <button className="btn" style={{ width: '100%', textAlign: 'left', fontWeight: 'bold', borderColor: 'var(--accent)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.04)', marginBottom: '12px' }} onClick={() => { setSelectedId(null); setEditingId(null); }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}><polyline points="15 18 9 12 15 6"></polyline></svg>
+                      <span>Constituent Projection</span>
+                    </button>
                     
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
                       <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>Daughter(s) node(s):</span>
@@ -3157,9 +3167,10 @@
 
                 {isExpr && (
                   <div className="sidebar-section">
-                    <div className="btn btn-no-hover" style={{ width: '100%', textAlign: 'left', fontWeight: 'bold', borderColor: 'var(--accent)', borderRadius: '8px', backgroundColor: 'transparent', marginBottom: '12px', cursor: 'default' }}>
-                      Expression Items
-                    </div>
+                    <button className="btn" style={{ width: '100%', textAlign: 'left', fontWeight: 'bold', borderColor: 'var(--accent)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.04)', marginBottom: '12px' }} onClick={() => { setSelectedId(null); setEditingId(null); }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}><polyline points="15 18 9 12 15 6"></polyline></svg>
+                      <span>Expression Items</span>
+                    </button>
 
                     <button
                       className="btn"
@@ -3234,7 +3245,10 @@
                   const currentLayer = diagram.expressions[info.exprIndex]?.operatorLayers?.[info.layerIndex];
                   return (
                   <div className="sidebar-section">
-                    <div className="btn btn-no-hover" style={{ width: '100%', textAlign: 'left', fontWeight: 'bold', borderColor: 'var(--accent)', borderRadius: '8px', backgroundColor: 'transparent', marginBottom: '12px', cursor: 'default' }}>Operator Projection</div>
+                    <button className="btn" style={{ width: '100%', textAlign: 'left', fontWeight: 'bold', borderColor: 'var(--accent)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.04)', marginBottom: '12px' }} onClick={() => { setSelectedId(null); setEditingId(null); }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}><polyline points="15 18 9 12 15 6"></polyline></svg>
+                      <span>Operator Projection</span>
+                    </button>
                     <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '4px'}}>Layer {info.layerIndex + 1} of {diagram.expressions[info.exprIndex]?.operatorLayers?.length || 0}</span>
                     <button className="btn" onClick={() => addOperatorLayerAfter(selectedId)} style={{ width: '100%', fontWeight: 'normal', marginTop: '4px' }}>+ Add Operator Layer Below</button>
 
@@ -3263,7 +3277,10 @@
                   const opLinkIds = getNodeLinkIds(op);
                   return (
                     <div className="sidebar-section">
-                      <div className="btn btn-no-hover" style={{ width: '100%', textAlign: 'left', fontWeight: 'bold', borderColor: 'var(--accent)', borderRadius: '8px', backgroundColor: 'transparent', marginBottom: '12px', cursor: 'default' }}>Operator</div>
+                      <button className="btn" style={{ width: '100%', textAlign: 'left', fontWeight: 'bold', borderColor: 'var(--accent)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.04)', marginBottom: '12px' }} onClick={() => { setSelectedId(null); setEditingId(null); }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        <span>Operator</span>
+                      </button>
                       <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '4px'}}>Attached to layer {info.layerIndex + 1}</span>
                       <div style={{borderTop: '1px solid var(--border-light)', paddingTop: '12px', marginTop: '12px', marginBottom: '8px'}}>
                         <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>Linking to expression item:</span>
@@ -3302,7 +3319,10 @@
 
                   return (
                     <div className="sidebar-section">
-                      <div className="btn btn-no-hover" style={{ width: '100%', textAlign: 'left', fontWeight: 'bold', borderColor: 'var(--accent)', borderRadius: '8px', backgroundColor: 'transparent', marginBottom: '12px', cursor: 'default' }}>Information Structure Nodes</div>
+                      <button className="btn" style={{ width: '100%', textAlign: 'left', fontWeight: 'bold', borderColor: 'var(--accent)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.04)', marginBottom: '12px' }} onClick={() => { setSelectedId(null); setEditingId(null); }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        <span>Information Structure Nodes</span>
+                      </button>
                       <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '4px'}}>Anchored on: {renderLabel(currentExpr?.label)}</span>
 
                       <div style={{marginTop: '12px', marginBottom: '4px'}}><span style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>Span across items:</span></div>
@@ -3394,6 +3414,11 @@
                     </code>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text)', fontStyle: 'italic' }}>Italics</span>
                     
+                    <code style={{ color: 'var(--accent)', background: 'var(--surface-warm)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', justifySelf: 'start' }}>
+                      **text**
+                    </code>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text)', fontWeight: 700 }}>Bold</span>
+
                     <code style={{ color: 'var(--accent)', background: 'var(--surface-warm)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', justifySelf: 'start' }}>
                       %text%
                     </code>
@@ -3589,6 +3614,7 @@
                     </select>
                   </div>
                 )}
+                <div style={{ color: '#adb5bd', textAlign: 'center', marginTop: '40px', fontSize: '0.85rem' }}>Click any node to see relevant options</div>
               </div>
             )}
           </div>
