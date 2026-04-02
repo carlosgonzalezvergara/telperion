@@ -679,7 +679,7 @@
                     }}
                   />
 
-                  <button type="button" className="ipa-inline-btn" title="Insert IPA character" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowIPAInline(prev => !prev); }} style={{ position: 'absolute', top: '0%', left: `calc(50% + ${Math.round(inputWidth/2) + 6}px)`, transform: 'none', zIndex: 10002, background: 'var(--accent)', color: '#ffffff', border: 'none', width: '22px', height: '22px', borderRadius: '6px', fontWeight: 800, lineHeight: '22px', cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.25)' }}>t͡ʃ</button>
+                  <button type="button" className="ipa-inline-btn" title="Insert IPA character" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowIPAInline(prev => !prev); }} style={{ position: 'absolute', top: '0%', left: `calc(50% + ${Math.round(inputWidth/2) + 6}px)`, transform: 'none', zIndex: 10002, background: 'var(--accent)', color: '#ffffff', border: 'none', width: '22px', height: '22px', borderRadius: '6px', fontWeight: 400, lineHeight: '22px', cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.25)' }}>t͡ʃ</button>
 
                   {showIPAInline && (
                     <div className="ipa-panel ipa-panel-inline" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }} style={{ position: 'absolute', top: '0', left: `calc(50% + ${Math.round(inputWidth/2) + 32}px)`, transform: 'none', zIndex: 10003, width: '380px' }}>
@@ -3412,27 +3412,27 @@
                     <code style={{ color: 'var(--accent)', background: 'var(--surface-warm)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', justifySelf: 'start' }}>
                       *text*
                     </code>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text)', fontStyle: 'italic' }}>Italics</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text)' }}>Italics: <span style={{ fontSize: '0.75rem', color: 'var(--text)', fontStyle: 'italic' }}>text</span></span>
                     
                     <code style={{ color: 'var(--accent)', background: 'var(--surface-warm)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', justifySelf: 'start' }}>
                       **text**
                     </code>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text)', fontWeight: 700 }}>Bold</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text)' }}>Bold: <span style={{ fontSize: '0.75rem', color: 'var(--text)', fontWeight: 700 }}>text</span></span>
 
                     <code style={{ color: 'var(--accent)', background: 'var(--surface-warm)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', justifySelf: 'start' }}>
                       %text%
                     </code>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text)', fontVariant: 'small-caps', textTransform: 'lowercase', fontWeight: 500 }}>Small Caps</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text)' }}>Small Caps: <span style={{ fontSize: '0.75rem', color: 'var(--text)', fontVariant: 'small-caps', textTransform: 'lowercase', fontWeight: 500 }}>text</span></span>
                     
                     <code style={{ color: 'var(--accent)', background: 'var(--surface-warm)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', justifySelf: 'start' }}>
                       _text_
                     </code>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text)' }}>Subscript <span style={{ fontSize: '0.7em', verticalAlign: 'sub' }}>(V<sub>1</sub>)</span></span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text)' }}>Subscript: <sub>text</sub></span>
 
                     <code style={{ color: 'var(--accent)', background: 'var(--surface-warm)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', justifySelf: 'start' }}>
                       __text__
                     </code>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text)' }}>Superscript <span style={{ fontSize: '0.7em', verticalAlign: 'super' }}>(N<sup>1</sup>)</span></span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text)' }}>Superscript: <sup>text</sup></span>
 
                   </div>
                 </div>
