@@ -576,9 +576,13 @@
       const leftPerifs = (node.peripheries || []).filter(p => p.side === 'left');
       const rightPerifs = (node.peripheries || []).filter(p => p.side === 'right');
 
-      const addChildBtn = (
+      // Comprobamos si el nodo actual tiene enlaces al ecuador léxico
+      const isLinkedToExpression = node.exprId || (Array.isArray(node.exprIds) && node.exprIds.filter(Boolean).length > 0);
+
+      // Solo renderizamos el botón de agregar hijo si el nodo NO está enlazado
+      const addChildBtn = !isLinkedToExpression ? (
         <div className="node-action-btn bottom-center" title="Add child" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }} onClick={(e) => { e.stopPropagation(); onAddChild && onAddChild(node.id); }}>+</div>
-      );
+      ) : null;
 
       const NodeCore = (
         <div className="tree-node" data-node-id={node.id} style={shiftStyle}>
@@ -3085,7 +3089,19 @@
                     
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
                       <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>Daughter(s) node(s):</span>
-                      <input type="number" min="0" value={selectedNodeData?.children?.length || 0} onChange={(e) => setDaughtersCount(parseInt(e.target.value, 10))} className="node-number-input" />
+                      <input 
+                        type="number" 
+                        min="0" 
+                        value={selectedNodeData?.children?.length || 0} 
+                        onChange={(e) => setDaughtersCount(parseInt(e.target.value, 10))} 
+                        className="node-number-input"
+                        disabled={getNodeLinkIds(selectedNodeData).length > 0}
+                        title={getNodeLinkIds(selectedNodeData).length > 0 ? "Unlink this node to add children" : ""}
+                        style={{
+                           opacity: getNodeLinkIds(selectedNodeData).length > 0 ? 0.5 : 1,
+                           cursor: getNodeLinkIds(selectedNodeData).length > 0 ? 'not-allowed' : 'auto'
+                        }}
+                      />
                     </div>
 
                     <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '4px'}}>Add periphery or LM:</span>
