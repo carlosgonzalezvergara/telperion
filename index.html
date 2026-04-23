@@ -2988,8 +2988,8 @@
 
                   const defsBlock = (
                     <defs>
-                      <pattern id="hatch-horizontal" patternUnits="userSpaceOnUse" width="6" height="6"><line x1="0" y1="3" x2="6" y2="3" stroke="#343a40" strokeWidth="0.8" /></pattern>
-                      <pattern id="hatch-vertical" patternUnits="userSpaceOnUse" width="6" height="6"><line x1="3" y1="0" x2="3" y2="6" stroke="#343a40" strokeWidth="0.8" /></pattern>
+                      <pattern id="hatch-horizontal-back" patternUnits="userSpaceOnUse" width="6" height="6"><line x1="0" y1="3" x2="6" y2="3" stroke="#343a40" strokeWidth="0.8" /></pattern>
+                      <pattern id="hatch-vertical-back" patternUnits="userSpaceOnUse" width="6" height="6"><line x1="3" y1="0" x2="3" y2="6" stroke="#343a40" strokeWidth="0.8" /></pattern>
                     </defs>
                   );
 
@@ -3028,12 +3028,12 @@
                       if (l.isHatchedV) {
                         return (
                           <g key={l.id} style={{ transition: 'opacity 0.3s ease', opacity: lineOpacity }}>
-                            <polygon points={l.clipPoints} fill={`url(#${l.fillPattern})`} stroke="none" />
+                            <polygon points={l.clipPoints} fill={`url(#${l.fillPattern}-back)`} stroke="none" />
                             <path d={l.d} fill="none" stroke={l.stroke} strokeWidth={l.strokeWidth} />
                           </g>
                         );
                       }
-                      return (<path key={l.id} d={l.d} fill={l.fillPattern ? `url(#${l.fillPattern})` : "none"} stroke={l.stroke || "#343a40"} strokeWidth={l.strokeWidth || "1.5"} strokeDasharray={l.isDashed ? "6 4" : null} style={{ transition: 'opacity 0.3s ease', opacity: lineOpacity }} />);
+                      return (<path key={l.id} d={l.d} fill={l.fillPattern ? `url(#${l.fillPattern}-back)` : "none"} stroke={l.stroke || "#343a40"} strokeWidth={l.strokeWidth || "1.5"} strokeDasharray={l.isDashed ? "6 4" : null} style={{ transition: 'opacity 0.3s ease', opacity: lineOpacity }} />);
                     }
 
                     return l.isTriangle ? (
@@ -3046,7 +3046,7 @@
                   return (
                     <>
                       <svg className="svg-layer svg-layer-back">{defsBlock}{backLines.map(renderLine)}</svg>
-                      <svg className="svg-layer svg-layer-front">{defsBlock}{frontLines.map(renderLine)}</svg>
+                      <svg className="svg-layer svg-layer-front">{frontLines.map(renderLine)}</svg>
                       {textLines.map(l => {
                         let lineOpacity = 1;
                         if (showOperators && showInfoStructure) {
