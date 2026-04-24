@@ -477,7 +477,17 @@
       useEffect(() => {
         if (showDropdown && labelRef.current) {
           const rect = labelRef.current.getBoundingClientRect();
-          setDropdownPos({ top: rect.bottom + 8, left: rect.left + rect.width / 2 });
+          // Clamp horizontal: evitar que el dropdown se salga del viewport.
+          // El dropdown usa translateX(-50%), por lo que su borde izquierdo es left - width/2.
+          // Usamos el max-width del CSS (280px) como cota superior segura del ancho real.
+          const DROPDOWN_MAX_WIDTH = 280;
+          const VIEWPORT_MARGIN = 8;
+          const halfWidth = DROPDOWN_MAX_WIDTH / 2;
+          const minLeft = halfWidth + VIEWPORT_MARGIN;
+          const maxLeft = window.innerWidth - halfWidth - VIEWPORT_MARGIN;
+          const rawLeft = rect.left + rect.width / 2;
+          const clampedLeft = Math.min(Math.max(rawLeft, minLeft), maxLeft);
+          setDropdownPos({ top: rect.bottom + 8, left: clampedLeft });
         } else if (!showDropdown) {
           setDropdownPos(null);
         }
