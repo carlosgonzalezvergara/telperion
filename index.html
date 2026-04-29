@@ -864,6 +864,7 @@
       const [editingId, setEditingId] = useState(null);
       const [pendingEditId, setPendingEditId] = useState(null);
       const [linkingLayerId, setLinkingLayerId] = useState(null);
+      const [secondaryLinkingNodeId, setSecondaryLinkingNodeId] = useState(null);
       
       const [rawText, setRawText] = useState('');
       const [cuts, setCuts] = useState(new Set());
@@ -1483,6 +1484,32 @@
         return updated;
       };
 
+      const getSecondaryLinkId = (node) => node?.secondaryExprId || '';
+
+      const setSecondaryLinkId = (node, exprId) => {
+        const updated = { ...node };
+        if (exprId) updated.secondaryExprId = exprId;
+        else delete updated.secondaryExprId;
+        return updated;
+      };
+
+      const getTerminalLinkedExpressionIds = (exceptNodeId = null) => {
+        const ids = new Set();
+        const walk = (n) => {
+          if (!n) return;
+          const isTerminal = !n.children || n.children.length === 0;
+          if (isTerminal && n.id !== exceptNodeId) {
+            getNodeLinkIds(n).forEach(id => ids.add(id));
+            const secondaryId = getSecondaryLinkId(n);
+            if (secondaryId) ids.add(secondaryId);
+          }
+          if (n.children) n.children.forEach(walk);
+          if (n.peripheries) n.peripheries.forEach(walk);
+        };
+        walk(diagram?.root);
+        return ids;
+      };
+
       const getLinkedExpressionsMaps = () => {
         const syntaxMap = {}; const operatorMap = {};
         if (!diagram) return { syntaxMap, operatorMap };
@@ -1533,6 +1560,9 @@
           if (existing.includes(exprId) && updated.id !== selectedId) {
             updated = setNodeLinkIds(updated, existing.filter(id => id !== exprId));
           }
+          if (getSecondaryLinkId(updated) === exprId && updated.id !== selectedId) {
+            updated = setSecondaryLinkId(updated, null);
+          }
           if (updated.children) updated.children = updated.children.map(unlinkPrevious);
           if (updated.peripheries) updated.peripheries = updated.peripheries.map(unlinkPrevious);
           return updated;
@@ -1543,14 +1573,36 @@
 
         newRoot = updateNode(newRoot, selectedId, n => {
           const ids = getNodeLinkIds(n);
-          if (!exprId) return setNodeLinkIds(n, []);
+          if (!exprId) return setSecondaryLinkId(setNodeLinkIds(n, []), null);
           if (isPeriphery) {
             const nextIds = ids.includes(exprId) ? ids.filter(id => id !== exprId) : [...ids, exprId];
             return setNodeLinkIds(n, nextIds);
           }
-          return setNodeLinkIds(n, [exprId]);
+          const updated = setNodeLinkIds(n, [exprId]);
+          return getSecondaryLinkId(updated) === exprId ? setSecondaryLinkId(updated, null) : updated;
         });
 
+        commitChange({ ...diagram, root: newRoot });
+      };
+
+      const handleSecondaryLinkExpression = (exprId) => {
+        if (!selectedId) return;
+        const currentNode = findNode(diagram.root, selectedId);
+        if (!currentNode || getNodeLinkIds(currentNode).length === 0) return;
+        const primaryId = getNodeLinkIds(currentNode)[0];
+        if (exprId && exprId === primaryId) return;
+        const unavailableIds = getTerminalLinkedExpressionIds(selectedId);
+        const currentSecondaryId = getSecondaryLinkId(currentNode);
+        if (exprId && unavailableIds.has(exprId) && exprId !== currentSecondaryId) return;
+        const newRoot = updateNode(diagram.root, selectedId, n => setSecondaryLinkId(n, exprId || null));
+        setSecondaryLinkingNodeId(null);
+        commitChange({ ...diagram, root: newRoot });
+      };
+
+      const handleClearSecondaryLink = () => {
+        if (!selectedId) return;
+        const newRoot = updateNode(diagram.root, selectedId, n => setSecondaryLinkId(n, null));
+        setSecondaryLinkingNodeId(null);
         commitChange({ ...diagram, root: newRoot });
       };
 
@@ -1587,6 +1639,9 @@
             if (getNodeLinkIds(n).includes(exprId)) {
               links.push({ type: 'syntax', sourceId: n.id, label: n.label });
             }
+            if (getSecondaryLinkId(n) === exprId) {
+              links.push({ type: 'syntax-secondary', sourceId: n.id, label: `${n.label} (secondary)` });
+            }
             if (n.children) n.children.forEach(walk);
             if (n.peripheries) n.peripheries.forEach(walk);
           };
@@ -1615,6 +1670,9 @@
             const currentIds = getNodeLinkIds(n);
             return setNodeLinkIds(n, currentIds.filter(id => id !== exprId));
           });
+          commitChange({ ...diagram, root: newRoot });
+        } else if (link.type === 'syntax-secondary') {
+          const newRoot = updateNode(diagram.root, link.sourceId, n => setSecondaryLinkId(n, null));
           commitChange({ ...diagram, root: newRoot });
         } else if (link.type === 'operator') {
           const newExprs = diagram.expressions.map(e => {
@@ -1871,6 +1929,7 @@
             if(!n) return n;
             let newN = {...n}; 
             newN = setNodeLinkIds(newN, getNodeLinkIds(newN).filter(linkId => linkId !== actualIdToRemove));
+            if (getSecondaryLinkId(newN) === actualIdToRemove) newN = setSecondaryLinkId(newN, null);
             if(newN.children) newN.children = newN.children.map(unlink);
             if(newN.peripheries) newN.peripheries = newN.peripheries.map(unlink);
             return newN;
@@ -2383,13 +2442,32 @@
                     const eLabel = getExprEl(exprId);
                     if (eLabel) {
                       const eRect = eLabel.getBoundingClientRect();
+                      const primaryX2 = eRect.left + eRect.width / 2 - wrapperRect.left;
+                      const primaryY2 = eRect.top - wrapperRect.top;
                       calculatedLines.push({
                         id: `expr-line-${n.id}-${exprId}-${idx}`,
                         x1: pBottomX, y1: pBottomY,
-                        x2: eRect.left + eRect.width / 2 - wrapperRect.left,
-                        y2: eRect.top - wrapperRect.top,
+                        x2: primaryX2,
+                        y2: primaryY2,
                         isArrow: false
                       });
+
+                      const secondaryExprId = getSecondaryLinkId(n);
+                      if (idx === 0 && secondaryExprId && secondaryExprId !== exprId) {
+                        const secondaryLabel = getExprEl(secondaryExprId);
+                        if (secondaryLabel) {
+                          const secondaryRect = secondaryLabel.getBoundingClientRect();
+                          const branchX = pBottomX;
+                          const branchY = pBottomY;
+                          calculatedLines.push({
+                            id: `expr-secondary-line-${n.id}-${secondaryExprId}`,
+                            x1: branchX, y1: branchY,
+                            x2: secondaryRect.left + secondaryRect.width / 2 - wrapperRect.left,
+                            y2: secondaryRect.top - wrapperRect.top,
+                            isArrow: false
+                          });
+                        }
+                      }
                     }
                   });
                 }
@@ -2931,7 +3009,7 @@
 
       return (
         <>
-        <div className="main-layout" onClick={() => { setSelectedId(null); setEditingId(null); setLinkingLayerId(null); }}>
+        <div className="main-layout" onClick={() => { setSelectedId(null); setEditingId(null); setLinkingLayerId(null); setSecondaryLinkingNodeId(null); }}>
           <svg style={{ width: 0, height: 0, position: 'absolute' }}>
             <defs>
               <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
@@ -2975,7 +3053,7 @@
             </header>
 
             <div className="canvas-container" onClick={(e) => {
-              e.stopPropagation(); setSelectedId(null); setEditingId(null); setLinkingLayerId(null); setFocusSelectionMode(null); setShowFocusDomains(false);
+              e.stopPropagation(); setSelectedId(null); setEditingId(null); setLinkingLayerId(null); setSecondaryLinkingNodeId(null); setFocusSelectionMode(null); setShowFocusDomains(false);
             }}>
               <div className={`zoom-controls ${diagram ? 'visible' : ''}`}>
                 <button className="zoom-btn" onClick={zoomOut} disabled={zoomLevel <= ZOOM_MIN} title="Zoom out (Ctrl/⌘ + −)">−</button>
@@ -3216,6 +3294,52 @@
                                   <input type="checkbox" checked={!!selectedNodeData.linkAsTriangle} onChange={handleToggleTriangle} />
                                   Draw link as triangle
                                 </label>
+                                <div style={{borderTop: '1px solid var(--border-light)', paddingTop: '8px', marginTop: '4px', display: 'flex', flexDirection: 'column', gap: '6px'}}>
+                                  <span style={{fontSize: '0.78rem', color: 'var(--text-secondary)'}}>Secondary link:</span>
+                                  {(() => {
+                                    const primaryExprId = getNodeLinkIds(selectedNodeData)[0];
+                                    const currentSecondaryExprId = getSecondaryLinkId(selectedNodeData);
+                                    const unavailable = getTerminalLinkedExpressionIds(selectedId);
+                                    const availableSecondaryExpressions = diagram.expressions.filter(ex => ex.id !== primaryExprId && !unavailable.has(ex.id));
+                                    const secondarySelectionOptions = diagram.expressions.filter(ex => {
+                                      return ex.id !== primaryExprId && (ex.id === currentSecondaryExprId || !unavailable.has(ex.id));
+                                    });
+                                    const hasAvailableSecondaryExpression = availableSecondaryExpressions.length > 0;
+
+                                    if (currentSecondaryExprId) {
+                                      return (
+                                        <div style={{display: 'flex', flexDirection: 'column', gap: '6px'}}>
+                                          <select className="node-select" value={currentSecondaryExprId} onChange={(e) => handleSecondaryLinkExpression(e.target.value)}>
+                                            <option value="">-- No secondary link --</option>
+                                            {secondarySelectionOptions.map(ex => <option key={ex.id} value={ex.id}>{ex.label}</option>)}
+                                          </select>
+                                          <button className="btn" onClick={handleClearSecondaryLink} style={{padding: '2px 8px', fontSize: '0.75rem', fontWeight: 'normal'}}>✕ Clear Secondary Link</button>
+                                        </div>
+                                      );
+                                    }
+
+                                    if (secondaryLinkingNodeId === selectedId) {
+                                      return (
+                                        <select className="node-select" value="" onChange={(e) => handleSecondaryLinkExpression(e.target.value)} disabled={!hasAvailableSecondaryExpression}>
+                                          <option value="">{hasAvailableSecondaryExpression ? '-- Select secondary link --' : '-- No free expression nodes --'}</option>
+                                          {availableSecondaryExpressions.map(ex => <option key={ex.id} value={ex.id}>{ex.label}</option>)}
+                                        </select>
+                                      );
+                                    }
+
+                                    return (
+                                      <button
+                                        className="btn"
+                                        onClick={() => hasAvailableSecondaryExpression && setSecondaryLinkingNodeId(selectedId)}
+                                        disabled={!hasAvailableSecondaryExpression}
+                                        title={hasAvailableSecondaryExpression ? 'Add secondary link' : 'No free expression nodes available'}
+                                        style={{padding: '4px 8px', fontSize: '0.8rem', fontWeight: 'normal'}}
+                                      >
+                                        + Add Secondary Link
+                                      </button>
+                                    );
+                                  })()}
+                                </div>
                               </div>
                             )}
                           </>

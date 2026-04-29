@@ -170,7 +170,6 @@
 <section id="introduction">
 <h2>1. Introduction</h2>
 <p><strong>Telperion</strong> is a specialized tool for building and analyzing syntactic trees under the <strong>Role and Reference Grammar (RRG)</strong> model. The application allows you to manage the three fundamental projections of the clause in a single workspace: <strong>Constituent Projection</strong>, <strong>Operator Projection</strong>, and <strong>Information Structure</strong>.</p>
-<p><strong>Initial morphosyntactic expression:</strong> Every diagram starts from a segmented expression, typically corresponding to words or multiword blocks. These base items act as anchors for both operator layers and information-structure units.</p>
 </section>
 
 <section id="getting-started">
@@ -284,12 +283,11 @@
 </ul>
 
 <h3>Links to the morphosyntactic expression</h3>
-<p>To link your syntactic structure with the expression items:</p>
-<ol>
-<li>Select the terminal node.</li>
-<li>In the sidebar, under <strong>Linking to expression item</strong>, choose the corresponding item from the dropdown.</li>
+<p>To link your syntactic structure with the expression items, select any terminal node. Then, in the sidebar, under <strong>Linking to expression item</strong>, choose the corresponding item from the dropdown. This creates the node’s link to the base expression.</p>
+<ul>
 <li><strong>Peripheries:</strong> a periphery may link to multiple expression items using checkboxes.</li>
 <li><strong>Draw link as triangle:</strong> when a node dominates a full phrase, enable <span class="ui-element">Draw link as triangle</span> to replace multiple word-links with a single triangle over the relevant span.</li>
+<li><strong>Secondary link:</strong> once a terminal node already has a primary link, the sidebar may offer <span class="ui-element">+ Add Secondary Link</span>. Use this option when the same terminal node should also be connected to another available item in the base expression. The secondary link does not change the position of the terminal node; it is drawn as an additional line emerging from the same origin as the primary link. When you add a secondary link, Telperion lists only base-expression items that are still free for this purpose. If no such item is available, <span class="ui-element">+ Add Secondary Link</span> remains inactive.</li>
 </ol>
 
 <h3>Incoming Links</h3>
