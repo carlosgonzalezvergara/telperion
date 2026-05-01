@@ -169,7 +169,7 @@
 
 <section id="introduction">
 <h2>1. Introduction</h2>
-<p><strong>Telperion</strong> is a specialized tool for building and analyzing syntactic trees under the <strong>Role and Reference Grammar (RRG)</strong> model. The application allows you to manage the three fundamental projections of the clause in a single workspace: <strong>Constituent Projection</strong>, <strong>Operator Projection</strong>, and <strong>Information Structure</strong>.</p>
+<p><strong>Telperion</strong> is a specialized tool for building and analyzing syntactic trees under the <strong>Role and Reference Grammar (RRG)</strong> model. The application allows you to manage the four fundamental projections of the clause in a single workspace: <strong>Constituent Projection</strong>, <strong>Operator Projection</strong>, <strong>Information Structure</strong>, and <strong>Logical Structure</strong>.</p>
 </section>
 
 <section id="getting-started">
@@ -223,7 +223,7 @@
 </ul>
 
 <h3>Editing labels and Text Formatting</h3>
-<p>Telperion makes it easy to assign and format labels across the Constituent, Operator, and Information Structure projections using a special markup system. A <strong>Text Formatting Guide</strong> is always visible in the sidebar when a node is selected.</p>
+<p>Telperion makes it easy to assign and format labels across the Constituent, Operator, Information Structure, and Logical Structure projections using a special markup system. A <strong>Text Formatting Guide</strong> is always visible in the sidebar when a node is selected.</p>
 
 <div class="formatting-grid">
   <code>*text*</code>
@@ -240,6 +240,9 @@
 
   <code>__text__ or __text</code>
 <span>Superscript (e.g., <code>N__1__</code> or <code>N__1</code>renders as N<sup>1</sup>)</span>
+
+  <code>~text~</code>
+  <span><span style="text-decoration: underline;">Underline</span></span>
 </div>
 
 <ul>
@@ -256,7 +259,7 @@
 <h3>Global Projection Controls</h3>
 <p>When you deselect all nodes by clicking on empty space, the sidebar displays the global projection controls:</p>
 <ul>
-<li><strong>Toggle Visibility:</strong> you can hide or show any of the three projections by clicking the checkbox next to each one. This is useful for focusing on specific layers while presenting or analyzing.</li>
+<li><strong>Toggle Visibility:</strong> you can hide or show any of the four projections by clicking the checkbox next to each one. This is useful for focusing on specific layers while presenting or analyzing.</li>
 <li><strong>Dimming Projections:</strong> when both Operator Projection and Information Structure are active simultaneously, the visual space below the base expression can become crowded. Under <strong>Dim projections</strong>, you can select whether to dim the operators or the information structure lines.</li>
 </ul>
 </section>
@@ -288,14 +291,14 @@
 <li><strong>Peripheries:</strong> a periphery may link to multiple expression items using checkboxes.</li>
 <li><strong>Draw link as triangle:</strong> when a node dominates a full phrase, enable <span class="ui-element">Draw link as triangle</span> to replace multiple word-links with a single triangle over the relevant span.</li>
 <li><strong>Secondary link:</strong> once a terminal node already has a primary link, the sidebar may offer <span class="ui-element">+ Add Secondary Link</span>. Use this option when the same terminal node should also be connected to another available item in the base expression. The secondary link does not change the position of the terminal node; it is drawn as an additional line emerging from the same origin as the primary link. When you add a secondary link, Telperion lists only base-expression items that are still free for this purpose. If no such item is available, <span class="ui-element">+ Add Secondary Link</span> remains inactive.</li>
-</ol>
+</ul>
 
 <h3>Incoming Links</h3>
-<p>If you need to review or quickly remove links pointing to a specific base item from syntax or operators:</p>
+<p>If you need to review or quickly remove links pointing to a specific base item from syntax, operators, or logical-structure chains:</p>
 <ol>
 <li>Select any item in the base expression.</li>
 <li>Look at the <strong>Incoming Links</strong> section in the right sidebar.</li>
-<li>You will see a list of all syntactic nodes and operator nodes that are currently pointing to this item. Uncheck the boxes to unlink them.</li>
+<li>You will see a list of all syntactic nodes, operator nodes, and LS chains that are currently pointing to this item, each tagged with its source projection (<em>Syntax</em>, <em>Operator</em>, or <em>LS</em>). Uncheck the boxes to unlink them.</li>
 </ol>
 </section>
 
@@ -353,8 +356,43 @@
 <p>Select the Speech Act label on the canvas to adjust its vertical position using <span class="ui-element">↑ Move Up</span> and <span class="ui-element">↓ Move Down</span> in the sidebar. Use <span class="ui-element">Reset position</span> to return to the default.</p>
 </section>
 
+<section id="logical-structure">
+<h2>7. Logical Structure</h2>
+<p>The Logical Structure projection complements the others by displaying the underlying semantic representation of the clause and how its parts connect upward to one or more items in the morphosyntactic expression.</p>
+
+<h3>Activating the projection</h3>
+<p>With no nodes selected, click <span class="ui-element">Logical Structure</span> in the sidebar. A textbox appears below the morphosyntactic expression. Like the other three projections, you can hide or show it via its checkbox in the global projection controls.</p>
+
+<h3>Writing the logical-structure expression</h3>
+<p>Click the textbox to start editing. A floating toolbar appears above the box with formatting and symbol options:</p>
+<ul>
+<li><strong>Formatting buttons:</strong> bold (<strong>B</strong>), italics (<em>I</em>), small caps (<span style="font-variant: small-caps; text-transform: lowercase;">SC</span>), subscript (X<sub>2</sub>), superscript (X<sup>2</sup>), and underline (<span style="text-decoration: underline;">U</span>). Each button wraps the current selection with the corresponding markup. The same markers from the <strong>Text Formatting Guide</strong> work here as well, so you can also type them directly.</li>
+<li><strong>Logical symbols (Σ):</strong> opens a panel of common symbols for logical-semantic notation: <code>∅ ∧ ∨ ◇ ¬ ↔ ⊃ + − ϕ ψ ⟨ ⟩</code>. Click any symbol to insert it at the cursor position.</li>
+<li><strong>IPA characters (t͡ʃ):</strong> the same IPA picker available throughout Telperion, useful when the logical structure includes transcribed forms.</li>
+</ul>
+<p>Press <span class="keyboard-shortcut">Enter</span> to confirm or <span class="keyboard-shortcut">Esc</span> to cancel an edit.</p>
+
+<h3>Building chains</h3>
+<p>A <strong>chain</strong> is the path that links the logical-structure expression to one or more items in the morphosyntactic expression. Each chain starts at an <em>origin point</em> on the upper edge of the LS textbox.</p>
+
+<h3>Adding origin points</h3>
+<p>A thin green <strong>rail</strong> sits just above the textbox. Hover over it: a small ghost marker follows your cursor with the tip <em>Click to add origin</em>. Click anywhere on the rail to create a new origin point at that horizontal position. You can create as many origin points as needed, and each one becomes the starting point of an independent chain.</p>
+<p>To remove an origin point, select it and click <span class="ui-element">✕ Delete Chain</span> in the sidebar.</p>
+
+<h3>Adding intermediate nodes</h3>
+<p>A chain can be a single line directly from the LS to the expression, or it can pass through one or two intermediate nodes. With an origin point selected, the sidebar offers:</p>
+<ul>
+<li><span class="ui-element">+ Add Macrorole Node</span>: creates the first-line node, intended for macroroles such as <strong>ACTOR</strong>, <strong>UNDERGOER</strong>, or <strong>NMR</strong>. The dropdown suggests these labels, but you can type any custom text.</li>
+<li><span class="ui-element">+ Add Codification Node</span>: creates the second-line node, intended for codification markers such as <strong>PSA</strong>, <strong>NOM</strong>, etc. You can also type any custom text (for example, lexical morphosyntactic markers like <em>after</em>: ACC). Use this button on a fresh chain to skip the macrorole layer entirely.</li>
+</ul>
+
+<h3>Linking to expression items</h3>
+<p>The link to the morphosyntactic expression always emerges from the <em>topmost</em> node of the chain. Select the topmost node and look in the sidebar under <strong>Linking to expression item:</strong> a checkbox list of all base-expression items appears.</p>
+
+</section>
+
 <section id="exporting">
-<h2>7. Saving and Downloading Image</h2>
+<h2>8. Saving and Downloading Image</h2>
 <ul>
 <li><span class="ui-element">Save</span>: downloads a <code>.tlp</code> file. This is Telperion’s native, fully editable format.</li>
 <li><strong>What is a .tlp file?:</strong> It is simply a JSON file produced by Telperion. The extension is just a custom label. You can open it in any text editor, although you normally should not edit it manually.</li>
@@ -364,7 +402,7 @@
 </section>
 
 <section id="shortcuts">
-<h2>8. Keyboard Shortcuts</h2>
+<h2>9. Keyboard Shortcuts</h2>
 <p>Telperion supports quick shortcuts to improve your workflow:</p>
 <ul>
 <li><span class="keyboard-shortcut">Ctrl / ⌘ + S</span> : Save file (<code>.tlp</code>)</li>

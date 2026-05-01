@@ -257,6 +257,75 @@
     .segment-preview { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-light); min-height: 32px; align-items: center; }
     .segment-chip { padding: 5px 14px; background: white; border: 1px solid var(--border); border-radius: 20px; font-size: 0.9rem; color: var(--text); font-family: var(--font-sans); }
 
+    .logical-structure-container { margin-top: 180px; display: flex; justify-content: center; position: relative; z-index: 2; pointer-events: none; }
+    .logical-structure-wrapper { position: relative; pointer-events: auto; }
+    .logical-structure-box { padding: 8px 18px; border: 1.5px solid var(--border); border-radius: 8px; background: var(--bg-color); font-size: 16px; font-family: inherit; min-width: 200px; min-height: 36px; cursor: pointer; pointer-events: auto; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; line-height: 1.4; max-width: 900px; text-align: center; }
+    .logical-structure-box:hover { border-color: var(--accent); background: rgba(15, 81, 50, 0.02); }
+    .logical-structure-box.selected { border-color: var(--accent); background: rgba(15, 81, 50, 0.04); box-shadow: 0 0 0 3px rgba(15, 81, 50, 0.10); }
+    .logical-structure-box.placeholder { color: #adb5bd; border-style: dashed; font-style: italic; }
+    .logical-structure-box.editing { border-color: var(--accent); background: white; box-shadow: 0 0 0 3px rgba(15, 81, 50, 0.10); padding: 4px 10px; cursor: text; min-width: 400px; }
+
+    .ls-rail { position: absolute; top: -16px; left: 0; right: 0; height: 12px; cursor: copy; z-index: 5; }
+    .ls-rail::before { content: ''; position: absolute; left: 6px; right: 6px; bottom: 4px; height: 2px; background: rgba(15,81,50,0.35); border-radius: 1px; pointer-events: none; transition: background 0.15s ease; }
+    .ls-rail:hover::before { background: rgba(15,81,50,0.60); }
+    .ls-ghost-origin { position: absolute; top: 7px; transform: translate(-50%, -50%); width: 12px; height: 12px; border-radius: 50%; background: rgba(15,81,50,0.35); border: 2px solid var(--accent); pointer-events: none; box-shadow: 0 0 0 4px rgba(15,81,50,0.10); }
+    .ls-ghost-tip { position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: var(--accent); color: white; font-size: 10px; padding: 3px 8px; border-radius: 4px; white-space: nowrap; font-family: var(--font-sans); font-weight: 600; letter-spacing: 0.02em; pointer-events: none; }
+    .ls-ghost-tip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 4px solid transparent; border-top-color: var(--accent); }
+    .ls-origin { position: absolute; top: -9px; transform: translate(-50%, -50%); width: 11px; height: 11px; border-radius: 50%; background: var(--accent); border: 2px solid white; box-shadow: 0 0 0 1px var(--accent); cursor: pointer; z-index: 6; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+    .ls-origin:hover { transform: translate(-50%, -50%) scale(1.25); }
+    .ls-origin.selected { transform: translate(-50%, -50%) scale(1.25); box-shadow: 0 0 0 1px var(--accent), 0 0 0 4px rgba(15,81,50,0.20); }
+
+    /* Tooltip de descubrimiento del raíl: flotante a la derecha del raíl, con flecha apuntando a la izquierda hacia él. */
+    .ls-rail-hint {
+      position: absolute;
+      top: -16px;
+      left: calc(100% + 18px);
+      transform: translateY(-50%);
+      background: #4a9d72;
+      color: white;
+      font-family: var(--font-sans);
+      font-size: 0.78rem;
+      font-weight: 500;
+      line-height: 1.35;
+      letter-spacing: 0.01em;
+      padding: 8px 12px;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      white-space: nowrap;
+      z-index: 1200;
+      pointer-events: none;
+      animation: lsHintFadeIn 0.35s ease-out both;
+    }
+    .ls-rail-hint::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: 100%;
+      transform: translateY(-50%);
+      border: 6px solid transparent;
+      border-right-color: #4a9d72;
+    }
+    @keyframes lsHintFadeIn {
+      from { opacity: 0; transform: translateY(calc(-50% + 4px)); }
+      to   { opacity: 1; transform: translateY(-50%); }
+    }
+
+    /* Capa de cadenas: por encima del cuadro de la LS, ocupa todo el ancho del wrapper.
+       Altura fija reservada para 2 líneas + separación al raíl. */
+    .ls-chains-layer { position: absolute; left: 0; right: 0; bottom: calc(100% + 14px); height: 0; pointer-events: none; z-index: 90; }
+    .ls-chain-column { position: absolute; bottom: 0; transform: translateX(-50%); width: 0; pointer-events: none; }
+    /* Slots con posición absoluta para que line1 y line2 siempre estén en su altura propia,
+       independientemente de si el otro existe. Bottom: 0 = nivel del raíl. */
+    .ls-line1-slot { position: absolute; left: 50%; bottom: 36px; transform: translateX(-50%); pointer-events: auto; z-index: 91; }
+    .ls-line2-slot { position: absolute; left: 50%; bottom: 92px; transform: translateX(-50%); pointer-events: auto; z-index: 91; }
+    .ls-node-label { font-size: 14px; min-height: 24px; padding: 3px 10px; }
+    .ls-textarea { width: 100%; min-width: 380px; border: none; outline: none; resize: none; font-family: inherit; font-size: 16px; line-height: 1.4; background: transparent; color: var(--text); padding: 4px 8px; box-sizing: border-box; overflow: hidden; text-align: center; }
+    .ls-toolbar { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); display: inline-flex; gap: 4px; padding: 6px; background: white; border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.10); z-index: 1100; align-items: center; white-space: nowrap; }
+    .ls-toolbar button { transition: background 0.15s ease, border-color 0.15s ease; }
+    .ls-toolbar button:hover { background: rgba(15,81,50,0.06); border-color: var(--accent); }
+    .ls-symbols-panel { position: absolute !important; bottom: calc(100% + 50px); left: 50%; transform: translateX(-50%); width: auto; min-width: 240px; z-index: 1100 !important; margin-top: 0 !important; }
+    .ls-ipa-panel { position: absolute !important; bottom: calc(100% + 50px); left: 50%; transform: translateX(-50%); width: 380px; z-index: 1100 !important; margin-top: 0 !important; }
+
     @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
   </style>
 </head>
@@ -312,6 +381,9 @@
       "IU", "{IU}", "{IU", "IU}", "IU}top", "IU}comm", "{IU}top", "{IU}comm"
     ];
 
+    const LS_LINE1_LABELS = ["ACTOR", "UNDERGOER", "NMR"];
+    const LS_LINE2_LABELS = ["PSA", "NOM", "ACC", "DAT", "ACT", "ERG", "ABS"];
+
     const renderInfoLabel = (text) => {
       if (!text) return text;
       
@@ -334,7 +406,7 @@
       if (!text || typeof text !== 'string') return text;
       
       // Si no hay formatos, devolvemos el texto normal para ahorrar recursos
-      if (!text.includes('_') && !text.includes('*') && !text.includes('%')) return text;
+      if (!text.includes('_') && !text.includes('*') && !text.includes('%') && !text.includes('~')) return text;
 
       const elements = [];
       let currentText = '';
@@ -345,6 +417,7 @@
       let isSmallCaps = false;
       let isSubscript = false;
       let isSuperscript = false;
+      let isUnderline = false;
 
       // Función que empaqueta el texto acumulado con los estilos activos
       const pushElement = (idx) => {
@@ -365,6 +438,7 @@
         // Alineación vertical nativa
         if (isSubscript) style.verticalAlign = 'sub';
         if (isSuperscript) style.verticalAlign = 'super';
+        if (isUnderline) style.textDecoration = 'underline';
 
         elements.push(React.createElement('span', { key: `chunk-${idx}`, style }, currentText));
         currentText = ''; 
@@ -399,6 +473,9 @@
         } else if (char === '_') {
           pushElement(i);
           isSubscript = !isSubscript; 
+        } else if (char === '~') {
+          pushElement(i);
+          isUnderline = !isUnderline;
         } else {
           currentText += char; 
         }
@@ -408,6 +485,29 @@
 
       // Usamos un span normal para que la alineación vertical funcione perfectamente
       return React.createElement('span', null, ...elements);
+    };
+
+    // Envuelve la selección actual de un input/textarea con un par de delimitadores
+    // (left, right). Si no hay selección, inserta el par y posiciona el cursor en medio.
+    const wrapSelection = (el, left, right = left) => {
+      if (!el) return;
+      const start = el.selectionStart ?? el.value.length;
+      const end = el.selectionEnd ?? el.value.length;
+      const before = el.value.slice(0, start);
+      const sel = el.value.slice(start, end);
+      const after = el.value.slice(end);
+      const newValue = before + left + sel + right + after;
+      const newCaret = sel ? (start + left.length + sel.length + right.length) : (start + left.length);
+      return { value: newValue, selStart: sel ? (start + left.length) : newCaret, selEnd: newCaret };
+    };
+
+    // Inserta texto en la posición del cursor de un input/textarea
+    const insertAtCursor = (el, str) => {
+      if (!el) return;
+      const start = el.selectionStart ?? el.value.length;
+      const end = el.selectionEnd ?? el.value.length;
+      const newValue = el.value.slice(0, start) + str + el.value.slice(end);
+      return { value: newValue, selStart: start + str.length, selEnd: start + str.length };
     };
 
     const debounce = (func, delay) => {
@@ -425,6 +525,8 @@
       if (hours === 1) return '1 hour ago';
       return `${hours} hours ago`;
     };
+
+    const LOGIC_SYMBOLS = ['∅', '∧', '∨', '◇', '¬', '↔', '⊃', '+', '−', 'ϕ', 'ψ', '⟨', '⟩'];
 
     const IPA_CATEGORIES = [
       { title: 'Vowels', chars: 'i y ɨ ʉ ɯ u ɪ ʏ ʊ e ø ɘ ɵ ɤ o ə ɛ œ ɜ ɞ ʌ ɔ æ ɐ a ɶ ɑ ɒ'.split(' ') },
@@ -858,6 +960,301 @@
       );
     };
 
+    const LS_RAIL_HINT_KEY = 'telperion.lsRailHintSeen';
+
+    const LogicalStructureBox = ({ ls, isSelected, isEditing, selectedId, editingId, onSelect, onChange, onStartEdit, onEndEdit, onAddChain }) => {
+      const textareaRef = React.useRef(null);
+      const boxRef = React.useRef(null);
+      const [draftValue, setDraftValue] = React.useState(ls.text || '');
+      const [showSymbols, setShowSymbols] = React.useState(false);
+      const [showIPA, setShowIPA] = React.useState(false);
+      const [ghostX, setGhostX] = React.useState(null); // posición X del marcador fantasma en px
+      const [showRailHint, setShowRailHint] = React.useState(() => {
+        try { return !localStorage.getItem(LS_RAIL_HINT_KEY); } catch (_) { return true; }
+      });
+
+      const railVisible = !isEditing;
+      const chains = ls.chains || [];
+
+      // Auto-dismiss del hint a los 10s; también se cierra al crear el primer punto de origen.
+      React.useEffect(() => {
+        if (!showRailHint) return;
+        if (chains.length > 0) {
+          setShowRailHint(false);
+          try { localStorage.setItem(LS_RAIL_HINT_KEY, '1'); } catch (_) {}
+          return;
+        }
+        const timer = setTimeout(() => {
+          setShowRailHint(false);
+          try { localStorage.setItem(LS_RAIL_HINT_KEY, '1'); } catch (_) {}
+        }, 10000);
+        return () => clearTimeout(timer);
+      }, [showRailHint, chains.length]);
+
+      const dismissRailHint = () => {
+        if (!showRailHint) return;
+        setShowRailHint(false);
+        try { localStorage.setItem(LS_RAIL_HINT_KEY, '1'); } catch (_) {}
+      };
+
+      // Sincroniza el draft cuando cambia el valor canónico (load, undo, etc.)
+      React.useEffect(() => {
+        if (!isEditing) setDraftValue(ls.text || '');
+      }, [ls.text, isEditing]);
+
+      // Auto-focus al entrar en edición
+      React.useEffect(() => {
+        if (isEditing && textareaRef.current) {
+          textareaRef.current.focus();
+          const len = textareaRef.current.value.length;
+          textareaRef.current.setSelectionRange(len, len);
+        }
+      }, [isEditing]);
+
+      // Auto-resize del textarea
+      React.useEffect(() => {
+        if (isEditing && textareaRef.current) {
+          textareaRef.current.style.height = 'auto';
+          textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+        }
+      }, [draftValue, isEditing]);
+
+      const commitDraft = () => {
+        if (draftValue !== ls.text) onChange(ls.id, draftValue);
+        onEndEdit();
+        setShowSymbols(false);
+        setShowIPA(false);
+      };
+
+      const applyWrap = (left, right = left) => {
+        const el = textareaRef.current;
+        if (!el) return;
+        const result = wrapSelection(el, left, right);
+        if (!result) return;
+        setDraftValue(result.value);
+        // Restaurar selección tras el re-render
+        requestAnimationFrame(() => {
+          if (textareaRef.current) {
+            textareaRef.current.focus();
+            textareaRef.current.setSelectionRange(result.selStart, result.selEnd);
+          }
+        });
+      };
+
+      const insertSymbol = (sym) => {
+        const el = textareaRef.current;
+        if (!el) return;
+        const result = insertAtCursor(el, sym);
+        if (!result) return;
+        setDraftValue(result.value);
+        requestAnimationFrame(() => {
+          if (textareaRef.current) {
+            textareaRef.current.focus();
+            textareaRef.current.setSelectionRange(result.selStart, result.selEnd);
+          }
+        });
+      };
+
+      const handleKeyDown = (e) => {
+        if (e.key === 'Escape') { e.preventDefault(); setDraftValue(ls.text || ''); onEndEdit(); setShowSymbols(false); setShowIPA(false); }
+        else if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitDraft(); }
+      };
+
+      const boxClasses = `logical-structure-box ${isSelected ? 'selected' : ''} ${(!ls.text && !isEditing) ? 'placeholder' : ''} ${isEditing ? 'editing' : ''}`;
+
+      const fmtBtnStyle = { width: '32px', height: '28px', padding: 0, fontSize: '14px', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'white', border: '1px solid var(--border)', borderRadius: '4px', cursor: 'pointer', color: 'var(--text)' };
+
+      return (
+        <div className="logical-structure-wrapper" onClick={(e) => e.stopPropagation()}>
+          {isEditing && (
+            <div className="ls-toolbar">
+              <button type="button" style={{...fmtBtnStyle, fontWeight: 700}} title="Bold (**…**)" onMouseDown={(e) => { e.preventDefault(); applyWrap('**'); }}>B</button>
+              <button type="button" style={{...fmtBtnStyle, fontStyle: 'italic'}} title="Italic (*…*)" onMouseDown={(e) => { e.preventDefault(); applyWrap('*'); }}>I</button>
+              <button type="button" style={{...fmtBtnStyle, fontVariant: 'small-caps', textTransform: 'lowercase'}} title="Small caps (%…%)" onMouseDown={(e) => { e.preventDefault(); applyWrap('%'); }}>SC</button>
+              <button type="button" style={fmtBtnStyle} title="Subscript (_…_)" onMouseDown={(e) => { e.preventDefault(); applyWrap('_'); }}><span>X<sub style={{fontSize:'0.7em'}}>2</sub></span></button>
+              <button type="button" style={fmtBtnStyle} title="Superscript (__…__)" onMouseDown={(e) => { e.preventDefault(); applyWrap('__'); }}><span>X<sup style={{fontSize:'0.7em'}}>2</sup></span></button>
+              <button type="button" style={{...fmtBtnStyle, textDecoration: 'underline'}} title="Underline (~…~)" onMouseDown={(e) => { e.preventDefault(); applyWrap('~'); }}>U</button>
+              <div style={{ width: '1px', height: '20px', background: 'var(--border)', margin: '0 2px' }}></div>
+              <button type="button" style={{...fmtBtnStyle, fontWeight: 600, background: showSymbols ? 'var(--accent)' : 'white', color: showSymbols ? 'white' : 'var(--text)' }} title="Logical symbols" onMouseDown={(e) => { e.preventDefault(); setShowSymbols(s => !s); if (!showSymbols) setShowIPA(false); }}>Σ</button>
+              <button type="button" style={{...fmtBtnStyle, fontWeight: 400, background: showIPA ? 'var(--accent)' : 'white', color: showIPA ? 'white' : 'var(--text)' }} title="IPA characters" onMouseDown={(e) => { e.preventDefault(); setShowIPA(s => !s); if (!showIPA) setShowSymbols(false); }}>t͡ʃ</button>
+            </div>
+          )}
+
+          {isEditing && showSymbols && (
+            <div className="ipa-panel ls-symbols-panel" onMouseDown={(e) => e.preventDefault()}>
+              <div className="ipa-grid">
+                {LOGIC_SYMBOLS.map(s => (
+                  <button key={s} type="button" className="ipa-char-btn" title={`Insert ${s}`} onMouseDown={(e) => { e.preventDefault(); insertSymbol(s); }}>{s}</button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {isEditing && showIPA && (
+            <div className="ipa-panel ls-ipa-panel" onMouseDown={(e) => e.preventDefault()}>
+              {IPA_CATEGORIES.map((cat) => (
+                <div key={cat.title}>
+                  <div className="ipa-category-title">{cat.title}</div>
+                  <div className="ipa-grid">
+                    {cat.chars.map((ch, j) => (
+                      <button key={j} type="button" className="ipa-char-btn" title={ch} onMouseDown={(e) => { e.preventDefault(); insertSymbol(ch); }}>{ch}</button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Columnas de cadenas: una por cadena, ancladas en originX del cuadro LS, apiladas verticalmente sobre él. */}
+          {chains.length > 0 && (
+            <div className="ls-chains-layer">
+              {chains.map(chain => (
+                <div key={chain.id} className="ls-chain-column" style={{ left: `${chain.originX * 100}%` }}>
+                  {chain.line2 && (
+                    <div className="ls-chain-node ls-line2-slot" data-ls-node="line2" data-ls-line-id={chain.line2.id}>
+                      <EditableLabel
+                        id={chain.line2.id} label={chain.line2.label}
+                        isSelected={selectedId === chain.line2.id} isEditing={editingId === chain.line2.id}
+                        onSelect={onSelect} onChange={onChange} onEndEdit={onEndEdit}
+                        labelList={LS_LINE2_LABELS} className="ls-node-label"
+                      />
+                    </div>
+                  )}
+                  {chain.line1 && (
+                    <div className="ls-chain-node ls-line1-slot" data-ls-node="line1" data-ls-line-id={chain.line1.id}>
+                      <EditableLabel
+                        id={chain.line1.id} label={chain.line1.label}
+                        isSelected={selectedId === chain.line1.id} isEditing={editingId === chain.line1.id}
+                        onSelect={onSelect} onChange={onChange} onEndEdit={onEndEdit}
+                        labelList={LS_LINE1_LABELS} className="ls-node-label"
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div
+            ref={boxRef}
+            className={boxClasses}
+            data-ls-id={ls.id}
+            onClick={(e) => { e.stopPropagation(); onSelect(e, ls.id); }}
+            onDoubleClick={(e) => { e.stopPropagation(); onStartEdit(ls.id); }}
+          >
+            {isEditing ? (
+              <textarea
+                ref={textareaRef}
+                className="ls-textarea"
+                value={draftValue}
+                onChange={(e) => setDraftValue(e.target.value)}
+                onBlur={(e) => {
+                  // No cerrar si el blur va a un botón de la toolbar o del panel
+                  const next = e.relatedTarget;
+                  if (next && (next.closest('.ls-toolbar') || next.closest('.ls-symbols-panel') || next.closest('.ls-ipa-panel'))) return;
+                  commitDraft();
+                }}
+                onKeyDown={handleKeyDown}
+                rows={1}
+                spellCheck={false}
+              />
+            ) : (
+              ls.text ? renderLabel(ls.text) : 'Logical Structure'
+            )}
+
+            {/* Rail interactivo: siempre visible cuando la LS existe y no se está editando.
+                Se posiciona estrictamente sobre el borde superior, no se superpone al contenido del cuadro. */}
+            {railVisible && (
+              <div
+                className="ls-rail"
+                onMouseMove={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setGhostX(e.clientX - rect.left);
+                }}
+                onMouseLeave={() => setGhostX(null)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const x = e.clientX - rect.left;
+                  const ratio = rect.width > 0 ? x / rect.width : 0;
+                  setGhostX(null);
+                  dismissRailHint();
+                  onAddChain(ratio);
+                }}
+                title="Click to add origin"
+              >
+                {ghostX !== null && (
+                  <div className="ls-ghost-origin" style={{ left: `${ghostX}px` }}>
+                    <div className="ls-ghost-tip">Click to add origin</div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tooltip de descubrimiento del raíl: aparece la primera vez que el usuario
+                inicializa la Logical Structure, se descarta a los 10s o al crear el primer origin. */}
+            {railVisible && showRailHint && (
+              <div className="ls-rail-hint">
+                Click on this rail to add origin points.
+              </div>
+            )}
+
+            {/* Puntos de partida: siempre visibles cuando hay cadenas */}
+            {chains.map(chain => (
+              <div
+                key={chain.id}
+                className={`ls-origin ${selectedId === chain.id ? 'selected' : ''}`}
+                style={{ left: `${chain.originX * 100}%` }}
+                data-chain-id={chain.id}
+                onClick={(e) => { e.stopPropagation(); onSelect(e, chain.id); }}
+                title="Chain origin"
+              />
+            ))}
+          </div>
+        </div>
+      );
+    };
+
+    const ArrowStyleSelector = ({ value, onChange }) => {
+      // Estilos posibles: 'plain', 'arrow-end' (flecha arriba), 'arrow-start' (flecha abajo), 'arrow-both'
+      const options = [
+        { id: 'plain',       label: '|',    title: 'Plain line' },
+        { id: 'arrow-end',   label: '↑',    title: 'Arrow at end (top)' },
+        { id: 'arrow-start', label: '↓',    title: 'Arrow at start (bottom)' },
+        { id: 'arrow-both',  label: '↕',    title: 'Arrows at both ends' },
+      ];
+      return (
+        <div style={{ display: 'flex', gap: '4px' }}>
+          {options.map(o => {
+            const isActive = value === o.id;
+            return (
+              <button
+                key={o.id}
+                type="button"
+                title={o.title}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(o.id); }}
+                style={{
+                  flex: 1, padding: '8px 4px',
+                  border: '1.5px solid',
+                  borderColor: isActive ? 'var(--accent)' : 'var(--border)',
+                  borderRadius: '6px',
+                  background: isActive ? 'rgba(15,81,50,0.08)' : 'white',
+                  cursor: 'pointer',
+                  color: isActive ? 'var(--accent)' : 'var(--text)',
+                  fontWeight: isActive ? 700 : 500,
+                  fontSize: '16px',
+                  lineHeight: 1,
+                  transition: 'all 0.15s ease',
+                  fontFamily: 'inherit',
+                }}>
+                {o.label}
+              </button>
+            );
+          })}
+        </div>
+      );
+    };
+
     const TelperionApp = () => {
       const [diagram, setDiagram] = useState(null);
       const [selectedId, setSelectedId] = useState(null);
@@ -873,10 +1270,12 @@
       const [showConstituent, setShowConstituent] = useState(true);
       const [showOperators, setShowOperators] = useState(true);
       const [showInfoStructure, setShowInfoStructure] = useState(true);
+      const [showLogicalStructure, setShowLogicalStructure] = useState(true);
       const [projectionFocus, setProjectionFocus] = useState('all');
       
       const [shifts, setShifts] = useState({});
       const [svgLines, setSvgLines] = useState([]);
+      const [lsLines, setLsLines] = useState([]);
       const [extraTopPadding, setExtraTopPadding] = useState(0);
 
       const [history, setHistory] = useState([]);
@@ -1026,7 +1425,7 @@
       const startNewDiagram = () => {
         setDiagram(null); setRawText(''); setCuts(new Set()); setHistory([]); setHistoryIndex(-1);
         setSelectedId(null); setEditingId(null); setExtraTopPadding(0);
-        setShowConstituent(true); setShowOperators(true); setShowInfoStructure(true); setProjectionFocus('all');
+        setShowConstituent(true); setShowOperators(true); setShowInfoStructure(true); setShowLogicalStructure(true); setProjectionFocus('all');
         localStorage.removeItem('telperion-autosave'); setLastSaved(null);
       };
 
@@ -1060,6 +1459,79 @@
         if (!diagram || diagram.root) return;
         const newRoot = { id: generateId(), label: '', children: [], peripheries: [], isSpine: false };
         commitChange({ ...diagram, root: newRoot });
+      };
+
+      const initializeLogicalStructure = () => {
+        if (!diagram || diagram.logicalStructure) return;
+        const newLS = { id: generateId(), text: '', chains: [] };
+        commitChange({ ...diagram, logicalStructure: newLS });
+      };
+
+      const addLSChain = (originX) => {
+        if (!diagram || !diagram.logicalStructure) return;
+        const newChain = {
+          id: generateId(),
+          originX: Math.max(0, Math.min(1, originX)),
+          line1: null,
+          line2: null,
+          exprIds: [],
+          finalArrowStyle: 'plain'
+        };
+        const chains = [...(diagram.logicalStructure.chains || []), newChain];
+        commitChange({ ...diagram, logicalStructure: { ...diagram.logicalStructure, chains } });
+        setSelectedId(newChain.id);
+        setEditingId(null);
+      };
+
+      const updateLSChain = (chainId, updater) => {
+        if (!diagram || !diagram.logicalStructure) return;
+        const chains = diagram.logicalStructure.chains.map(c => c.id === chainId ? updater(c) : c);
+        commitChange({ ...diagram, logicalStructure: { ...diagram.logicalStructure, chains } });
+      };
+
+      const addLSLine1 = (chainId) => {
+        const newNode = { id: generateId(), label: '', arrowFromBelowStyle: 'plain' };
+        updateLSChain(chainId, c => ({ ...c, line1: newNode }));
+        setSelectedId(newNode.id); setPendingEditId(newNode.id);
+      };
+
+      const addLSLine2 = (chainId) => {
+        const newNode = { id: generateId(), label: '', arrowFromBelowStyle: 'plain' };
+        updateLSChain(chainId, c => ({ ...c, line2: newNode }));
+        setSelectedId(newNode.id); setPendingEditId(newNode.id);
+      };
+
+      const deleteLSLine1 = (chainId) => {
+        updateLSChain(chainId, c => ({ ...c, line1: null }));
+        setSelectedId(chainId); setEditingId(null);
+      };
+
+      const deleteLSLine2 = (chainId) => {
+        updateLSChain(chainId, c => ({ ...c, line2: null }));
+        setSelectedId(chainId); setEditingId(null);
+      };
+
+      const toggleChainTarget = (chainId, exprId) => {
+        updateLSChain(chainId, c => {
+          const list = c.exprIds || [];
+          const next = list.includes(exprId) ? list.filter(x => x !== exprId) : [...list, exprId];
+          return { ...c, exprIds: next };
+        });
+      };
+
+      const clearChainTargets = (chainId) => {
+        updateLSChain(chainId, c => ({ ...c, exprIds: [] }));
+      };
+
+      const setChainFinalArrowStyle = (chainId, style) => {
+        updateLSChain(chainId, c => ({ ...c, finalArrowStyle: style }));
+      };
+
+      const setLSNodeArrowFromBelow = (chainId, which, style) => {
+        updateLSChain(chainId, c => {
+          if (!c[which]) return c;
+          return { ...c, [which]: { ...c[which], arrowFromBelowStyle: style } };
+        });
       };
 
       const getAutoFilename = () => {
@@ -1130,7 +1602,7 @@
         };
 
         consider(baseRect);
-        el.querySelectorAll('.node-label, .equator-item, .operator-label, svg').forEach(node => consider(node.getBoundingClientRect()));
+        el.querySelectorAll('.node-label, .equator-item, .operator-label, .logical-structure-box, svg').forEach(node => consider(node.getBoundingClientRect()));
 
         if (!isFinite(minL) || !isFinite(minT) || !isFinite(maxR) || !isFinite(maxB)) {
           minL = baseRect.left; minT = baseRect.top; maxR = baseRect.right; maxB = baseRect.bottom;
@@ -1156,7 +1628,7 @@
               const x2 = parseFloat(line.getAttribute('x2')), y2 = parseFloat(line.getAttribute('y2'));
               if (![x1,y1,x2,y2].every(v => Number.isFinite(v))) return;
               const ang = Math.atan2(y2 - y1, x2 - x1);
-              const hL = 10, hW = 7, tx = x2, ty = y2;
+              const hL = 7, hW = 5, tx = x2, ty = y2;
               const bx = tx - hL * Math.cos(ang), by = ty - hL * Math.sin(ang);
               const lx = bx + (hW/2)*Math.cos(ang+Math.PI/2), ly = by + (hW/2)*Math.sin(ang+Math.PI/2);
               const rx = bx + (hW/2)*Math.cos(ang-Math.PI/2), ry = by + (hW/2)*Math.sin(ang-Math.PI/2);
@@ -1165,6 +1637,26 @@
               poly.setAttribute('fill', line.getAttribute('stroke') || '#343a40');
               svgClone.appendChild(poly);
               line.removeAttribute('marker-end');
+            } catch(_) {}
+          });
+
+          // marker-start: flecha apuntando hacia el inicio (x1,y1). Dirección invertida respecto a marker-end.
+          svgClone.querySelectorAll('line[marker-start]').forEach(line => {
+            try {
+              const x1 = parseFloat(line.getAttribute('x1')), y1 = parseFloat(line.getAttribute('y1'));
+              const x2 = parseFloat(line.getAttribute('x2')), y2 = parseFloat(line.getAttribute('y2'));
+              if (![x1,y1,x2,y2].every(v => Number.isFinite(v))) return;
+              // El polígono apunta hacia (x1,y1); la base se desplaza hacia (x2,y2)
+              const ang = Math.atan2(y2 - y1, x2 - x1);
+              const hL = 7, hW = 5, tx = x1, ty = y1;
+              const bx = tx + hL * Math.cos(ang), by = ty + hL * Math.sin(ang);
+              const lx = bx + (hW/2)*Math.cos(ang+Math.PI/2), ly = by + (hW/2)*Math.sin(ang+Math.PI/2);
+              const rx = bx + (hW/2)*Math.cos(ang-Math.PI/2), ry = by + (hW/2)*Math.sin(ang-Math.PI/2);
+              const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+              poly.setAttribute('points', `${tx},${ty} ${lx},${ly} ${rx},${ry}`);
+              poly.setAttribute('fill', line.getAttribute('stroke') || '#343a40');
+              svgClone.appendChild(poly);
+              line.removeAttribute('marker-start');
             } catch(_) {}
           });
 
@@ -1197,6 +1689,26 @@
         clone.querySelectorAll('.node-chevron').forEach(n => n.remove());
         clone.querySelectorAll('.node-label.selected').forEach(n => n.classList.remove('selected'));
         clone.querySelectorAll('.node-label.is-editing').forEach(n => n.classList.remove('is-editing'));
+
+        // Logical Structure: en el export, ocultar el raíl, los puntos de origen, los marcadores fantasma
+        // y las paneles flotantes (toolbar, símbolos, IPA). Quitar también el borde y la sombra del cuadro de la LS.
+        clone.querySelectorAll('.ls-rail').forEach(n => n.remove());
+        clone.querySelectorAll('.ls-origin').forEach(n => n.remove());
+        clone.querySelectorAll('.ls-ghost-origin').forEach(n => n.remove());
+        clone.querySelectorAll('.ls-toolbar, .ls-symbols-panel, .ls-ipa-panel, .ipa-panel').forEach(n => n.remove());
+        clone.querySelectorAll('.logical-structure-box').forEach(box => {
+          box.style.border = 'none';
+          box.style.boxShadow = 'none';
+          box.style.background = 'transparent';
+          box.classList.remove('selected');
+          box.classList.remove('placeholder');
+          box.classList.remove('editing');
+          // Si el cuadro está vacío y solo tiene el texto placeholder "Logical Structure",
+          // lo blanquea para que no aparezca en el PNG.
+          if (diagram.logicalStructure && !diagram.logicalStructure.text) {
+            box.textContent = '';
+          }
+        });
 
         clone.style.transform = 'none'; clone.style.transformOrigin = '0 0';
         clone.style.position = 'relative'; clone.style.left = '0'; clone.style.top = '0';
@@ -1328,6 +1840,17 @@
             }
           }
         }
+        if (diagram.logicalStructure && diagram.logicalStructure.id === id) {
+          return { type: 'logicalStructure' };
+        }
+        if (diagram.logicalStructure && diagram.logicalStructure.chains) {
+          for (let ci = 0; ci < diagram.logicalStructure.chains.length; ci++) {
+            const c = diagram.logicalStructure.chains[ci];
+            if (c.id === id) return { type: 'lsChain', chainIndex: ci, chainId: id };
+            if (c.line1 && c.line1.id === id) return { type: 'lsLine1', chainIndex: ci, chainId: c.id };
+            if (c.line2 && c.line2.id === id) return { type: 'lsLine2', chainIndex: ci, chainId: c.id };
+          }
+        }
         if (diagram.root) {
           const nodeInfo = findParentAndIndex(diagram.root, id);
           if (nodeInfo) return { type: 'node', ...nodeInfo };
@@ -1376,6 +1899,17 @@
             return { ...e, operatorLayers: newLayers };
           });
           commitChange({ ...diagram, expressions: newExprs });
+        } else if (itemInfo.type === 'logicalStructure') {
+          if (newLabel !== diagram.logicalStructure.text) {
+            commitChange({ ...diagram, logicalStructure: { ...diagram.logicalStructure, text: newLabel } });
+          }
+        } else if (itemInfo.type === 'lsLine1' || itemInfo.type === 'lsLine2') {
+          const key = itemInfo.type === 'lsLine1' ? 'line1' : 'line2';
+          const chains = diagram.logicalStructure.chains.map(c => {
+            if (c.id !== itemInfo.chainId) return c;
+            return { ...c, [key]: { ...c[key], label: newLabel } };
+          });
+          commitChange({ ...diagram, logicalStructure: { ...diagram.logicalStructure, chains } });
         } else {
           const newRoot = updateNode(diagram.root, id, n => ({ ...n, label: newLabel }));
           if (JSON.stringify(newRoot) !== JSON.stringify(diagram.root)) commitChange({ ...diagram, root: newRoot });
@@ -1661,6 +2195,26 @@
             });
           }
         });
+
+        // Enlaces desde cadenas de la Logical Structure
+        if (diagram.logicalStructure && diagram.logicalStructure.chains) {
+          diagram.logicalStructure.chains.forEach((chain, ci) => {
+            if ((chain.exprIds || []).includes(exprId)) {
+              // Etiqueta descriptiva: si la cadena tiene nodos intermedios, los menciona; si no, indica enlace directo desde la LS.
+              const labelParts = [];
+              if (chain.line2 && chain.line2.label) labelParts.push(chain.line2.label);
+              else if (chain.line2) labelParts.push('(unlabeled codification)');
+              if (chain.line1 && chain.line1.label) labelParts.push(chain.line1.label);
+              else if (chain.line1) labelParts.push('(unlabeled macrorole)');
+              const sortedIdx = [...diagram.logicalStructure.chains]
+                .sort((a, b) => a.originX - b.originX)
+                .findIndex(c => c.id === chain.id);
+              const friendly = labelParts.length ? labelParts.join(' → ') : `LS chain ${sortedIdx + 1}`;
+              links.push({ type: 'logicalStructure', sourceId: chain.id, label: friendly });
+            }
+          });
+        }
+
         return links;
       };
 
@@ -1689,6 +2243,13 @@
             return { ...e, operatorLayers: newLayers };
           });
           commitChange({ ...diagram, expressions: newExprs });
+        } else if (link.type === 'logicalStructure') {
+          if (!diagram.logicalStructure) return;
+          const newChains = diagram.logicalStructure.chains.map(c => {
+            if (c.id !== link.sourceId) return c;
+            return { ...c, exprIds: (c.exprIds || []).filter(id => id !== exprId) };
+          });
+          commitChange({ ...diagram, logicalStructure: { ...diagram.logicalStructure, chains: newChains } });
         }
       };
 
@@ -1911,6 +2472,30 @@
         if (opInfo && opInfo.type === 'operator') { deleteOperatorLayer(idToRemove); return; }
         if (opInfo && opInfo.type === 'operatorNode') { deleteOperatorNode(idToRemove); return; }
         if (opInfo && opInfo.type === 'infoUnit') { deleteInfoUnit(opInfo.anchorExprId); return; }
+
+        if (opInfo && opInfo.type === 'logicalStructure') {
+          const { logicalStructure, ...rest } = diagram;
+          commitChange(rest);
+          if (selectedId === idToRemove) { setSelectedId(null); setEditingId(null); }
+          return;
+        }
+
+        if (opInfo && opInfo.type === 'lsChain') {
+          const newChains = diagram.logicalStructure.chains.filter(c => c.id !== idToRemove);
+          commitChange({ ...diagram, logicalStructure: { ...diagram.logicalStructure, chains: newChains } });
+          if (selectedId === idToRemove) { setSelectedId(null); setEditingId(null); }
+          return;
+        }
+
+        if (opInfo && opInfo.type === 'lsLine1') {
+          deleteLSLine1(opInfo.chainId);
+          return;
+        }
+
+        if (opInfo && opInfo.type === 'lsLine2') {
+          deleteLSLine2(opInfo.chainId);
+          return;
+        }
         
         if (opInfo && opInfo.type === 'gloss') {
           // If a gloss is selected, delete ONLY the gloss content (keep the base item)
@@ -1936,7 +2521,18 @@
           };
           const newRoot = diagram.root ? unlink(diagram.root) : null;
           const newExprs = diagram.expressions.filter(e => e.id !== actualIdToRemove);
-          commitChange({ ...diagram, root: newRoot, expressions: newExprs });
+          // Limpiar referencias colgantes en cadenas LS
+          let newLogicalStructure = diagram.logicalStructure;
+          if (newLogicalStructure && newLogicalStructure.chains) {
+            newLogicalStructure = {
+              ...newLogicalStructure,
+              chains: newLogicalStructure.chains.map(c => ({
+                ...c,
+                exprIds: (c.exprIds || []).filter(id => id !== actualIdToRemove)
+              }))
+            };
+          }
+          commitChange({ ...diagram, root: newRoot, expressions: newExprs, ...(newLogicalStructure ? { logicalStructure: newLogicalStructure } : {}) });
           if (selectedId === idToRemove) { setSelectedId(null); setEditingId(null); }
           return;
         }
@@ -2866,7 +3462,115 @@
         setWrapperNaturalSize(prev => (prev.w === natW && prev.h === natH) ? prev : { w: natW, h: natH });
         wrapperEl.style.transform = `scale(${zoomLevel / 100})`;
 
-      }, [diagram, editingId, layoutTick, zoomLevel, showConstituent, showOperators, showInfoStructure, projectionFocus]); 
+      }, [diagram, editingId, layoutTick, zoomLevel, showConstituent, showOperators, showInfoStructure, showLogicalStructure, projectionFocus]); 
+
+      // ============================================================
+      // EFECTO INDEPENDIENTE: cómputo de segmentos de LS chains
+      // Se ejecuta SIEMPRE que cambien las cadenas, incluso cuando hay un nodo en edición.
+      // Esto garantiza que cambios desde el sidebar (estilos de flecha, targets) se vean al instante.
+      // ============================================================
+      useLayoutEffect(() => {
+        if (!diagram || !wrapperRef.current) return;
+        if (!diagram.logicalStructure || !diagram.logicalStructure.chains || !diagram.logicalStructure.chains.length) {
+          if (lsLines.length) setLsLines([]);
+          return;
+        }
+
+        const wrapperEl = wrapperRef.current;
+        const wrapperRect = wrapperEl.getBoundingClientRect();
+
+        const lsBoxEl = document.querySelector(`[data-ls-id="${diagram.logicalStructure.id}"]`);
+        if (!lsBoxEl) return;
+        const lsRect = lsBoxEl.getBoundingClientRect();
+        const lsTop = lsRect.top - wrapperRect.top;
+
+        const getLsNodeRect = (nodeId) => {
+          const slot = document.querySelector(`[data-ls-line-id="${nodeId}"]`);
+          if (!slot) return null;
+          const r = slot.getBoundingClientRect();
+          return {
+            cx: r.left + r.width / 2 - wrapperRect.left,
+            top: r.top - wrapperRect.top,
+            bottom: r.bottom - wrapperRect.top,
+          };
+        };
+
+        // Devuelve la posición de un ítem de la expresión: cx (centrado en la palabra) y bottom
+        // (en el borde inferior de la línea de glosa si existe; si no, de la palabra).
+        const getExprPosition = (id) => {
+          const wordEl = document.querySelector(`[data-expr-id="${id}"] > .node-content > .node-label.equator-item`);
+          if (!wordEl) return null;
+          const wordRect = wordEl.getBoundingClientRect();
+          const item = document.querySelector(`[data-expr-id="${id}"]`);
+          const glossEl = item ? item.querySelector('.gloss-label') : null;
+          const bottom = glossEl ? glossEl.getBoundingClientRect().bottom : wordRect.bottom;
+          return {
+            cx: wordRect.left + wordRect.width / 2 - wrapperRect.left,
+            bottom: bottom - wrapperRect.top,
+          };
+        };
+
+        const stylesToMarkers = (style) => {
+          const ms = (style === 'arrow-start' || style === 'arrow-both') ? 'arrowhead-start' : null;
+          const me = (style === 'arrow-end'   || style === 'arrow-both') ? 'arrowhead' : null;
+          return { markerStart: ms, markerEnd: me };
+        };
+
+        const computed = [];
+        const zoom = zoomLevel / 100;
+        const toLocal = (px) => px / zoom;
+
+        diagram.logicalStructure.chains.forEach((chain, ci) => {
+          const originX = toLocal(lsRect.left + chain.originX * lsRect.width - wrapperRect.left);
+          const originY = toLocal(lsTop);
+
+          let prev = { x: originX, y: originY };
+
+          if (chain.line1) {
+            const l1 = getLsNodeRect(chain.line1.id);
+            if (l1) {
+              const { markerStart, markerEnd } = stylesToMarkers(chain.line1.arrowFromBelowStyle || 'plain');
+              computed.push({
+                id: `ls-chain-${ci}-seg1`,
+                x1: prev.x, y1: prev.y, x2: toLocal(l1.cx), y2: toLocal(l1.bottom) + 4,
+                markerStart, markerEnd
+              });
+              prev = { x: toLocal(l1.cx), y: toLocal(l1.top) - 1 };
+            }
+          }
+
+          if (chain.line2) {
+            const l2 = getLsNodeRect(chain.line2.id);
+            if (l2) {
+              const { markerStart, markerEnd } = stylesToMarkers(chain.line2.arrowFromBelowStyle || 'plain');
+              computed.push({
+                id: `ls-chain-${ci}-seg2`,
+                x1: prev.x, y1: prev.y, x2: toLocal(l2.cx), y2: toLocal(l2.bottom) + 4,
+                markerStart, markerEnd
+              });
+              prev = { x: toLocal(l2.cx), y: toLocal(l2.top) - 1 };
+            }
+          }
+
+          const targets = chain.exprIds || [];
+          if (targets.length) {
+            const { markerStart, markerEnd } = stylesToMarkers(chain.finalArrowStyle || 'plain');
+            targets.forEach((exprId, ti) => {
+              const pos = getExprPosition(exprId);
+              if (!pos) return;
+              const ex = toLocal(pos.cx);
+              const ey = toLocal(pos.bottom) + 4;
+              computed.push({
+                id: `ls-chain-${ci}-final-${ti}`,
+                x1: prev.x, y1: prev.y, x2: ex, y2: ey,
+                markerStart, markerEnd
+              });
+            });
+          }
+        });
+
+        setLsLines(prev => JSON.stringify(prev) === JSON.stringify(computed) ? prev : computed);
+      }, [diagram, layoutTick, zoomLevel, showLogicalStructure]);
 
       const editingType = editingId ? getItemTypeById(editingId)?.type : null;
 
@@ -2974,9 +3678,13 @@
       const isOperatorNode = info && info.type === 'operatorNode';
       const isInfoUnit = info && info.type === 'infoUnit';
       const isSpeechAct = info && info.type === 'speechAct';
+      const isLS = info && info.type === 'logicalStructure';
+      const isLSChain = info && info.type === 'lsChain';
+      const isLSLine1 = info && info.type === 'lsLine1';
+      const isLSLine2 = info && info.type === 'lsLine2';
       const canAddParent = isSyntax && info && !info.parent;
       const canDeleteSelection = Boolean(info) && !isSpeechAct;
-      const deleteLabel = isInfoUnit ? '✕ Delete Information Unit' : isOperatorNode ? '✕ Delete Operator' : isOperator ? '✕ Delete Layer' : isExpr ? '✕ Delete Item' : (isSyntax ? '✕ Delete Node' : '✕ Delete');
+      const deleteLabel = isInfoUnit ? '✕ Delete Information Unit' : isOperatorNode ? '✕ Delete Operator' : isOperator ? '✕ Delete Layer' : isExpr ? '✕ Delete Item' : isLS ? '✕ Delete Logical Structure' : isLSChain ? '✕ Delete Chain' : isLSLine1 ? '✕ Delete Macrorole Node' : isLSLine2 ? '✕ Delete Codification Node' : (isSyntax ? '✕ Delete Node' : '✕ Delete');
       
       let canMoveLeft = false; let canMoveRight = false; let isSpineActive = false; let canSpine = false;
       
@@ -3012,8 +3720,11 @@
         <div className="main-layout" onClick={() => { setSelectedId(null); setEditingId(null); setLinkingLayerId(null); setSecondaryLinkingNodeId(null); }}>
           <svg style={{ width: 0, height: 0, position: 'absolute' }}>
             <defs>
-              <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                <polygon points="0 0, 10 3.5, 0 7" fill="#343a40" />
+              <marker id="arrowhead" markerWidth="7" markerHeight="5" refX="6.5" refY="2.5" orient="auto">
+                <polygon points="0 0, 7 2.5, 0 5" fill="#343a40" />
+              </marker>
+              <marker id="arrowhead-start" markerWidth="7" markerHeight="5" refX="0.5" refY="2.5" orient="auto">
+                <polygon points="7 0, 0 2.5, 7 5" fill="#343a40" />
               </marker>
             </defs>
           </svg>
@@ -3080,23 +3791,27 @@
                 
                 {(() => {
                   const isOperatorSvg = (id) => (id.startsWith('op-line-') || id.startsWith('oparrow-') || id.startsWith('oplink-') || id.startsWith('crosslink-'));
+                  const isLsChainSvg = (id) => id.startsWith('ls-chain-') || id.startsWith('ls-link-marker-');
 
                   const defsBlock = (
                     <defs>
                       <pattern id="hatch-horizontal-back" patternUnits="userSpaceOnUse" width="6" height="6"><line x1="0" y1="3" x2="6" y2="3" stroke="#343a40" strokeWidth="0.8" /></pattern>
                       <pattern id="hatch-vertical-back" patternUnits="userSpaceOnUse" width="6" height="6"><line x1="3" y1="0" x2="3" y2="6" stroke="#343a40" strokeWidth="0.8" /></pattern>
+                      <marker id="arrowhead" markerWidth="7" markerHeight="5" refX="6.5" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#343a40" /></marker>
+                      <marker id="arrowhead-start" markerWidth="7" markerHeight="5" refX="0.5" refY="2.5" orient="auto"><polygon points="7 0, 0 2.5, 7 5" fill="#343a40" /></marker>
                     </defs>
                   );
 
-                  const visibleLines = svgLines.filter(l => {
+                  const visibleLines = [...svgLines, ...lsLines].filter(l => {
                     if (!showConstituent && (l.id.startsWith('line-') || l.id.startsWith('perif-') || l.id.startsWith('expr-line-') || l.id.startsWith('expr-triangle-'))) return false;
                     if (!showOperators && isOperatorSvg(l.id)) return false;
                     if (!showInfoStructure && (l.id.startsWith('info-line-') || l.id.startsWith('info-bracket-') || l.id.startsWith('pfd-') || l.id.startsWith('afd-') || l.id.startsWith('comp-') || l.id.startsWith('cont-'))) return false;
+                    if (!showLogicalStructure && isLsChainSvg(l.id)) return false;
                     return true;
                   });
 
-                  const backLines = visibleLines.filter(l => !isOperatorSvg(l.id) && !l.isText);
-                  const frontLines = visibleLines.filter(l => isOperatorSvg(l.id) && !l.isText);
+                  const backLines = visibleLines.filter(l => !isOperatorSvg(l.id) && !isLsChainSvg(l.id) && !l.isText);
+                  const frontLines = visibleLines.filter(l => (isOperatorSvg(l.id) || isLsChainSvg(l.id)) && !l.isText);
                   const textLines = visibleLines.filter(l => l.isText);
 
                   const renderLine = (l) => {
@@ -3131,10 +3846,14 @@
                       return (<path key={l.id} d={l.d} fill={l.fillPattern ? `url(#${l.fillPattern}-back)` : "none"} stroke={l.stroke || "#343a40"} strokeWidth={l.strokeWidth || "1.5"} strokeDasharray={l.isDashed ? "6 4" : null} style={{ transition: 'opacity 0.3s ease', opacity: lineOpacity }} />);
                     }
 
+                    if (l.isCircle) {
+                      return <circle key={l.id} cx={l.cx} cy={l.cy} r={l.r} fill={l.fill || '#343a40'} style={{ transition: 'opacity 0.3s ease', opacity: lineOpacity }} />;
+                    }
+
                     return l.isTriangle ? (
                       <polygon key={l.id} points={l.points} fill="none" stroke="#343a40" strokeWidth="1.5" strokeDasharray={l.isDashed ? "6 4" : (l.isDotted ? "0 4" : null)} strokeLinecap={l.isDotted ? "round" : undefined} style={{ transition: 'opacity 0.3s ease', opacity: lineOpacity }} />
                     ) : (
-                      <line key={l.id} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="#343a40" strokeWidth="1.5" strokeDasharray={l.isDashed ? "6 4" : (l.isDotted ? "0 4" : null)} strokeLinecap={l.isDotted ? "round" : undefined} markerEnd={l.isArrow ? "url(#arrowhead)" : null} style={{ transition: 'opacity 0.3s ease', opacity: lineOpacity }} />
+                      <line key={`${l.id}-${l.markerStart || 'n'}-${l.markerEnd || 'n'}`} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="#343a40" strokeWidth="1.5" strokeDasharray={l.isDashed ? "6 4" : (l.isDotted ? "0 4" : null)} strokeLinecap={l.isDotted ? "round" : undefined} markerStart={l.markerStart ? `url(#${l.markerStart})` : null} markerEnd={l.markerEnd ? `url(#${l.markerEnd})` : (l.isArrow ? "url(#arrowhead)" : null)} style={{ transition: 'opacity 0.3s ease', opacity: lineOpacity }} />
                     );
                   };
 
@@ -3194,6 +3913,23 @@
                       onChange={handleLabelChange} onEndEdit={() => setEditingId(null)} onDelete={deleteItem} />
                   ))}
                 </div>
+
+                {diagram.logicalStructure && showLogicalStructure && (
+                  <div className="logical-structure-container" style={{ zIndex: editingType === 'logicalStructure' ? 1000 : 2 }}>
+                    <LogicalStructureBox
+                      ls={diagram.logicalStructure}
+                      isSelected={selectedId === diagram.logicalStructure.id}
+                      isEditing={editingId === diagram.logicalStructure.id}
+                      selectedId={selectedId}
+                      editingId={editingId}
+                      onSelect={handleNodeClick}
+                      onChange={handleLabelChange}
+                      onStartEdit={(id) => { setSelectedId(id); setEditingId(id); }}
+                      onEndEdit={() => setEditingId(null)}
+                      onAddChain={addLSChain}
+                    />
+                  </div>
+                )}
               </div>
               </div>
             </div>
@@ -3246,7 +3982,7 @@
                         </div>
 
                         {info.nodeType === 'periphery' ? (
-                          <div style={{display:'flex', flexDirection:'column', gap:'6px', maxHeight:'350px', overflowY:'auto', padding:'6px 0'}}>
+                          <div style={{display:'flex', flexDirection:'column', gap:'6px', padding:'6px 0'}}>
                             {diagram.expressions.map(ex => {
                               const owner = syntaxMap[ex.id];
                               const myIds = getNodeLinkIds(selectedNodeData);
@@ -3388,11 +4124,11 @@
                       {incomingLinks.length === 0 ? (
                         <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>No incoming links</span>
                       ) : (
-                        <div style={{display:'flex', flexDirection:'column', gap:'6px', maxHeight:'350px', overflowY:'auto', padding:'6px 0'}}>
+                        <div style={{display:'flex', flexDirection:'column', gap:'6px', padding:'6px 0'}}>
                           {incomingLinks.map((link) => (
                             <label key={link.sourceId} style={{display:'flex', alignItems:'center', gap:'8px', fontSize:'0.9rem', cursor:'pointer'}}>
                               <input type="checkbox" checked={true} onChange={() => handleRemoveIncomingLink(actualExprId, link)} />
-                              <span>From <strong>{renderLabel(link.label)}</strong> <span style={{fontSize: '0.75rem', color: 'var(--text-secondary)'}}>({link.type === 'syntax' ? 'Syntax' : 'Operator'})</span></span>
+                              <span>From <strong>{renderLabel(link.label)}</strong> <span style={{fontSize: '0.75rem', color: 'var(--text-secondary)'}}>({link.type === 'syntax' ? 'Syntax' : link.type === 'logicalStructure' ? 'LS' : 'Operator'})</span></span>
                             </label>
                           ))}
                         </div>
@@ -3469,7 +4205,7 @@
                       <div style={{borderTop: '1px solid var(--border-light)', paddingTop: '12px', marginTop: '12px', marginBottom: '8px'}}>
                         <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>Linking to expression item:</span>
                       </div>
-                      <div style={{display:'flex', flexDirection:'column', gap:'6px', maxHeight:'350px', overflowY:'auto', padding:'6px 0'}}>
+                      <div style={{display:'flex', flexDirection:'column', gap:'6px', padding:'6px 0'}}>
                         {diagram.expressions.map(ex => {
                           const isLinked = opLinkIds.includes(ex.id);
                           return (
@@ -3520,6 +4256,143 @@
                         <button onClick={() => updateSpan(0, -1)} disabled={!canShrinkRight} style={{ fontWeight: 'normal' }}>Shrink Right ←</button>
                       </div>
                       <div style={{textAlign: 'center', fontSize: '0.8rem', color: 'var(--accent)', marginTop: '8px'}}>Covering {1 + sLeft + sRight} item(s)</div>
+                    </div>
+                  );
+                })()}
+
+                {isLS && (
+                  <div className="sidebar-section">
+                    <button className="btn" style={{ width: '100%', textAlign: 'left', fontWeight: 'bold', borderColor: 'var(--accent)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.04)', marginBottom: '12px' }} onClick={() => { setSelectedId(null); setEditingId(null); }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}><polyline points="15 18 9 12 15 6"></polyline></svg>
+                      <span>Logical Structure</span>
+                    </button>
+                    <p style={{fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0}}>Edit the logical structure expression and link it to items in the expression line above.</p>
+                    <p style={{fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '8px', marginBottom: 0}}>Click on the rail above the Logical Structure textbox to add origin points for chains linking the LS to expression items.</p>
+                  </div>
+                )}
+
+                {isLSChain && (() => {
+                  const chain = diagram.logicalStructure?.chains?.[info.chainIndex];
+                  if (!chain) return null;
+                  const totalChains = diagram.logicalStructure.chains.length;
+                  const sortedIdx = [...diagram.logicalStructure.chains]
+                    .sort((a, b) => a.originX - b.originX)
+                    .findIndex(c => c.id === chain.id);
+                  const hasL1 = !!chain.line1;
+                  const hasL2 = !!chain.line2;
+                  const isTopmost = !hasL1 && !hasL2;
+                  return (
+                    <div className="sidebar-section">
+                      <button className="btn" style={{ width: '100%', textAlign: 'left', fontWeight: 'bold', borderColor: 'var(--accent)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.04)', marginBottom: '12px' }} onClick={() => { setSelectedId(null); setEditingId(null); }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        <span>Logical Structure Chain</span>
+                      </button>
+                      <p style={{fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0}}>Chain {sortedIdx + 1} of {totalChains}, anchored at {Math.round(chain.originX * 100)}% of the LS.</p>
+
+                      <div className="sidebar-title" style={{ marginTop: '14px' }}>Build the chain upward</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '6px' }}>
+                        {!hasL1 && !hasL2 && (
+                          <>
+                            <button className="btn" style={{ textAlign: 'left' }} onClick={() => addLSLine1(chain.id)}>+ Add Macrorole Node</button>
+                            <button className="btn" style={{ textAlign: 'left' }} onClick={() => addLSLine2(chain.id)}>+ Add Codification Node</button>
+                            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic', margin: '-2px 0 0 4px' }}>Skip macrorole</p>
+                          </>
+                        )}
+                        {hasL1 && !hasL2 && (
+                          <button className="btn" style={{ textAlign: 'left' }} onClick={() => addLSLine2(chain.id)}>+ Add Codification Node above</button>
+                        )}
+                        {!hasL1 && hasL2 && (
+                          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontStyle: 'italic', margin: '4px 0 0' }}>Macrorole node cannot be inserted retroactively. Delete the codification node first if you want to add a macrorole.</p>
+                        )}
+                        {hasL1 && hasL2 && (
+                          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontStyle: 'italic', margin: '4px 0 0' }}>Both intermediate nodes are in place. Configure the link to the expression on the topmost (Codification) node.</p>
+                        )}
+                      </div>
+
+                      {isTopmost && (
+                        <>
+                          <div style={{borderTop: '1px solid var(--border-light)', paddingTop: '12px', marginTop: '14px', marginBottom: '8px'}}>
+                            <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>Linking to expression item:</span>
+                          </div>
+                          <div style={{display:'flex', flexDirection:'column', gap:'6px', padding:'6px 0'}}>
+                            {diagram.expressions.map(expr => {
+                              const isLinked = (chain.exprIds || []).includes(expr.id);
+                              return (
+                                <label key={expr.id} style={{display:'flex', alignItems:'center', gap:'8px', fontSize:'0.9rem'}}>
+                                  <input type="checkbox" checked={isLinked} onChange={() => toggleChainTarget(chain.id, expr.id)} />
+                                  <span>{renderLabel(expr.label) || '...'}</span>
+                                </label>
+                              );
+                            })}
+                            {(chain.exprIds || []).length > 0 && (
+                              <button className="btn" onClick={() => clearChainTargets(chain.id)} style={{marginTop:'4px', fontWeight: 'normal'}}>Clear Links</button>
+                            )}
+                          </div>
+
+                          {(chain.exprIds || []).length > 0 && (
+                            <>
+                              <div className="sidebar-title" style={{ marginTop: '14px' }}>Final arrow style</div>
+                              <ArrowStyleSelector value={chain.finalArrowStyle || 'plain'} onChange={(s) => setChainFinalArrowStyle(chain.id, s)} />
+                            </>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {(isLSLine1 || isLSLine2) && (() => {
+                  const chain = diagram.logicalStructure?.chains?.[info.chainIndex];
+                  if (!chain) return null;
+                  const which = isLSLine1 ? 'line1' : 'line2';
+                  const node = chain[which];
+                  if (!node) return null;
+                  const isTopmost = isLSLine2 || (isLSLine1 && !chain.line2);
+                  return (
+                    <div className="sidebar-section">
+                      <button className="btn" style={{ width: '100%', textAlign: 'left', fontWeight: 'bold', borderColor: 'var(--accent)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.04)', marginBottom: '12px' }} onClick={() => { setSelectedId(chain.id); setEditingId(null); }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        <span>{isLSLine1 ? 'Macrorole Node' : 'Codification Node'}</span>
+                      </button>
+                      <p style={{fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0}}>{isLSLine1 ? 'Pick a macrorole or type a custom label.' : 'Pick a codification marker or type a custom label.'}</p>
+
+                      <div className="sidebar-title" style={{ marginTop: '14px' }}>Arrow from below</div>
+                      <ArrowStyleSelector value={node.arrowFromBelowStyle || 'plain'} onChange={(s) => setLSNodeArrowFromBelow(chain.id, which, s)} />
+
+                      {isLSLine1 && !chain.line2 && (
+                        <div style={{ marginTop: '14px' }}>
+                          <button className="btn" style={{ width: '100%', textAlign: 'left' }} onClick={() => addLSLine2(chain.id)}>+ Add Codification Node above</button>
+                        </div>
+                      )}
+
+                      {isTopmost && (
+                        <>
+                          <div style={{borderTop: '1px solid var(--border-light)', paddingTop: '12px', marginTop: '14px', marginBottom: '8px'}}>
+                            <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>Linking to expression item:</span>
+                          </div>
+                          <div style={{display:'flex', flexDirection:'column', gap:'6px', padding:'6px 0'}}>
+                            {diagram.expressions.map(expr => {
+                              const isLinked = (chain.exprIds || []).includes(expr.id);
+                              return (
+                                <label key={expr.id} style={{display:'flex', alignItems:'center', gap:'8px', fontSize:'0.9rem'}}>
+                                  <input type="checkbox" checked={isLinked} onChange={() => toggleChainTarget(chain.id, expr.id)} />
+                                  <span>{renderLabel(expr.label) || '...'}</span>
+                                </label>
+                              );
+                            })}
+                            {(chain.exprIds || []).length > 0 && (
+                              <button className="btn" onClick={() => clearChainTargets(chain.id)} style={{marginTop:'4px', fontWeight: 'normal'}}>Clear Links</button>
+                            )}
+                          </div>
+
+                          {(chain.exprIds || []).length > 0 && (
+                            <>
+                              <div className="sidebar-title" style={{ marginTop: '14px' }}>Final arrow style</div>
+                              <ArrowStyleSelector value={chain.finalArrowStyle || 'plain'} onChange={(s) => setChainFinalArrowStyle(chain.id, s)} />
+                            </>
+                          )}
+                        </>
+                      )}
                     </div>
                   );
                 })()}
@@ -3617,6 +4490,11 @@
                       __text__
                     </code>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text)' }}>Superscript: <sup>text</sup></span>
+
+                    <code style={{ color: 'var(--accent)', background: 'var(--surface-warm)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', justifySelf: 'start' }}>
+                      ~text~
+                    </code>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text)' }}>Underline: <span style={{ fontSize: '0.75rem', color: 'var(--text)', textDecoration: 'underline' }}>text</span></span>
 
                   </div>
                 </div>
@@ -3785,6 +4663,20 @@
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </button>
                     {!hasInfoUnits ? (<p style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px'}}>Select any item of the expression to mark it as Information Unit</p>) : (<p style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px'}}>Click to see Information Structure options</p>)}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, marginTop: '10px' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={diagram.logicalStructure ? 'var(--text-secondary)' : 'var(--border)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} title="Toggle visibility"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <input type="checkbox" checked={showLogicalStructure} onChange={(e) => setShowLogicalStructure(e.target.checked)} disabled={!diagram.logicalStructure} style={{ width: '16px', height: '16px', cursor: diagram.logicalStructure ? 'pointer' : 'not-allowed', accentColor: 'var(--accent)' }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <button className={diagram.logicalStructure ? "btn btn-no-hover" : "btn"} style={{ width: '100%', textAlign: 'left', borderRadius: '8px', fontWeight: 'bold', borderColor: diagram.logicalStructure ? 'var(--accent)' : 'var(--border)', cursor: diagram.logicalStructure ? 'default' : 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: diagram.logicalStructure ? 'none' : '0 2px 4px rgba(0,0,0,0.04)' }} onClick={initializeLogicalStructure}>
+                      <span>{diagram.logicalStructure ? '✓ Logical Structure' : 'Logical Structure'}</span>
+                      {!diagram.logicalStructure && <div style={{ width: '16px', height: '16px' }}></div>}
+                    </button>
+                    {!diagram.logicalStructure ? (<p style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px'}}>Click to add a logical structure expression</p>) : (<p style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px'}}>Click on the Logical Structure box to edit and link it</p>)}
                   </div>
                 </div>
 
