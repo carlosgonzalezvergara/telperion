@@ -223,7 +223,7 @@
 </ul>
 
 <h3>Editing labels and Text Formatting</h3>
-<p>Telperion makes it easy to assign and format labels across the Constituent, Operator, Information Structure, and Logical Structure projections using a special markup system. A <strong>Text Formatting Guide</strong> is always visible in the sidebar when a node is selected.</p>
+<p>Telperion makes it easy to assign and format labels across the Constituent, Operator, Information Structure, and Logical Structure projections. Two complementary routes are available: a <strong>floating formatting toolbar</strong> that appears above any label while you edit it, and a markup system you can type directly. A <strong>Text Formatting Guide</strong> listing the markers is always visible in the sidebar when a node is selected.</p>
 
 <div class="formatting-grid">
   <code>*text*</code>
@@ -246,6 +246,8 @@
 </div>
 
 <ul>
+<li><strong>Floating toolbar:</strong> as soon as you start editing any label, a small toolbar appears above it with one-click buttons for bold (<strong>B</strong>), italics (<em>I</em>), small caps (<span style="font-variant: small-caps; text-transform: lowercase;">SC</span>), subscript (X<sub>2</sub>), superscript (X<sup>2</sup>), and underline (<span style="text-decoration: underline;">U</span>). Each button wraps the current selection with the appropriate marker, so you do not need to remember the syntax. The toolbar also includes a <strong>logical symbols</strong> picker (Σ) and an <strong>IPA characters</strong> picker (t͡ʃ).</li>
+
 <li><strong>Dropdowns and Free Typing:</strong> When you click a label to edit it, an input field appears with a chevron on the right side. Clicking this chevron toggles a dropdown list offering context-appropriate RRG labels. You can click to select from the list, or type freely to enter any custom text.</li>
 
 <li><strong>Toggle behavior:</strong> Markers act as toggles. For example, <code>CORE_P_ - ARG</code> will render as <strong>CORE<sub>P</sub> - ARG</strong>.</li>
@@ -364,11 +366,11 @@
 <p>With no nodes selected, click <span class="ui-element">Logical Structure</span> in the sidebar. A textbox appears below the morphosyntactic expression. Like the other three projections, you can hide or show it via its checkbox in the global projection controls.</p>
 
 <h3>Writing the logical-structure expression</h3>
-<p>Click the textbox to start editing. A floating toolbar appears above the box with formatting and symbol options:</p>
+<p>Click the textbox to start editing. The same floating toolbar that accompanies every editable label (see <a href="#interface">§3</a>) appears above the box, offering formatting buttons together with two pickers that are particularly useful for logical-structure work:</p>
 <ul>
 <li><strong>Formatting buttons:</strong> bold (<strong>B</strong>), italics (<em>I</em>), small caps (<span style="font-variant: small-caps; text-transform: lowercase;">SC</span>), subscript (X<sub>2</sub>), superscript (X<sup>2</sup>), and underline (<span style="text-decoration: underline;">U</span>). Each button wraps the current selection with the corresponding markup. The same markers from the <strong>Text Formatting Guide</strong> work here as well, so you can also type them directly.</li>
 <li><strong>Logical symbols (Σ):</strong> opens a panel of common symbols for logical-semantic notation: <code>∅ ∧ ∨ ◇ ¬ ↔ ⊃ + − ϕ ψ ⟨ ⟩</code>. Click any symbol to insert it at the cursor position.</li>
-<li><strong>IPA characters (t͡ʃ):</strong> the same IPA picker available throughout Telperion, useful when the logical structure includes transcribed forms.</li>
+<li><strong>IPA characters (t͡ʃ):</strong> the standard IPA picker, useful when the logical structure includes transcribed forms.</li>
 </ul>
 <p>Press <span class="keyboard-shortcut">Enter</span> to confirm or <span class="keyboard-shortcut">Esc</span> to cancel an edit.</p>
 

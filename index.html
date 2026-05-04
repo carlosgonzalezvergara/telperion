@@ -12,7 +12,7 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet" />
 
-  <link rel="icon" type="image/png" href="favicon.png".png">
+  <link rel="icon" type="image/png" href="favicon.png">
 
   <style>
     :root {
@@ -257,9 +257,9 @@
     .segment-preview { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-light); min-height: 32px; align-items: center; }
     .segment-chip { padding: 5px 14px; background: white; border: 1px solid var(--border); border-radius: 20px; font-size: 0.9rem; color: var(--text); font-family: var(--font-sans); }
 
-    .logical-structure-container { margin-top: 180px; display: flex; justify-content: center; position: relative; z-index: 2; pointer-events: none; }
+    .logical-structure-container { margin-top: 240px; display: flex; justify-content: center; position: relative; z-index: 2; pointer-events: none; }
     .logical-structure-wrapper { position: relative; pointer-events: auto; }
-    .logical-structure-box { padding: 8px 18px; border: 1.5px solid var(--border); border-radius: 8px; background: var(--bg-color); font-size: 16px; font-family: inherit; min-width: 200px; min-height: 36px; cursor: pointer; pointer-events: auto; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; line-height: 1.4; max-width: 900px; text-align: center; }
+    .logical-structure-box { padding: 8px 18px; border: 1.5px solid var(--border); border-radius: 8px; background: var(--bg-color); font-size: 16px; font-family: inherit; min-width: 200px; min-height: 36px; cursor: pointer; pointer-events: auto; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; line-height: 1.4; max-width: 900px; text-align: center; letter-spacing: 0.05em; word-spacing: 0.15em; }
     .logical-structure-box:hover { border-color: var(--accent); background: rgba(15, 81, 50, 0.02); }
     .logical-structure-box.selected { border-color: var(--accent); background: rgba(15, 81, 50, 0.04); box-shadow: 0 0 0 3px rgba(15, 81, 50, 0.10); }
     .logical-structure-box.placeholder { color: #adb5bd; border-style: dashed; font-style: italic; }
@@ -552,6 +552,155 @@
       { title: 'Brackets & Delimiters', chars: '/ [ ] ⟨ ⟩ { }'.split(' ') },
     ];
 
+    // Estilo común para los botones de formato de la toolbar flotante.
+    const FMT_BTN_STYLE = { width: '32px', height: '28px', padding: 0, fontSize: '14px', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'white', border: '1px solid var(--border)', borderRadius: '4px', cursor: 'pointer', color: 'var(--text)' };
+
+    /**
+     * Toolbar flotante reutilizable de formato (B / I / SC / sub / sup / U / Σ / IPA).
+     * Se renderiza vía portal y se ancla por encima del input/textarea referenciado por
+     * `anchorRef` mediante getBoundingClientRect, de modo que no queda atrapada por
+     * recortes de overflow ni por el stacking context del nodo editado.
+     *
+     * Props:
+     *   anchorRef    – ref al input/textarea editado (se usa también para applyWrap/insertAtCursor).
+     *   value        – valor actual del campo editado (controlled).
+     *   setValue     – setter del valor.
+     *   visible      – si la toolbar debe mostrarse (típicamente isEditing).
+     *   anchorTrack  – cualquier dependencia que, al cambiar, deba recalcular posición
+     *                  (p. ej. la longitud del texto cuando el input cambia de ancho).
+     */
+    const FormattingToolbar = ({ anchorRef, value, setValue, visible, anchorTrack }) => {
+      const [pos, setPos] = React.useState(null);
+      const [showSymbols, setShowSymbols] = React.useState(false);
+      const [showIPA, setShowIPA] = React.useState(false);
+
+      // Reposicionar al hacerse visible, al cambiar el contenido (ancho del input)
+      // y al hacer scroll/resize del viewport. Centrada sobre el input/textarea.
+      React.useEffect(() => {
+        if (!visible) { setPos(null); setShowSymbols(false); setShowIPA(false); return; }
+        const update = () => {
+          const el = anchorRef && anchorRef.current;
+          if (!el) return;
+          const rect = el.getBoundingClientRect();
+          // 8px de separación encima del input.
+          setPos({ top: rect.top - 8, left: rect.left + rect.width / 2 });
+        };
+        update();
+        const canvas = document.querySelector('.canvas-container');
+        window.addEventListener('resize', update);
+        window.addEventListener('scroll', update, true);
+        if (canvas) canvas.addEventListener('scroll', update, { passive: true });
+        return () => {
+          window.removeEventListener('resize', update);
+          window.removeEventListener('scroll', update, true);
+          if (canvas) canvas.removeEventListener('scroll', update);
+        };
+      }, [visible, anchorTrack, anchorRef]);
+
+      const applyWrap = (left, right = left) => {
+        const el = anchorRef && anchorRef.current;
+        if (!el) return;
+        const result = wrapSelection(el, left, right);
+        if (!result) return;
+        setValue(result.value);
+        requestAnimationFrame(() => {
+          if (!anchorRef.current) return;
+          anchorRef.current.focus();
+          anchorRef.current.setSelectionRange(result.selStart, result.selEnd);
+        });
+      };
+
+      const insertSymbol = (sym) => {
+        const el = anchorRef && anchorRef.current;
+        if (!el) return;
+        const result = insertAtCursor(el, sym);
+        if (!result) return;
+        setValue(result.value);
+        requestAnimationFrame(() => {
+          if (!anchorRef.current) return;
+          anchorRef.current.focus();
+          anchorRef.current.setSelectionRange(result.selStart, result.selEnd);
+        });
+      };
+
+      if (!visible || !pos) return null;
+      const portalTarget = document.getElementById('dropdown-portal');
+      if (!portalTarget) return null;
+
+      const toolbarStyle = {
+        position: 'fixed',
+        top: `${pos.top}px`,
+        left: `${pos.left}px`,
+        transform: 'translate(-50%, -100%)',
+        display: 'inline-flex',
+        gap: '4px',
+        padding: '6px',
+        background: 'white',
+        border: '1px solid var(--border)',
+        borderRadius: '6px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.10)',
+        zIndex: 11000,
+        alignItems: 'center',
+        whiteSpace: 'nowrap',
+        pointerEvents: 'auto',
+      };
+      const panelStyle = {
+        position: 'fixed',
+        top: `${pos.top - 44}px`,
+        left: `${pos.left}px`,
+        transform: 'translate(-50%, -100%)',
+        zIndex: 10999,
+        background: 'white',
+        border: '1px solid var(--border)',
+        borderRadius: '6px',
+        boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+        padding: '8px',
+        maxWidth: '420px',
+        maxHeight: '60vh',
+        overflowY: 'auto',
+      };
+
+      return ReactDOM.createPortal(
+        <>
+          <div className="ls-toolbar floating-fmt-toolbar" style={toolbarStyle} onMouseDown={(e) => e.preventDefault()}>
+            <button type="button" style={{...FMT_BTN_STYLE, fontWeight: 700}} title="Bold (**…**)" onMouseDown={(e) => { e.preventDefault(); applyWrap('**'); }}>B</button>
+            <button type="button" style={{...FMT_BTN_STYLE, fontStyle: 'italic'}} title="Italic (*…*)" onMouseDown={(e) => { e.preventDefault(); applyWrap('*'); }}>I</button>
+            <button type="button" style={{...FMT_BTN_STYLE, fontVariant: 'small-caps', textTransform: 'lowercase'}} title="Small caps (%…%)" onMouseDown={(e) => { e.preventDefault(); applyWrap('%'); }}>SC</button>
+            <button type="button" style={FMT_BTN_STYLE} title="Subscript (_…_)" onMouseDown={(e) => { e.preventDefault(); applyWrap('_'); }}><span>X<sub style={{fontSize:'0.7em'}}>2</sub></span></button>
+            <button type="button" style={FMT_BTN_STYLE} title="Superscript (__…__)" onMouseDown={(e) => { e.preventDefault(); applyWrap('__'); }}><span>X<sup style={{fontSize:'0.7em'}}>2</sup></span></button>
+            <button type="button" style={{...FMT_BTN_STYLE, textDecoration: 'underline'}} title="Underline (~…~)" onMouseDown={(e) => { e.preventDefault(); applyWrap('~'); }}>U</button>
+            <div style={{ width: '1px', height: '20px', background: 'var(--border)', margin: '0 2px' }}></div>
+            <button type="button" style={{...FMT_BTN_STYLE, fontWeight: 600, background: showSymbols ? 'var(--accent)' : 'white', color: showSymbols ? 'white' : 'var(--text)' }} title="Logical symbols" onMouseDown={(e) => { e.preventDefault(); setShowSymbols(s => !s); if (!showSymbols) setShowIPA(false); }}>Σ</button>
+            <button type="button" style={{...FMT_BTN_STYLE, fontWeight: 400, background: showIPA ? 'var(--accent)' : 'white', color: showIPA ? 'white' : 'var(--text)' }} title="IPA characters" onMouseDown={(e) => { e.preventDefault(); setShowIPA(s => !s); if (!showIPA) setShowSymbols(false); }}>t͡ʃ</button>
+          </div>
+          {showSymbols && (
+            <div className="ipa-panel ls-symbols-panel floating-fmt-panel" style={panelStyle} onMouseDown={(e) => e.preventDefault()}>
+              <div className="ipa-grid">
+                {LOGIC_SYMBOLS.map(s => (
+                  <button key={s} type="button" className="ipa-char-btn" title={`Insert ${s}`} onMouseDown={(e) => { e.preventDefault(); insertSymbol(s); }}>{s}</button>
+                ))}
+              </div>
+            </div>
+          )}
+          {showIPA && (
+            <div className="ipa-panel ls-ipa-panel floating-fmt-panel" style={panelStyle} onMouseDown={(e) => e.preventDefault()}>
+              {IPA_CATEGORIES.map((cat) => (
+                <div key={cat.title}>
+                  <div className="ipa-category-title">{cat.title}</div>
+                  <div className="ipa-grid">
+                    {cat.chars.map((ch, j) => (
+                      <button key={j} type="button" className="ipa-char-btn" title={ch} onMouseDown={(e) => { e.preventDefault(); insertSymbol(ch); }}>{ch}</button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>,
+        portalTarget
+      );
+    };
+
     const EditableLabel = ({
       id, label, isSelected, isEditing, onSelect, onChange, onEndEdit,
       labelList, renderFn = renderLabel, className = '', actionButtons = null, pillStyle = null
@@ -646,7 +795,12 @@
                 style={{ width: `${inputWidth}px`, left: '50%', transform: 'translateX(-50%)', paddingRight: '24px' }}
                 value={localVal} size={Math.max(3, localVal.length)}
                 onChange={(e) => { setLocalVal(e.target.value); setShowDropdown(true); }}
-                onBlur={(e) => { onChange(id, e.target.value || '...'); onEndEdit(); }}
+                onBlur={(e) => {
+                  // No cerrar si el blur va a la toolbar flotante o sus paneles.
+                  const next = e.relatedTarget;
+                  if (next && (next.closest('.floating-fmt-toolbar') || next.closest('.floating-fmt-panel'))) return;
+                  onChange(id, e.target.value || '...'); onEndEdit();
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') { onChange(id, localVal || '...'); onEndEdit(); }
                   else if (e.key === 'Escape') { if (showDropdown) { setShowDropdown(false); e.stopPropagation(); } else { onEndEdit(); } }
@@ -657,6 +811,13 @@
                 <svg viewBox="0 0 10 6"><path d="M1 1L5 5L9 1"/></svg>
               </div>
               {dropdownContent}
+              <FormattingToolbar
+                anchorRef={inputRef}
+                value={localVal}
+                setValue={setLocalVal}
+                visible={isEditing}
+                anchorTrack={inputWidth}
+              />
             </>
           )}
         </div>
@@ -742,25 +903,9 @@
       
       const inputRef = useRef(null);
       const glossInputRef = useRef(null);
-      const [showIPAInline, setShowIPAInline] = useState(false);
 
       useEffect(() => { if (isEditing) setLocalVal(expr.label === '...' ? '' : expr.label); }, [isEditing, expr.label]);
       useEffect(() => { if (isEditingGloss) setLocalGlossVal((expr.secondaryGloss === '...' || expr.secondaryGloss === '\u00A0') ? '' : (expr.secondaryGloss || '')); }, [isEditingGloss, expr.secondaryGloss]);
-      useEffect(() => { if (!isEditing) setShowIPAInline(false); }, [isEditing]);
-      
-      const insertIPAInlineChar = (char) => {
-        const input = inputRef.current;
-        const start = input && typeof input.selectionStart === 'number' ? input.selectionStart : localVal.length;
-        const end = input && typeof input.selectionEnd === 'number' ? input.selectionEnd : start;
-        const newVal = localVal.substring(0, start) + char + localVal.substring(end);
-        setLocalVal(newVal);
-        setTimeout(() => {
-          if (!inputRef.current) return;
-          inputRef.current.focus();
-          const pos = start + char.length;
-          inputRef.current.setSelectionRange(pos, pos);
-        }, 0);
-      };
 
       const shiftStyle = { 
         transform: shifts[expr.id] ? `translateX(${shifts[expr.id]}px)` : 'none',
@@ -794,29 +939,25 @@
                     style={{ width: `${inputWidth}px`, left: '50%', transform: 'translateX(-50%)' }}
                     autoFocus value={localVal} size={Math.max(3, localVal.length)}
                     onChange={(e) => setLocalVal(e.target.value)}
-                    onBlur={(e) => { onChange(expr.id, e.target.value); onEndEdit(); }}
+                    onBlur={(e) => {
+                      // No cerrar si el blur va a la toolbar flotante o sus paneles.
+                      const next = e.relatedTarget;
+                      if (next && (next.closest('.floating-fmt-toolbar') || next.closest('.floating-fmt-panel'))) return;
+                      onChange(expr.id, e.target.value); onEndEdit();
+                    }}
                     onKeyDown={(e) => { 
                       if (e.key === 'Enter') { e.preventDefault(); onChange(expr.id, localVal); onEndEdit(); }
                       if (e.key === 'Escape') { e.preventDefault(); setLocalVal(expr.label); onEndEdit(); }
                     }}
                   />
 
-                  <button type="button" className="ipa-inline-btn" title="Insert IPA character" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowIPAInline(prev => !prev); }} style={{ position: 'absolute', top: '0%', left: `calc(50% + ${Math.round(inputWidth/2) + 6}px)`, transform: 'none', zIndex: 10002, background: 'var(--accent)', color: '#ffffff', border: 'none', width: '22px', height: '22px', borderRadius: '6px', fontWeight: 400, lineHeight: '22px', cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.25)' }}>t͡ʃ</button>
-
-                  {showIPAInline && (
-                    <div className="ipa-panel ipa-panel-inline" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }} style={{ position: 'absolute', top: '0', left: `calc(50% + ${Math.round(inputWidth/2) + 32}px)`, transform: 'none', zIndex: 10003, width: '380px' }}>
-                      {IPA_CATEGORIES.map((cat) => (
-                        <div key={cat.title}>
-                          <div className="ipa-category-title">{cat.title}</div>
-                          <div className="ipa-grid">
-                            {cat.chars.map((ch, j) => (
-                              <button key={j} type="button" className="ipa-char-btn" onClick={() => insertIPAInlineChar(ch)} title={ch}>{ch}</button>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <FormattingToolbar
+                    anchorRef={inputRef}
+                    value={localVal}
+                    setValue={setLocalVal}
+                    visible={isEditing}
+                    anchorTrack={inputWidth}
+                  />
                 </>
               )}
             </div>
@@ -860,11 +1001,24 @@
                     autoFocus
                     value={localGlossVal}
                     onChange={(e) => setLocalGlossVal(e.target.value)}
-                    onBlur={(e) => { onChange(expr.id, e.target.value, true); onEndEdit(); }}
+                    onBlur={(e) => {
+                      const next = e.relatedTarget;
+                      if (next && (next.closest('.floating-fmt-toolbar') || next.closest('.floating-fmt-panel'))) return;
+                      onChange(expr.id, e.target.value, true); onEndEdit();
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') { e.preventDefault(); onChange(expr.id, localGlossVal, true); onEndEdit(); }
                       if (e.key === 'Escape') { e.preventDefault(); setLocalGlossVal((expr.secondaryGloss === '\u00A0') ? '' : (expr.secondaryGloss || '')); onEndEdit(); }
                     }}
+                  />
+                )}
+                {isEditingGloss && (
+                  <FormattingToolbar
+                    anchorRef={glossInputRef}
+                    value={localGlossVal}
+                    setValue={setLocalGlossVal}
+                    visible={isEditingGloss}
+                    anchorTrack={localGlossVal.length}
                   />
                 )}
               </div>
