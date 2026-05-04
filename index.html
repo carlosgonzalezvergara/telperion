@@ -263,7 +263,7 @@
     .logical-structure-box:hover { border-color: var(--accent); background: rgba(15, 81, 50, 0.02); }
     .logical-structure-box.selected { border-color: var(--accent); background: rgba(15, 81, 50, 0.04); box-shadow: 0 0 0 3px rgba(15, 81, 50, 0.10); }
     .logical-structure-box.placeholder { color: #adb5bd; border-style: dashed; font-style: italic; }
-    .logical-structure-box.editing { border-color: var(--accent); background: white; box-shadow: 0 0 0 3px rgba(15, 81, 50, 0.10); padding: 4px 10px; cursor: text; min-width: 400px; }
+    .logical-structure-box.editing { border-color: var(--accent); background: white; box-shadow: 0 0 0 3px rgba(15, 81, 50, 0.10); cursor: text; min-width: 400px; }
 
     .ls-rail { position: absolute; top: -16px; left: 0; right: 0; height: 12px; cursor: copy; z-index: 5; }
     .ls-rail::before { content: ''; position: absolute; left: 6px; right: 6px; bottom: 4px; height: 2px; background: rgba(15,81,50,0.35); border-radius: 1px; pointer-events: none; transition: background 0.15s ease; }
@@ -570,20 +570,26 @@
      *                  (p. ej. la longitud del texto cuando el input cambia de ancho).
      */
     const FormattingToolbar = ({ anchorRef, value, setValue, visible, anchorTrack }) => {
-      const [pos, setPos] = React.useState(null);
+      // Posición del input/textarea anclado: top/bottom/centerX en coordenadas del viewport.
+      const [anchorRect, setAnchorRect] = React.useState(null);
       const [showSymbols, setShowSymbols] = React.useState(false);
       const [showIPA, setShowIPA] = React.useState(false);
+      const toolbarRef = React.useRef(null);
+      const panelRef = React.useRef(null);
+      // Altura medida de la toolbar (para situar el panel justo por encima de ella).
+      const [toolbarH, setToolbarH] = React.useState(40);
+      // Si true, el panel se despliega hacia abajo (cuando arriba no hay espacio).
+      const [panelBelow, setPanelBelow] = React.useState(false);
 
       // Reposicionar al hacerse visible, al cambiar el contenido (ancho del input)
-      // y al hacer scroll/resize del viewport. Centrada sobre el input/textarea.
+      // y al hacer scroll/resize del viewport. Se centra horizontalmente sobre el anchor.
       React.useEffect(() => {
-        if (!visible) { setPos(null); setShowSymbols(false); setShowIPA(false); return; }
+        if (!visible) { setAnchorRect(null); setShowSymbols(false); setShowIPA(false); return; }
         const update = () => {
           const el = anchorRef && anchorRef.current;
           if (!el) return;
           const rect = el.getBoundingClientRect();
-          // 8px de separación encima del input.
-          setPos({ top: rect.top - 8, left: rect.left + rect.width / 2 });
+          setAnchorRect({ top: rect.top, bottom: rect.bottom, centerX: rect.left + rect.width / 2 });
         };
         update();
         const canvas = document.querySelector('.canvas-container');
@@ -596,6 +602,28 @@
           if (canvas) canvas.removeEventListener('scroll', update);
         };
       }, [visible, anchorTrack, anchorRef]);
+
+      // Medir la altura real de la toolbar tras pintar para anclar el panel a su borde.
+      React.useLayoutEffect(() => {
+        if (toolbarRef.current) {
+          const h = toolbarRef.current.getBoundingClientRect().height;
+          if (h && Math.abs(h - toolbarH) > 0.5) setToolbarH(h);
+        }
+      }, [anchorRect, visible]);
+
+      // Decidir si el panel cabe arriba o debe ir abajo. Se mide tras el primer render del panel.
+      React.useLayoutEffect(() => {
+        if (!showSymbols && !showIPA) { setPanelBelow(false); return; }
+        if (!panelRef.current || !anchorRect) return;
+        const panelH = panelRef.current.getBoundingClientRect().height;
+        // Espacio libre arriba del input (descontando la toolbar y un margen pequeño).
+        const spaceAbove = anchorRect.top - toolbarH - 12;
+        if (panelH > spaceAbove && (window.innerHeight - anchorRect.bottom) > spaceAbove) {
+          setPanelBelow(true);
+        } else {
+          setPanelBelow(false);
+        }
+      }, [showSymbols, showIPA, anchorRect, toolbarH]);
 
       const applyWrap = (left, right = left) => {
         const el = anchorRef && anchorRef.current;
@@ -623,15 +651,43 @@
         });
       };
 
-      if (!visible || !pos) return null;
+      if (!visible || !anchorRect) return null;
       const portalTarget = document.getElementById('dropdown-portal');
       if (!portalTarget) return null;
 
+      // Posición horizontal: centrada sobre el anchor, con clamp al viewport (margen 8px).
+      const VIEWPORT_MARGIN = 8;
+      const PANEL_MAX_W = 420;
+      const halfPanel = PANEL_MAX_W / 2;
+      const minLeft = halfPanel + VIEWPORT_MARGIN;
+      const maxLeft = window.innerWidth - halfPanel - VIEWPORT_MARGIN;
+      const clampedLeft = Math.min(Math.max(anchorRect.centerX, minLeft), maxLeft);
+
+      // La toolbar va 8px arriba del input (si hay espacio); si no, debajo.
+      const spaceAbove = anchorRect.top - 12;
+      const toolbarAbove = spaceAbove >= toolbarH;
+      const toolbarTop = toolbarAbove
+        ? (anchorRect.top - 8 - toolbarH)
+        : (anchorRect.bottom + 8);
+
+      // El panel va arriba o abajo según panelBelow. Cuando va arriba, se asienta sobre la toolbar
+      // (si la toolbar también está arriba) o sobre el anchor (si la toolbar está abajo).
+      // Cuando va abajo, se sitúa debajo de la toolbar (si la toolbar está abajo) o del anchor.
+      let panelTop;
+      if (panelBelow) {
+        panelTop = toolbarAbove ? (anchorRect.bottom + 8) : (toolbarTop + toolbarH + 6);
+      } else {
+        // Posicionamos el TOP del panel; el alto real se calculará automáticamente.
+        // Lo ponemos justo encima de la toolbar (o del anchor si la toolbar va abajo).
+        // Para lograrlo sin medir el panel, usamos transform: translateY(-100%) y top en la base.
+        panelTop = toolbarAbove ? toolbarTop : anchorRect.top;
+      }
+
       const toolbarStyle = {
         position: 'fixed',
-        top: `${pos.top}px`,
-        left: `${pos.left}px`,
-        transform: 'translate(-50%, -100%)',
+        top: `${toolbarTop}px`,
+        left: `${clampedLeft}px`,
+        transform: 'translateX(-50%)',
         display: 'inline-flex',
         gap: '4px',
         padding: '6px',
@@ -644,25 +700,37 @@
         whiteSpace: 'nowrap',
         pointerEvents: 'auto',
       };
+
+      // Tope razonable de altura del panel (como el del LS principal y otros desplegables).
+      // Se combina con el espacio disponible al viewport para que nunca se salga de pantalla
+      // ni se vuelva desproporcionadamente alto cuando hay mucho espacio (p. ej. nodo cerca del top).
+      const PANEL_MAX_H = Math.round(window.innerHeight * 0.3); // ~60vh
+      const panelMaxByViewport = panelBelow
+        ? Math.max(120, window.innerHeight - panelTop - VIEWPORT_MARGIN)
+        : Math.max(120, panelTop - VIEWPORT_MARGIN - 6);
+
       const panelStyle = {
         position: 'fixed',
-        top: `${pos.top - 44}px`,
-        left: `${pos.left}px`,
-        transform: 'translate(-50%, -100%)',
+        top: `${panelTop}px`,
+        left: `${clampedLeft}px`,
+        // Si va abajo: anclado por su top. Si va arriba: anclado por su bottom (translateY(-100%) con un margen extra).
+        transform: panelBelow ? 'translateX(-50%)' : 'translate(-50%, calc(-100% - 6px))',
         zIndex: 10999,
         background: 'white',
         border: '1px solid var(--border)',
         borderRadius: '6px',
         boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
         padding: '8px',
-        maxWidth: '420px',
-        maxHeight: '60vh',
+        width: 'max-content',
+        maxWidth: `${PANEL_MAX_W}px`,
+        maxHeight: `${Math.min(PANEL_MAX_H, panelMaxByViewport)}px`,
         overflowY: 'auto',
+        pointerEvents: 'auto',
       };
 
       return ReactDOM.createPortal(
         <>
-          <div className="ls-toolbar floating-fmt-toolbar" style={toolbarStyle} onMouseDown={(e) => e.preventDefault()}>
+          <div ref={toolbarRef} className="floating-fmt-toolbar" style={toolbarStyle} onMouseDown={(e) => e.preventDefault()}>
             <button type="button" style={{...FMT_BTN_STYLE, fontWeight: 700}} title="Bold (**…**)" onMouseDown={(e) => { e.preventDefault(); applyWrap('**'); }}>B</button>
             <button type="button" style={{...FMT_BTN_STYLE, fontStyle: 'italic'}} title="Italic (*…*)" onMouseDown={(e) => { e.preventDefault(); applyWrap('*'); }}>I</button>
             <button type="button" style={{...FMT_BTN_STYLE, fontVariant: 'small-caps', textTransform: 'lowercase'}} title="Small caps (%…%)" onMouseDown={(e) => { e.preventDefault(); applyWrap('%'); }}>SC</button>
@@ -674,7 +742,7 @@
             <button type="button" style={{...FMT_BTN_STYLE, fontWeight: 400, background: showIPA ? 'var(--accent)' : 'white', color: showIPA ? 'white' : 'var(--text)' }} title="IPA characters" onMouseDown={(e) => { e.preventDefault(); setShowIPA(s => !s); if (!showIPA) setShowSymbols(false); }}>t͡ʃ</button>
           </div>
           {showSymbols && (
-            <div className="ipa-panel ls-symbols-panel floating-fmt-panel" style={panelStyle} onMouseDown={(e) => e.preventDefault()}>
+            <div ref={panelRef} className="floating-fmt-panel" style={panelStyle} onMouseDown={(e) => e.preventDefault()}>
               <div className="ipa-grid">
                 {LOGIC_SYMBOLS.map(s => (
                   <button key={s} type="button" className="ipa-char-btn" title={`Insert ${s}`} onMouseDown={(e) => { e.preventDefault(); insertSymbol(s); }}>{s}</button>
@@ -683,7 +751,7 @@
             </div>
           )}
           {showIPA && (
-            <div className="ipa-panel ls-ipa-panel floating-fmt-panel" style={panelStyle} onMouseDown={(e) => e.preventDefault()}>
+            <div ref={panelRef} className="floating-fmt-panel" style={panelStyle} onMouseDown={(e) => e.preventDefault()}>
               {IPA_CATEGORIES.map((cat) => (
                 <div key={cat.title}>
                   <div className="ipa-category-title">{cat.title}</div>
@@ -1123,6 +1191,11 @@
       const [showSymbols, setShowSymbols] = React.useState(false);
       const [showIPA, setShowIPA] = React.useState(false);
       const [ghostX, setGhostX] = React.useState(null); // posición X del marcador fantasma en px
+      // Ancho del cuadro capturado al entrar en edición. Mantenerlo fijo evita que el cuadro
+      // cambie de dimensiones cuando el textarea reemplaza al texto renderizado: si el cuadro
+      // pudiera reflujar libremente, el textarea (que es más ancho que el contenido envuelto)
+      // forzaría menos líneas y, por tanto, una altura visiblemente menor durante la edición.
+      const [lockedWidth, setLockedWidth] = React.useState(null);
       const [showRailHint, setShowRailHint] = React.useState(() => {
         try { return !localStorage.getItem(LS_RAIL_HINT_KEY); } catch (_) { return true; }
       });
@@ -1155,6 +1228,34 @@
       React.useEffect(() => {
         if (!isEditing) setDraftValue(ls.text || '');
       }, [ls.text, isEditing]);
+
+      // Mantener registro del último ancho del cuadro en estado NO-edición. Al entrar en
+      // edición, el textarea reemplaza al texto renderizado en el DOM, así que cualquier
+      // medición posterior reflejaría el ancho impuesto por el textarea (más ancho que el
+      // texto envuelto) y no el ancho que el usuario veía justo antes del clic.
+      // Por eso medimos en cada render mientras NO se está editando, y conservamos ese
+      // valor para fijarlo cuando se entra en edición. Esto evita que el cuadro se
+      // ensanche al editar, lo que a su vez preservaría el número de líneas y, por tanto,
+      // la altura visible.
+      const lastUnlockedWidthRef = React.useRef(null);
+      React.useLayoutEffect(() => {
+        if (!isEditing && boxRef.current) {
+          const w = boxRef.current.getBoundingClientRect().width;
+          if (w > 0) lastUnlockedWidthRef.current = w;
+        }
+      });
+
+      // Al entrar en edición, transferir el ancho recordado al estado lockedWidth para que
+      // se aplique como inline style. Al salir, liberarlo.
+      React.useLayoutEffect(() => {
+        if (isEditing) {
+          if (lockedWidth == null && lastUnlockedWidthRef.current != null) {
+            setLockedWidth(lastUnlockedWidthRef.current);
+          }
+        } else if (lockedWidth != null) {
+          setLockedWidth(null);
+        }
+      }, [isEditing, lockedWidth]);
 
       // Auto-focus al entrar en edición
       React.useEffect(() => {
@@ -1293,6 +1394,7 @@
             ref={boxRef}
             className={boxClasses}
             data-ls-id={ls.id}
+            style={isEditing && lockedWidth != null ? { width: `${lockedWidth}px` } : undefined}
             onClick={(e) => { e.stopPropagation(); onSelect(e, ls.id); }}
             onDoubleClick={(e) => { e.stopPropagation(); onStartEdit(ls.id); }}
           >
