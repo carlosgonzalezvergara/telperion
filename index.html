@@ -321,8 +321,26 @@
     .ls-node-label { font-size: 14px; min-height: 24px; padding: 3px 10px; }
     .ls-textarea { width: 100%; min-width: 380px; border: none; outline: none; resize: none; font-family: inherit; font-size: 16px; line-height: 1.4; background: transparent; color: var(--text); padding: 4px 8px; box-sizing: border-box; overflow: hidden; text-align: center; }
     .ls-toolbar { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); display: inline-flex; gap: 4px; padding: 6px; background: white; border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.10); z-index: 1100; align-items: center; white-space: nowrap; }
-    .ls-toolbar button { transition: background 0.15s ease, border-color 0.15s ease; }
-    .ls-toolbar button:hover { background: rgba(15,81,50,0.06); border-color: var(--accent); }
+    .ls-toolbar button { transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.12s ease; }
+    .ls-toolbar button:hover { background: var(--surface-warm) !important; border-color: #ced4da !important; }
+    .ls-toolbar button:active { transform: scale(0.96); }
+    .ls-toolbar button.active:hover { background: var(--accent-hover) !important; border-color: var(--accent-hover) !important; color: white !important; }
+
+    .fmt-toolbar-btn {
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
+    }
+    .fmt-toolbar-btn:hover {
+      background: var(--surface-warm) !important;
+      border-color: #ced4da !important;
+    }
+    .fmt-toolbar-btn:active {
+      transform: scale(0.96);
+    }
+    .fmt-toolbar-btn.active:hover {
+      background: var(--accent-hover) !important;
+      border-color: var(--accent-hover) !important;
+      color: white !important;
+    }
     .ls-symbols-panel { position: absolute !important; bottom: calc(100% + 50px); left: 50%; transform: translateX(-50%); width: auto; min-width: 240px; z-index: 1100 !important; margin-top: 0 !important; }
     .ls-ipa-panel { position: absolute !important; bottom: calc(100% + 50px); left: 50%; transform: translateX(-50%); width: 380px; z-index: 1100 !important; margin-top: 0 !important; }
 
@@ -731,15 +749,15 @@
       return ReactDOM.createPortal(
         <>
           <div ref={toolbarRef} className="floating-fmt-toolbar" style={toolbarStyle} onMouseDown={(e) => e.preventDefault()}>
-            <button type="button" style={{...FMT_BTN_STYLE, fontWeight: 700}} title="Bold (**…**)" onMouseDown={(e) => { e.preventDefault(); applyWrap('**'); }}>B</button>
-            <button type="button" style={{...FMT_BTN_STYLE, fontStyle: 'italic'}} title="Italic (*…*)" onMouseDown={(e) => { e.preventDefault(); applyWrap('*'); }}>I</button>
-            <button type="button" style={{...FMT_BTN_STYLE, fontVariant: 'small-caps', textTransform: 'lowercase'}} title="Small caps (%…%)" onMouseDown={(e) => { e.preventDefault(); applyWrap('%'); }}>SC</button>
-            <button type="button" style={FMT_BTN_STYLE} title="Subscript (_…_)" onMouseDown={(e) => { e.preventDefault(); applyWrap('_'); }}><span>X<sub style={{fontSize:'0.7em'}}>2</sub></span></button>
-            <button type="button" style={FMT_BTN_STYLE} title="Superscript (__…__)" onMouseDown={(e) => { e.preventDefault(); applyWrap('__'); }}><span>X<sup style={{fontSize:'0.7em'}}>2</sup></span></button>
-            <button type="button" style={{...FMT_BTN_STYLE, textDecoration: 'underline'}} title="Underline (~…~)" onMouseDown={(e) => { e.preventDefault(); applyWrap('~'); }}>U</button>
+            <button type="button" className="fmt-toolbar-btn" style={{...FMT_BTN_STYLE, fontWeight: 700}} title="Bold (**…**)" onMouseDown={(e) => { e.preventDefault(); applyWrap('**'); }}>B</button>
+            <button type="button" className="fmt-toolbar-btn" style={{...FMT_BTN_STYLE, fontStyle: 'italic'}} title="Italic (*…*)" onMouseDown={(e) => { e.preventDefault(); applyWrap('*'); }}>I</button>
+            <button type="button" className="fmt-toolbar-btn" style={{...FMT_BTN_STYLE, fontVariant: 'small-caps', textTransform: 'lowercase'}} title="Small caps (%…%)" onMouseDown={(e) => { e.preventDefault(); applyWrap('%'); }}>SC</button>
+            <button type="button" className="fmt-toolbar-btn" style={FMT_BTN_STYLE} title="Subscript (_…_)" onMouseDown={(e) => { e.preventDefault(); applyWrap('_'); }}><span>X<sub style={{fontSize:'0.7em'}}>2</sub></span></button>
+            <button type="button" className="fmt-toolbar-btn" style={FMT_BTN_STYLE} title="Superscript (__…__)" onMouseDown={(e) => { e.preventDefault(); applyWrap('__'); }}><span>X<sup style={{fontSize:'0.7em'}}>2</sup></span></button>
+            <button type="button" className="fmt-toolbar-btn" style={{...FMT_BTN_STYLE, textDecoration: 'underline'}} title="Underline (~…~)" onMouseDown={(e) => { e.preventDefault(); applyWrap('~'); }}>U</button>
             <div style={{ width: '1px', height: '20px', background: 'var(--border)', margin: '0 2px' }}></div>
-            <button type="button" style={{...FMT_BTN_STYLE, fontWeight: 600, background: showSymbols ? 'var(--accent)' : 'white', color: showSymbols ? 'white' : 'var(--text)' }} title="Logical symbols" onMouseDown={(e) => { e.preventDefault(); setShowSymbols(s => !s); if (!showSymbols) setShowIPA(false); }}>Σ</button>
-            <button type="button" style={{...FMT_BTN_STYLE, fontWeight: 400, background: showIPA ? 'var(--accent)' : 'white', color: showIPA ? 'white' : 'var(--text)' }} title="IPA characters" onMouseDown={(e) => { e.preventDefault(); setShowIPA(s => !s); if (!showIPA) setShowSymbols(false); }}>t͡ʃ</button>
+            <button type="button" className={`fmt-toolbar-btn ${showSymbols ? 'active' : ''}`} style={{...FMT_BTN_STYLE, fontWeight: 600, background: showSymbols ? 'var(--accent)' : 'white', color: showSymbols ? 'white' : 'var(--text)' }} title="Logical symbols" onMouseDown={(e) => { e.preventDefault(); setShowSymbols(s => !s); if (!showSymbols) setShowIPA(false); }}>Σ</button>
+            <button type="button" className={`fmt-toolbar-btn ${showIPA ? 'active' : ''}`} style={{...FMT_BTN_STYLE, fontWeight: 400, background: showIPA ? 'var(--accent)' : 'white', color: showIPA ? 'white' : 'var(--text)' }} title="IPA characters" onMouseDown={(e) => { e.preventDefault(); setShowIPA(s => !s); if (!showIPA) setShowSymbols(false); }}>t͡ʃ</button>
           </div>
           {showSymbols && (
             <div ref={panelRef} className="floating-fmt-panel" style={panelStyle} onMouseDown={(e) => e.preventDefault()}>
@@ -1323,15 +1341,15 @@
         <div className="logical-structure-wrapper" onClick={(e) => e.stopPropagation()}>
           {isEditing && (
             <div className="ls-toolbar">
-              <button type="button" style={{...fmtBtnStyle, fontWeight: 700}} title="Bold (**…**)" onMouseDown={(e) => { e.preventDefault(); applyWrap('**'); }}>B</button>
-              <button type="button" style={{...fmtBtnStyle, fontStyle: 'italic'}} title="Italic (*…*)" onMouseDown={(e) => { e.preventDefault(); applyWrap('*'); }}>I</button>
-              <button type="button" style={{...fmtBtnStyle, fontVariant: 'small-caps', textTransform: 'lowercase'}} title="Small caps (%…%)" onMouseDown={(e) => { e.preventDefault(); applyWrap('%'); }}>SC</button>
-              <button type="button" style={fmtBtnStyle} title="Subscript (_…_)" onMouseDown={(e) => { e.preventDefault(); applyWrap('_'); }}><span>X<sub style={{fontSize:'0.7em'}}>2</sub></span></button>
-              <button type="button" style={fmtBtnStyle} title="Superscript (__…__)" onMouseDown={(e) => { e.preventDefault(); applyWrap('__'); }}><span>X<sup style={{fontSize:'0.7em'}}>2</sup></span></button>
-              <button type="button" style={{...fmtBtnStyle, textDecoration: 'underline'}} title="Underline (~…~)" onMouseDown={(e) => { e.preventDefault(); applyWrap('~'); }}>U</button>
+              <button type="button" className="fmt-toolbar-btn" style={{...fmtBtnStyle, fontWeight: 700}} title="Bold (**…**)" onMouseDown={(e) => { e.preventDefault(); applyWrap('**'); }}>B</button>
+              <button type="button" className="fmt-toolbar-btn" style={{...fmtBtnStyle, fontStyle: 'italic'}} title="Italic (*…*)" onMouseDown={(e) => { e.preventDefault(); applyWrap('*'); }}>I</button>
+              <button type="button" className="fmt-toolbar-btn" style={{...fmtBtnStyle, fontVariant: 'small-caps', textTransform: 'lowercase'}} title="Small caps (%…%)" onMouseDown={(e) => { e.preventDefault(); applyWrap('%'); }}>SC</button>
+              <button type="button" className="fmt-toolbar-btn" style={fmtBtnStyle} title="Subscript (_…_)" onMouseDown={(e) => { e.preventDefault(); applyWrap('_'); }}><span>X<sub style={{fontSize:'0.7em'}}>2</sub></span></button>
+              <button type="button" className="fmt-toolbar-btn" style={fmtBtnStyle} title="Superscript (__…__)" onMouseDown={(e) => { e.preventDefault(); applyWrap('__'); }}><span>X<sup style={{fontSize:'0.7em'}}>2</sup></span></button>
+              <button type="button" className="fmt-toolbar-btn" style={{...fmtBtnStyle, textDecoration: 'underline'}} title="Underline (~…~)" onMouseDown={(e) => { e.preventDefault(); applyWrap('~'); }}>U</button>
               <div style={{ width: '1px', height: '20px', background: 'var(--border)', margin: '0 2px' }}></div>
-              <button type="button" style={{...fmtBtnStyle, fontWeight: 600, background: showSymbols ? 'var(--accent)' : 'white', color: showSymbols ? 'white' : 'var(--text)' }} title="Logical symbols" onMouseDown={(e) => { e.preventDefault(); setShowSymbols(s => !s); if (!showSymbols) setShowIPA(false); }}>Σ</button>
-              <button type="button" style={{...fmtBtnStyle, fontWeight: 400, background: showIPA ? 'var(--accent)' : 'white', color: showIPA ? 'white' : 'var(--text)' }} title="IPA characters" onMouseDown={(e) => { e.preventDefault(); setShowIPA(s => !s); if (!showIPA) setShowSymbols(false); }}>t͡ʃ</button>
+              <button type="button" className={`fmt-toolbar-btn ${showSymbols ? 'active' : ''}`} style={{...fmtBtnStyle, fontWeight: 600, background: showSymbols ? 'var(--accent)' : 'white', color: showSymbols ? 'white' : 'var(--text)' }} title="Logical symbols" onMouseDown={(e) => { e.preventDefault(); setShowSymbols(s => !s); if (!showSymbols) setShowIPA(false); }}>Σ</button>
+              <button type="button" className={`fmt-toolbar-btn ${showIPA ? 'active' : ''}`} style={{...fmtBtnStyle, fontWeight: 400, background: showIPA ? 'var(--accent)' : 'white', color: showIPA ? 'white' : 'var(--text)' }} title="IPA characters" onMouseDown={(e) => { e.preventDefault(); setShowIPA(s => !s); if (!showIPA) setShowSymbols(false); }}>t͡ʃ</button>
             </div>
           )}
 
