@@ -1589,20 +1589,48 @@
       const [isSaving, setIsSaving] = useState(false);
       const isUndoRedo = useRef(false);
 
-      const performAutoSave = useCallback(() => {
-        if (!diagram || isUndoRedo.current) return;
-        setIsSaving(true);
-        try {
-          localStorage.setItem('telperion-autosave', JSON.stringify({ diagram, timestamp: new Date().toISOString(), version: '1.0' }));
-          setLastSaved(new Date());
-          setTimeout(() => setIsSaving(false), 500);
-        } catch (err) { console.error('Autosave error:', err); setIsSaving(false); }
-      }, [diagram]);
+      const AUTOSAVE_KEY = 'telperion-autosave';
+      const AUTOSAVE_VERSION = '1.1';
 
       const autoSaveDebounced = useRef(null);
       if (!autoSaveDebounced.current) {
         autoSaveDebounced.current = debounce((fn) => fn(), 3000);
       }
+
+      const buildAutoSaveData = useCallback(() => ({
+        diagram,
+        timestamp: new Date().toISOString(),
+        version: AUTOSAVE_VERSION
+      }), [diagram]);
+
+      const writeAutoSave = useCallback(({ silent = false } = {}) => {
+        if (!diagram) return false;
+        const data = buildAutoSaveData();
+        try {
+          if (!silent) setIsSaving(true);
+          localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data));
+          setLastSaved(new Date(data.timestamp));
+          if (!silent) setTimeout(() => setIsSaving(false), 500);
+          return true;
+        } catch (err) {
+          console.error('Autosave error:', err);
+          setIsSaving(false);
+          return false;
+        }
+      }, [diagram, buildAutoSaveData]);
+
+      const clearAutoSave = useCallback(() => {
+        autoSaveDebounced.current?.cancel?.();
+        localStorage.removeItem(AUTOSAVE_KEY);
+        setLastSaved(null);
+        setIsSaving(false);
+      }, []);
+
+      const performAutoSave = useCallback(() => {
+        // Autosave should reflect the user's visible state, even after undo/redo.
+        // That's why we don't block on isUndoRedo.current.
+        writeAutoSave();
+      }, [writeAutoSave]);
 
       const commitChange = (newDiagram) => {
         const newHistory = history.slice(0, historyIndex + 1);
@@ -1651,27 +1679,55 @@
       }, [undo, redo, zoomIn, zoomOut, zoomReset]);
 
       useEffect(() => {
-        if (diagram && !isUndoRedo.current) autoSaveDebounced.current(performAutoSave);
+        if (diagram) autoSaveDebounced.current(performAutoSave);
       }, [diagram, performAutoSave]);
 
+      // Emergency save before closing, reloading, or hiding the tab.
       useEffect(() => {
-        const saved = localStorage.getItem('telperion-autosave');
-        if (saved) {
-          try {
-            const data = JSON.parse(saved);
-            const savedDate = new Date(data.timestamp);
-            const minutesAgo = Math.round((Date.now() - savedDate) / 60000);
-            const message = minutesAgo < 1
-              ? 'Found recent unsaved work.\n\nContinue where you left off?'
+        const saveImmediately = () => {
+          if (!diagram) return;
+          autoSaveDebounced.current?.cancel?.();
+          writeAutoSave({ silent: true });
+        };
+        const handleVisibilityChange = () => {
+          if (document.visibilityState === 'hidden') saveImmediately();
+        };
+        window.addEventListener('beforeunload', saveImmediately);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => {
+          window.removeEventListener('beforeunload', saveImmediately);
+          document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+      }, [diagram, writeAutoSave]);
+
+      // Restore from auto-save on mount
+      useEffect(() => {
+        const saved = localStorage.getItem(AUTOSAVE_KEY);
+        if (!saved) return;
+        try {
+          const data = JSON.parse(saved);
+          if (!data || !data.diagram) {
+            clearAutoSave();
+            return;
+          }
+          const savedDate = new Date(data.timestamp);
+          const hasValidDate = !Number.isNaN(savedDate.getTime());
+          const minutesAgo = hasValidDate
+            ? Math.max(0, Math.round((Date.now() - savedDate.getTime()) / 60000))
+            : null;
+          const message = minutesAgo === null
+            ? 'Found unsaved work.\n\nContinue where you left off?'
+            : minutesAgo < 1
+              ? 'Found unsaved work.\n\nContinue where you left off?'
               : `Found unsaved work from ${minutesAgo} minute${minutesAgo === 1 ? '' : 's'} ago.\n\nContinue where you left off?`;
-            if (confirm(message)) {
-              setDiagram(data.diagram); setHistory([data.diagram]); setHistoryIndex(0);
-            } else {
-              localStorage.removeItem('telperion-autosave');
-            }
-          } catch (err) { console.error('Restore error:', err); localStorage.removeItem('telperion-autosave'); }
-        }
-      }, []);
+          if (confirm(message)) {
+            setDiagram(data.diagram); setHistory([data.diagram]); setHistoryIndex(0);
+            if (hasValidDate) setLastSaved(savedDate);
+          } else {
+            clearAutoSave();
+          }
+        } catch (err) { console.error('Restore error:', err); clearAutoSave(); }
+      }, [clearAutoSave]);
 
       useLayoutEffect(() => {
         if (!wrapperRef.current || typeof ResizeObserver === 'undefined') return;
@@ -1700,7 +1756,7 @@
         setDiagram(null); setRawText(''); setCuts(new Set()); setHistory([]); setHistoryIndex(-1);
         setSelectedId(null); setEditingId(null); setExtraTopPadding(0);
         setShowConstituent(true); setShowOperators(true); setShowInfoStructure(true); setShowLogicalStructure(true); setProjectionFocus('all');
-        localStorage.removeItem('telperion-autosave'); setLastSaved(null);
+        clearAutoSave();
       };
 
       const words = rawText.trim().split(/\s+/).filter(Boolean);
@@ -1831,8 +1887,14 @@
 
       const handleSave = () => {
         if (!diagram) return;
+
+        // Flush any pending autosave and write the current state.
+        // The backup is NOT cleared: this avoids losing the restoration
+        // point if the user closes the tab right after saving manually.
+        autoSaveDebounced.current?.flush?.();
+        writeAutoSave({ silent: true });
   
-        const filename = getAutoFilename(); // Calculamos el nombre automático
+        const filename = getAutoFilename();
   
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(diagram, null, 2));
         const anchor = document.createElement('a');
