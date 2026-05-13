@@ -223,7 +223,7 @@
 </ul>
 
 <h3>Editing labels and Text Formatting</h3>
-<p>Telperion makes it easy to assign and format labels across the Constituent, Operator, Information Structure, and Logical Structure projections. Two complementary routes are available: a <strong>floating formatting toolbar</strong> that appears above any label while you edit it, and a markup system you can type directly. A <strong>Text Formatting Guide</strong> listing the markers is always visible in the sidebar when a node is selected.</p>
+<p>Telperion makes it easy to assign and format labels across the Constituent, Operator, Information Structure, and Logical Structure projections. Two complementary routes are available: a <strong>Text Formatting</strong> control block in the right sidebar that appears only while you are editing a label, and a markup system you can type directly.</p>
 
 <div class="formatting-grid">
   <code>*text*</code>
@@ -246,7 +246,7 @@
 </div>
 
 <ul>
-<li><strong>Floating toolbar:</strong> as soon as you start editing any label, a small toolbar appears above it with one-click buttons for bold (<strong>B</strong>), italics (<em>I</em>), small caps (<span style="font-variant: small-caps; text-transform: lowercase;">SC</span>), subscript (X<sub>2</sub>), superscript (X<sup>2</sup>), and underline (<span style="text-decoration: underline;">U</span>). Each button wraps the current selection with the appropriate marker, so you do not need to remember the syntax. The toolbar also includes a <strong>logical symbols</strong> picker (Σ) and an <strong>IPA characters</strong> picker (t͡ʃ).</li>
+<li><strong>Sidebar formatting controls:</strong> as soon as you start editing any label, two blocks appear at the bottom of the right sidebar. The first, <strong>Text Formatting</strong>, contains one-click buttons for bold (<strong>B</strong>), italics (<em>I</em>), small caps (<span style="font-variant: small-caps; text-transform: lowercase;">SC</span>), subscript (X<sub>2</sub>), superscript (X<sup>2</sup>), and underline (<span style="text-decoration: underline;">U</span>). Each button wraps the current selection with the appropriate marker, so you do not need to remember the syntax. The second block, <strong>Insert Symbol:</strong>, provides two pickers — a <strong>logical symbols</strong> picker (Σ) and an <strong>IPA characters</strong> picker (t͡ʃ) — for inserting individual characters at the cursor position. A <strong>Text Formatting Guide</strong> with all the markup shortcuts is shown below the controls. The entire section disappears automatically when you finish editing, keeping the sidebar uncluttered the rest of the time.</li>
 
 <li><strong>Dropdowns and Free Typing:</strong> When you click a label to edit it, an input field appears with a chevron on the right side. Clicking this chevron toggles a dropdown list offering context-appropriate RRG labels. You can click to select from the list, or type freely to enter any custom text.</li>
 
@@ -366,7 +366,7 @@
 <p>With no nodes selected, click <span class="ui-element">Logical Structure</span> in the sidebar. A textbox appears below the morphosyntactic expression. Like the other three projections, you can hide or show it via its checkbox in the global projection controls.</p>
 
 <h3>Writing the logical-structure expression</h3>
-<p>Click the textbox to start editing. The same floating toolbar that accompanies every editable label (see <a href="#interface">§3</a>) appears above the box, offering formatting buttons together with two pickers that are particularly useful for logical-structure work:</p>
+<p>Click the textbox to start editing. The same sidebar formatting controls described in <a href="#interface">§3</a> become active when you edit it, offering formatting buttons together with two pickers that are particularly useful for logical-structure work:</p>
 <ul>
 <li><strong>Formatting buttons:</strong> bold (<strong>B</strong>), italics (<em>I</em>), small caps (<span style="font-variant: small-caps; text-transform: lowercase;">SC</span>), subscript (X<sub>2</sub>), superscript (X<sup>2</sup>), and underline (<span style="text-decoration: underline;">U</span>). Each button wraps the current selection with the corresponding markup. The same markers from the <strong>Text Formatting Guide</strong> work here as well, so you can also type them directly.</li>
 <li><strong>Logical symbols (Σ):</strong> opens a panel of common symbols for logical-semantic notation: <code>∅ ∧ ∨ ◇ ¬ ↔ ⊃ + − ϕ ψ ⟨ ⟩</code>. Click any symbol to insert it at the cursor position.</li>
@@ -395,12 +395,28 @@
 
 <section id="exporting">
 <h2>8. Saving and Downloading Image</h2>
+
+<h3>Saving as .tlp</h3>
+<p>Click <span class="ui-element">Save</span> (or press <span class="keyboard-shortcut">Ctrl / ⌘ + S</span>) to open the save dialog. The dialog suggests a file name based on the first words of your base expression; you can edit it freely or accept the default. Press <span class="keyboard-shortcut">Enter</span> to confirm or <span class="keyboard-shortcut">Esc</span> (or click outside the dialog) to cancel.</p>
 <ul>
-<li><span class="ui-element">Save</span>: downloads a <code>.tlp</code> file. This is Telperion’s native, fully editable format.</li>
 <li><strong>What is a .tlp file?:</strong> It is simply a JSON file produced by Telperion. The extension is just a custom label. You can open it in any text editor, although you normally should not edit it manually.</li>
-<li><span class="ui-element">Download Image</span>: generates a high-resolution PNG image with clean rendering and appropriate padding.</li>
-<li><strong>Auto-save:</strong> Telperion periodically stores recent work in your browser to help recover from accidental tab closes. It is a safety net, not a replacement for saving a <code>.tlp</code> when you finish.</li>
 </ul>
+
+<h3>Downloading as PNG</h3>
+<p>Click <span class="ui-element">Download as Image</span> to open the image-export dialog. As with saving, you can edit the suggested file name. Below the file name, a <strong>Background</strong> selector lets you choose between:</p>
+<ul>
+<li><strong>White</strong> (default): produces a PNG with a solid white background. This is the safest choice for embedding the image in documents, slides, or printed materials.</li>
+<li><strong>Transparent</strong>: produces a PNG with no background. Useful when you want to compose the diagram over a colored slide background or layer it with other graphics.</li>
+</ul>
+<p>The PNG is generated at high resolution with appropriate padding, regardless of the chosen background.</p>
+
+<h3>Auto-save and session recovery</h3>
+<p>Telperion periodically stores your recent work in the browser as a safety net against accidental tab closes. When you reopen Telperion and unsaved work from a previous session is detected, a <strong>Restore previous session</strong> dialog appears. It indicates how long ago the backup was made and offers two options:</p>
+<ul>
+<li><strong>Continue</strong>: loads the backup so you can pick up where you left off.</li>
+<li><strong>Discard</strong>: clears the backup and starts with a fresh canvas.</li>
+</ul>
+<p>This dialog requires an explicit choice — it cannot be closed by clicking outside. Press <span class="keyboard-shortcut">Enter</span> to continue or <span class="keyboard-shortcut">Esc</span> to discard. Auto-save is a safety net, not a replacement for saving a <code>.tlp</code> file when you finish your work.</p>
 </section>
 
 <section id="shortcuts">

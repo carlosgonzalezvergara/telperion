@@ -93,7 +93,7 @@
     
     .sidebar { width: 300px; min-width: 300px; max-width: 300px; background: var(--surface); border-left: 1px solid var(--border-light); padding: 20px; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 24px; box-shadow: -4px 0 16px rgba(0,0,0,0.03); z-index: 10; height: 100%; }
     .sidebar-section { display: flex; flex-direction: column; gap: 10px; }
-    .sidebar-title { font-family: var(--font-serif); font-size: 1rem; text-transform: none; letter-spacing: 0.01em; color: var(--accent); font-weight: 600; margin-bottom: 4px; border-bottom: 1px solid var(--border-light); padding-bottom: 6px; }
+    .sidebar-title { font-family: var(--font-serif); font-size: 1rem; text-transform: none; letter-spacing: 0.01em; color: var(--accent); font-weight: 600; margin-top: 4px; border-top: 1px solid var(--border-light); padding-top: 10px; }
     
     .action-row { display: flex; gap: 8px; }
     .action-row button { flex: 1; padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: white; cursor: pointer; font-family: inherit; font-size: 0.85rem; color: var(--text); transition: all 0.2s ease; }
@@ -320,20 +320,15 @@
     .ls-line2-slot { position: absolute; left: 50%; bottom: 92px; transform: translateX(-50%); pointer-events: auto; z-index: 91; }
     .ls-node-label { font-size: 14px; min-height: 24px; padding: 3px 10px; }
     .ls-textarea { width: 100%; min-width: 380px; border: none; outline: none; resize: none; font-family: inherit; font-size: 16px; line-height: 1.4; background: transparent; color: var(--text); padding: 4px 8px; box-sizing: border-box; overflow: hidden; text-align: center; }
-    .ls-toolbar { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); display: inline-flex; gap: 4px; padding: 6px; background: white; border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.10); z-index: 1100; align-items: center; white-space: nowrap; }
-    .ls-toolbar button { transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.12s ease; }
-    .ls-toolbar button:hover { background: var(--surface-warm) !important; border-color: #ced4da !important; }
-    .ls-toolbar button:active { transform: scale(0.96); }
-    .ls-toolbar button.active:hover { background: var(--accent-hover) !important; border-color: var(--accent-hover) !important; color: white !important; }
 
     .fmt-toolbar-btn {
       transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
     }
-    .fmt-toolbar-btn:hover {
+    .fmt-toolbar-btn:hover:not(:disabled) {
       background: var(--surface-warm) !important;
       border-color: #ced4da !important;
     }
-    .fmt-toolbar-btn:active {
+    .fmt-toolbar-btn:active:not(:disabled) {
       transform: scale(0.96);
     }
     .fmt-toolbar-btn.active:hover {
@@ -341,10 +336,174 @@
       border-color: var(--accent-hover) !important;
       color: white !important;
     }
-    .ls-symbols-panel { position: absolute !important; bottom: calc(100% + 50px); left: 50%; transform: translateX(-50%); width: auto; min-width: 240px; z-index: 1100 !important; margin-top: 0 !important; }
-    .ls-ipa-panel { position: absolute !important; bottom: calc(100% + 50px); left: 50%; transform: translateX(-50%); width: 380px; z-index: 1100 !important; margin-top: 0 !important; }
 
     @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+    /* =================================
+       FILENAME MODAL & RESTORE MODAL
+       =================================
+       Modales adaptados desde Kilmer al estilo Telperion. Usan las variables
+       nativas (--accent, --border, --surface, --font-serif/sans) para
+       mantener coherencia con el resto de la interfaz. El backdrop semi-opaco
+       cubre el lienzo mientras el modal está abierto; el card tiene un
+       gradient sutil cálido, header verde con icono SVG inline, e
+       inputs/botones que reutilizan los patrones existentes.
+    */
+    .fnm-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 24, 22, 0.45);
+      backdrop-filter: blur(2px);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fnmFadeIn 0.15s ease-out;
+    }
+    @keyframes fnmFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .fnm-card {
+      background: linear-gradient(135deg, #fdfcfb 0%, var(--surface) 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.22);
+      width: min(420px, calc(100vw - 40px));
+      overflow: hidden;
+      animation: fnmCardIn 0.18s cubic-bezier(0.34, 1.3, 0.64, 1);
+    }
+    @keyframes fnmCardIn {
+      from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .fnm-header {
+      background: var(--accent);
+      color: white;
+      padding: 14px 22px;
+      font-family: var(--font-serif);
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .fnm-header svg { flex-shrink: 0; opacity: 0.95; }
+    .fnm-body { padding: 22px; }
+    .fnm-label {
+      display: block;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      letter-spacing: 0.02em;
+    }
+    .fnm-input-wrap {
+      display: flex;
+      align-items: stretch;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      background: white;
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+    .fnm-input-wrap:focus-within { border-color: var(--accent); }
+    .fnm-input {
+      flex: 1;
+      min-width: 0;
+      border: none;
+      outline: none;
+      padding: 10px 12px;
+      font-family: var(--font-serif);
+      font-size: 16px;
+      color: var(--text);
+      background: transparent;
+    }
+    .fnm-ext {
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      background: rgba(0, 0, 0, 0.04);
+      border-left: 1px solid var(--border);
+      font-family: 'SF Mono', Consolas, monospace;
+      font-size: 14px;
+      color: var(--text-secondary);
+      user-select: none;
+    }
+    .fnm-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 0 22px 18px;
+    }
+    .fnm-btn {
+      padding: 9px 18px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.05s;
+    }
+    .fnm-btn:active { transform: translateY(1px); }
+    .fnm-btn-cancel {
+      background: transparent;
+      border-color: var(--border);
+      color: var(--text);
+    }
+    .fnm-btn-cancel:hover {
+      background: rgba(0, 0, 0, 0.04);
+      border-color: rgba(0, 0, 0, 0.2);
+    }
+    .fnm-btn-confirm {
+      background: var(--accent);
+      color: white;
+    }
+    .fnm-btn-confirm:hover:not(:disabled) { background: var(--accent-hover); }
+    .fnm-btn-confirm:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    /* Radio groups para campos extra del FilenameModal (e.g. fondo del PNG).
+       Diseño deliberadamente discreto: borde fino, sin fondo, tipografía
+       pequeña — para que el campo extra no compita visualmente con el
+       input del nombre, que es la decisión principal del modal. */
+    .fnm-radio-group {
+      display: flex;
+      gap: 6px;
+    }
+    .fnm-radio {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 10px;
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      background: transparent;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      color: var(--text-secondary);
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .fnm-radio:hover {
+      border-color: var(--border);
+      color: var(--text);
+    }
+    .fnm-radio.selected {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+    .fnm-radio input[type="radio"] {
+      accent-color: var(--accent);
+      margin: 0;
+      transform: scale(0.9);
+    }
   </style>
 </head>
 <body>
@@ -570,222 +729,14 @@
       { title: 'Brackets & Delimiters', chars: '/ [ ] ⟨ ⟩ { }'.split(' ') },
     ];
 
-    // Estilo común para los botones de formato de la toolbar flotante.
+    // Estilo común para los botones de formato del sidebar de formato.
     const FMT_BTN_STYLE = { width: '32px', height: '28px', padding: 0, fontSize: '14px', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'white', border: '1px solid var(--border)', borderRadius: '4px', cursor: 'pointer', color: 'var(--text)' };
 
-    /**
-     * Toolbar flotante reutilizable de formato (B / I / SC / sub / sup / U / Σ / IPA).
-     * Se renderiza vía portal y se ancla por encima del input/textarea referenciado por
-     * `anchorRef` mediante getBoundingClientRect, de modo que no queda atrapada por
-     * recortes de overflow ni por el stacking context del nodo editado.
-     *
-     * Props:
-     *   anchorRef    – ref al input/textarea editado (se usa también para applyWrap/insertAtCursor).
-     *   value        – valor actual del campo editado (controlled).
-     *   setValue     – setter del valor.
-     *   visible      – si la toolbar debe mostrarse (típicamente isEditing).
-     *   anchorTrack  – cualquier dependencia que, al cambiar, deba recalcular posición
-     *                  (p. ej. la longitud del texto cuando el input cambia de ancho).
-     */
-    const FormattingToolbar = ({ anchorRef, value, setValue, visible, anchorTrack }) => {
-      // Posición del input/textarea anclado: top/bottom/centerX en coordenadas del viewport.
-      const [anchorRect, setAnchorRect] = React.useState(null);
-      const [showSymbols, setShowSymbols] = React.useState(false);
-      const [showIPA, setShowIPA] = React.useState(false);
-      const toolbarRef = React.useRef(null);
-      const panelRef = React.useRef(null);
-      // Altura medida de la toolbar (para situar el panel justo por encima de ella).
-      const [toolbarH, setToolbarH] = React.useState(40);
-      // Si true, el panel se despliega hacia abajo (cuando arriba no hay espacio).
-      const [panelBelow, setPanelBelow] = React.useState(false);
-
-      // Reposicionar al hacerse visible, al cambiar el contenido (ancho del input)
-      // y al hacer scroll/resize del viewport. Se centra horizontalmente sobre el anchor.
-      React.useEffect(() => {
-        if (!visible) { setAnchorRect(null); setShowSymbols(false); setShowIPA(false); return; }
-        const update = () => {
-          const el = anchorRef && anchorRef.current;
-          if (!el) return;
-          const rect = el.getBoundingClientRect();
-          setAnchorRect({ top: rect.top, bottom: rect.bottom, centerX: rect.left + rect.width / 2 });
-        };
-        update();
-        const canvas = document.querySelector('.canvas-container');
-        window.addEventListener('resize', update);
-        window.addEventListener('scroll', update, true);
-        if (canvas) canvas.addEventListener('scroll', update, { passive: true });
-        return () => {
-          window.removeEventListener('resize', update);
-          window.removeEventListener('scroll', update, true);
-          if (canvas) canvas.removeEventListener('scroll', update);
-        };
-      }, [visible, anchorTrack, anchorRef]);
-
-      // Medir la altura real de la toolbar tras pintar para anclar el panel a su borde.
-      React.useLayoutEffect(() => {
-        if (toolbarRef.current) {
-          const h = toolbarRef.current.getBoundingClientRect().height;
-          if (h && Math.abs(h - toolbarH) > 0.5) setToolbarH(h);
-        }
-      }, [anchorRect, visible]);
-
-      // Decidir si el panel cabe arriba o debe ir abajo. Se mide tras el primer render del panel.
-      React.useLayoutEffect(() => {
-        if (!showSymbols && !showIPA) { setPanelBelow(false); return; }
-        if (!panelRef.current || !anchorRect) return;
-        const panelH = panelRef.current.getBoundingClientRect().height;
-        // Espacio libre arriba del input (descontando la toolbar y un margen pequeño).
-        const spaceAbove = anchorRect.top - toolbarH - 12;
-        if (panelH > spaceAbove && (window.innerHeight - anchorRect.bottom) > spaceAbove) {
-          setPanelBelow(true);
-        } else {
-          setPanelBelow(false);
-        }
-      }, [showSymbols, showIPA, anchorRect, toolbarH]);
-
-      const applyWrap = (left, right = left) => {
-        const el = anchorRef && anchorRef.current;
-        if (!el) return;
-        const result = wrapSelection(el, left, right);
-        if (!result) return;
-        setValue(result.value);
-        requestAnimationFrame(() => {
-          if (!anchorRef.current) return;
-          anchorRef.current.focus();
-          anchorRef.current.setSelectionRange(result.selStart, result.selEnd);
-        });
-      };
-
-      const insertSymbol = (sym) => {
-        const el = anchorRef && anchorRef.current;
-        if (!el) return;
-        const result = insertAtCursor(el, sym);
-        if (!result) return;
-        setValue(result.value);
-        requestAnimationFrame(() => {
-          if (!anchorRef.current) return;
-          anchorRef.current.focus();
-          anchorRef.current.setSelectionRange(result.selStart, result.selEnd);
-        });
-      };
-
-      if (!visible || !anchorRect) return null;
-      const portalTarget = document.getElementById('dropdown-portal');
-      if (!portalTarget) return null;
-
-      // Posición horizontal: centrada sobre el anchor, con clamp al viewport (margen 8px).
-      const VIEWPORT_MARGIN = 8;
-      const PANEL_MAX_W = 420;
-      const halfPanel = PANEL_MAX_W / 2;
-      const minLeft = halfPanel + VIEWPORT_MARGIN;
-      const maxLeft = window.innerWidth - halfPanel - VIEWPORT_MARGIN;
-      const clampedLeft = Math.min(Math.max(anchorRect.centerX, minLeft), maxLeft);
-
-      // La toolbar va 8px arriba del input (si hay espacio); si no, debajo.
-      const spaceAbove = anchorRect.top - 12;
-      const toolbarAbove = spaceAbove >= toolbarH;
-      const toolbarTop = toolbarAbove
-        ? (anchorRect.top - 8 - toolbarH)
-        : (anchorRect.bottom + 8);
-
-      // El panel va arriba o abajo según panelBelow. Cuando va arriba, se asienta sobre la toolbar
-      // (si la toolbar también está arriba) o sobre el anchor (si la toolbar está abajo).
-      // Cuando va abajo, se sitúa debajo de la toolbar (si la toolbar está abajo) o del anchor.
-      let panelTop;
-      if (panelBelow) {
-        panelTop = toolbarAbove ? (anchorRect.bottom + 8) : (toolbarTop + toolbarH + 6);
-      } else {
-        // Posicionamos el TOP del panel; el alto real se calculará automáticamente.
-        // Lo ponemos justo encima de la toolbar (o del anchor si la toolbar va abajo).
-        // Para lograrlo sin medir el panel, usamos transform: translateY(-100%) y top en la base.
-        panelTop = toolbarAbove ? toolbarTop : anchorRect.top;
-      }
-
-      const toolbarStyle = {
-        position: 'fixed',
-        top: `${toolbarTop}px`,
-        left: `${clampedLeft}px`,
-        transform: 'translateX(-50%)',
-        display: 'inline-flex',
-        gap: '4px',
-        padding: '6px',
-        background: 'white',
-        border: '1px solid var(--border)',
-        borderRadius: '6px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.10)',
-        zIndex: 11000,
-        alignItems: 'center',
-        whiteSpace: 'nowrap',
-        pointerEvents: 'auto',
-      };
-
-      // Tope razonable de altura del panel (como el del LS principal y otros desplegables).
-      // Se combina con el espacio disponible al viewport para que nunca se salga de pantalla
-      // ni se vuelva desproporcionadamente alto cuando hay mucho espacio (p. ej. nodo cerca del top).
-      const PANEL_MAX_H = Math.round(window.innerHeight * 0.3); // ~60vh
-      const panelMaxByViewport = panelBelow
-        ? Math.max(120, window.innerHeight - panelTop - VIEWPORT_MARGIN)
-        : Math.max(120, panelTop - VIEWPORT_MARGIN - 6);
-
-      const panelStyle = {
-        position: 'fixed',
-        top: `${panelTop}px`,
-        left: `${clampedLeft}px`,
-        // Si va abajo: anclado por su top. Si va arriba: anclado por su bottom (translateY(-100%) con un margen extra).
-        transform: panelBelow ? 'translateX(-50%)' : 'translate(-50%, calc(-100% - 6px))',
-        zIndex: 10999,
-        background: 'white',
-        border: '1px solid var(--border)',
-        borderRadius: '6px',
-        boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
-        padding: '8px',
-        width: 'max-content',
-        maxWidth: `${PANEL_MAX_W}px`,
-        maxHeight: `${Math.min(PANEL_MAX_H, panelMaxByViewport)}px`,
-        overflowY: 'auto',
-        pointerEvents: 'auto',
-      };
-
-      return ReactDOM.createPortal(
-        <>
-          <div ref={toolbarRef} className="floating-fmt-toolbar" style={toolbarStyle} onMouseDown={(e) => e.preventDefault()}>
-            <button type="button" className="fmt-toolbar-btn" style={{...FMT_BTN_STYLE, fontWeight: 700}} title="Bold (**…**)" onMouseDown={(e) => { e.preventDefault(); applyWrap('**'); }}>B</button>
-            <button type="button" className="fmt-toolbar-btn" style={{...FMT_BTN_STYLE, fontStyle: 'italic'}} title="Italic (*…*)" onMouseDown={(e) => { e.preventDefault(); applyWrap('*'); }}>I</button>
-            <button type="button" className="fmt-toolbar-btn" style={{...FMT_BTN_STYLE, fontVariant: 'small-caps', textTransform: 'lowercase'}} title="Small caps (%…%)" onMouseDown={(e) => { e.preventDefault(); applyWrap('%'); }}>SC</button>
-            <button type="button" className="fmt-toolbar-btn" style={FMT_BTN_STYLE} title="Subscript (_…_)" onMouseDown={(e) => { e.preventDefault(); applyWrap('_'); }}><span>X<sub style={{fontSize:'0.7em'}}>2</sub></span></button>
-            <button type="button" className="fmt-toolbar-btn" style={FMT_BTN_STYLE} title="Superscript (__…__)" onMouseDown={(e) => { e.preventDefault(); applyWrap('__'); }}><span>X<sup style={{fontSize:'0.7em'}}>2</sup></span></button>
-            <button type="button" className="fmt-toolbar-btn" style={{...FMT_BTN_STYLE, textDecoration: 'underline'}} title="Underline (~…~)" onMouseDown={(e) => { e.preventDefault(); applyWrap('~'); }}>U</button>
-            <div style={{ width: '1px', height: '20px', background: 'var(--border)', margin: '0 2px' }}></div>
-            <button type="button" className={`fmt-toolbar-btn ${showSymbols ? 'active' : ''}`} style={{...FMT_BTN_STYLE, fontWeight: 600, background: showSymbols ? 'var(--accent)' : 'white', color: showSymbols ? 'white' : 'var(--text)' }} title="Logical symbols" onMouseDown={(e) => { e.preventDefault(); setShowSymbols(s => !s); if (!showSymbols) setShowIPA(false); }}>Σ</button>
-            <button type="button" className={`fmt-toolbar-btn ${showIPA ? 'active' : ''}`} style={{...FMT_BTN_STYLE, fontWeight: 400, background: showIPA ? 'var(--accent)' : 'white', color: showIPA ? 'white' : 'var(--text)' }} title="IPA characters" onMouseDown={(e) => { e.preventDefault(); setShowIPA(s => !s); if (!showIPA) setShowSymbols(false); }}>t͡ʃ</button>
-          </div>
-          {showSymbols && (
-            <div ref={panelRef} className="floating-fmt-panel" style={panelStyle} onMouseDown={(e) => e.preventDefault()}>
-              <div className="ipa-grid">
-                {LOGIC_SYMBOLS.map(s => (
-                  <button key={s} type="button" className="ipa-char-btn" title={`Insert ${s}`} onMouseDown={(e) => { e.preventDefault(); insertSymbol(s); }}>{s}</button>
-                ))}
-              </div>
-            </div>
-          )}
-          {showIPA && (
-            <div ref={panelRef} className="floating-fmt-panel" style={panelStyle} onMouseDown={(e) => e.preventDefault()}>
-              {IPA_CATEGORIES.map((cat) => (
-                <div key={cat.title}>
-                  <div className="ipa-category-title">{cat.title}</div>
-                  <div className="ipa-grid">
-                    {cat.chars.map((ch, j) => (
-                      <button key={j} type="button" className="ipa-char-btn" title={ch} onMouseDown={(e) => { e.preventDefault(); insertSymbol(ch); }}>{ch}</button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </>,
-        portalTarget
-      );
-    };
+    // Contexto que expone los callbacks de registro/desregistro del input de formato.
+    // Cualquier campo editable (EditableLabel, los <input>/<textarea> de ExpressionItem,
+    // LogicalStructureBox, etc.) los consume para anunciarse al sidebar de formato
+    // cuando entra en edición y liberarse al salir.
+    const FormatInputContext = React.createContext({ register: () => {}, unregister: () => {} });
 
     const EditableLabel = ({
       id, label, isSelected, isEditing, onSelect, onChange, onEndEdit,
@@ -796,6 +747,7 @@
       const [dropdownPos, setDropdownPos] = useState(null);
       const inputRef = useRef(null);
       const labelRef = useRef(null);
+      const { register, unregister } = React.useContext(FormatInputContext);
 
       useEffect(() => {
         if (isEditing) {
@@ -803,6 +755,14 @@
           setTimeout(() => { if (inputRef.current) inputRef.current.focus(); }, 0);
         } else { setShowDropdown(false); }
       }, [isEditing, label]);
+
+      // Registrar este input en el sidebar de formato mientras dura la edición.
+      useEffect(() => {
+        if (isEditing) {
+          register(inputRef, setLocalVal);
+          return () => unregister();
+        }
+      }, [isEditing, register, unregister]);
 
       // Cerrar dropdown al hacer scroll en el canvas
       useEffect(() => {
@@ -882,9 +842,9 @@
                 value={localVal} size={Math.max(3, localVal.length)}
                 onChange={(e) => { setLocalVal(e.target.value); setShowDropdown(true); }}
                 onBlur={(e) => {
-                  // No cerrar si el blur va a la toolbar flotante o sus paneles.
+                  // No cerrar si el blur va al sidebar de formato (botones de B/I/SC/sub/sup/U/Σ/IPA).
                   const next = e.relatedTarget;
-                  if (next && (next.closest('.floating-fmt-toolbar') || next.closest('.floating-fmt-panel'))) return;
+                  if (next && next.closest('.sidebar-formatting-controls')) return;
                   onChange(id, e.target.value || '...'); onEndEdit();
                 }}
                 onKeyDown={(e) => {
@@ -897,13 +857,6 @@
                 <svg viewBox="0 0 10 6"><path d="M1 1L5 5L9 1"/></svg>
               </div>
               {dropdownContent}
-              <FormattingToolbar
-                anchorRef={inputRef}
-                value={localVal}
-                setValue={setLocalVal}
-                visible={isEditing}
-                anchorTrack={inputWidth}
-              />
             </>
           )}
         </div>
@@ -989,9 +942,24 @@
       
       const inputRef = useRef(null);
       const glossInputRef = useRef(null);
+      const { register, unregister } = React.useContext(FormatInputContext);
 
       useEffect(() => { if (isEditing) setLocalVal(expr.label === '...' ? '' : expr.label); }, [isEditing, expr.label]);
       useEffect(() => { if (isEditingGloss) setLocalGlossVal((expr.secondaryGloss === '...' || expr.secondaryGloss === '\u00A0') ? '' : (expr.secondaryGloss || '')); }, [isEditingGloss, expr.secondaryGloss]);
+
+      // Registrar el input correspondiente en el sidebar de formato mientras dura su edición.
+      useEffect(() => {
+        if (isEditing) {
+          register(inputRef, setLocalVal);
+          return () => unregister();
+        }
+      }, [isEditing, register, unregister]);
+      useEffect(() => {
+        if (isEditingGloss) {
+          register(glossInputRef, setLocalGlossVal);
+          return () => unregister();
+        }
+      }, [isEditingGloss, register, unregister]);
 
       const shiftStyle = { 
         transform: shifts[expr.id] ? `translateX(${shifts[expr.id]}px)` : 'none',
@@ -1026,23 +994,15 @@
                     autoFocus value={localVal} size={Math.max(3, localVal.length)}
                     onChange={(e) => setLocalVal(e.target.value)}
                     onBlur={(e) => {
-                      // No cerrar si el blur va a la toolbar flotante o sus paneles.
+                      // No cerrar si el blur va al sidebar de formato.
                       const next = e.relatedTarget;
-                      if (next && (next.closest('.floating-fmt-toolbar') || next.closest('.floating-fmt-panel'))) return;
+                      if (next && next.closest('.sidebar-formatting-controls')) return;
                       onChange(expr.id, e.target.value); onEndEdit();
                     }}
                     onKeyDown={(e) => { 
                       if (e.key === 'Enter') { e.preventDefault(); onChange(expr.id, localVal); onEndEdit(); }
                       if (e.key === 'Escape') { e.preventDefault(); setLocalVal(expr.label); onEndEdit(); }
                     }}
-                  />
-
-                  <FormattingToolbar
-                    anchorRef={inputRef}
-                    value={localVal}
-                    setValue={setLocalVal}
-                    visible={isEditing}
-                    anchorTrack={inputWidth}
                   />
                 </>
               )}
@@ -1089,22 +1049,13 @@
                     onChange={(e) => setLocalGlossVal(e.target.value)}
                     onBlur={(e) => {
                       const next = e.relatedTarget;
-                      if (next && (next.closest('.floating-fmt-toolbar') || next.closest('.floating-fmt-panel'))) return;
+                      if (next && next.closest('.sidebar-formatting-controls')) return;
                       onChange(expr.id, e.target.value, true); onEndEdit();
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') { e.preventDefault(); onChange(expr.id, localGlossVal, true); onEndEdit(); }
                       if (e.key === 'Escape') { e.preventDefault(); setLocalGlossVal((expr.secondaryGloss === '\u00A0') ? '' : (expr.secondaryGloss || '')); onEndEdit(); }
                     }}
-                  />
-                )}
-                {isEditingGloss && (
-                  <FormattingToolbar
-                    anchorRef={glossInputRef}
-                    value={localGlossVal}
-                    setValue={setLocalGlossVal}
-                    visible={isEditingGloss}
-                    anchorTrack={localGlossVal.length}
                   />
                 )}
               </div>
@@ -1206,9 +1157,8 @@
       const textareaRef = React.useRef(null);
       const boxRef = React.useRef(null);
       const [draftValue, setDraftValue] = React.useState(ls.text || '');
-      const [showSymbols, setShowSymbols] = React.useState(false);
-      const [showIPA, setShowIPA] = React.useState(false);
       const [ghostX, setGhostX] = React.useState(null); // posición X del marcador fantasma en px
+      const { register, unregister } = React.useContext(FormatInputContext);
       // Ancho del cuadro capturado al entrar en edición. Mantenerlo fijo evita que el cuadro
       // cambie de dimensiones cuando el textarea reemplaza al texto renderizado: si el cuadro
       // pudiera reflujar libremente, el textarea (que es más ancho que el contenido envuelto)
@@ -1295,89 +1245,25 @@
       const commitDraft = () => {
         if (draftValue !== ls.text) onChange(ls.id, draftValue);
         onEndEdit();
-        setShowSymbols(false);
-        setShowIPA(false);
       };
 
-      const applyWrap = (left, right = left) => {
-        const el = textareaRef.current;
-        if (!el) return;
-        const result = wrapSelection(el, left, right);
-        if (!result) return;
-        setDraftValue(result.value);
-        // Restaurar selección tras el re-render
-        requestAnimationFrame(() => {
-          if (textareaRef.current) {
-            textareaRef.current.focus();
-            textareaRef.current.setSelectionRange(result.selStart, result.selEnd);
-          }
-        });
-      };
-
-      const insertSymbol = (sym) => {
-        const el = textareaRef.current;
-        if (!el) return;
-        const result = insertAtCursor(el, sym);
-        if (!result) return;
-        setDraftValue(result.value);
-        requestAnimationFrame(() => {
-          if (textareaRef.current) {
-            textareaRef.current.focus();
-            textareaRef.current.setSelectionRange(result.selStart, result.selEnd);
-          }
-        });
-      };
+      // Registrar el textarea en el sidebar de formato mientras dura la edición.
+      React.useEffect(() => {
+        if (isEditing) {
+          register(textareaRef, setDraftValue);
+          return () => unregister();
+        }
+      }, [isEditing, register, unregister]);
 
       const handleKeyDown = (e) => {
-        if (e.key === 'Escape') { e.preventDefault(); setDraftValue(ls.text || ''); onEndEdit(); setShowSymbols(false); setShowIPA(false); }
+        if (e.key === 'Escape') { e.preventDefault(); setDraftValue(ls.text || ''); onEndEdit(); }
         else if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitDraft(); }
       };
 
       const boxClasses = `logical-structure-box ${isSelected ? 'selected' : ''} ${(!ls.text && !isEditing) ? 'placeholder' : ''} ${isEditing ? 'editing' : ''}`;
 
-      const fmtBtnStyle = { width: '32px', height: '28px', padding: 0, fontSize: '14px', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'white', border: '1px solid var(--border)', borderRadius: '4px', cursor: 'pointer', color: 'var(--text)' };
-
       return (
         <div className="logical-structure-wrapper" onClick={(e) => e.stopPropagation()}>
-          {isEditing && (
-            <div className="ls-toolbar">
-              <button type="button" className="fmt-toolbar-btn" style={{...fmtBtnStyle, fontWeight: 700}} title="Bold (**…**)" onMouseDown={(e) => { e.preventDefault(); applyWrap('**'); }}>B</button>
-              <button type="button" className="fmt-toolbar-btn" style={{...fmtBtnStyle, fontStyle: 'italic'}} title="Italic (*…*)" onMouseDown={(e) => { e.preventDefault(); applyWrap('*'); }}>I</button>
-              <button type="button" className="fmt-toolbar-btn" style={{...fmtBtnStyle, fontVariant: 'small-caps', textTransform: 'lowercase'}} title="Small caps (%…%)" onMouseDown={(e) => { e.preventDefault(); applyWrap('%'); }}>SC</button>
-              <button type="button" className="fmt-toolbar-btn" style={fmtBtnStyle} title="Subscript (_…_)" onMouseDown={(e) => { e.preventDefault(); applyWrap('_'); }}><span>X<sub style={{fontSize:'0.7em'}}>2</sub></span></button>
-              <button type="button" className="fmt-toolbar-btn" style={fmtBtnStyle} title="Superscript (__…__)" onMouseDown={(e) => { e.preventDefault(); applyWrap('__'); }}><span>X<sup style={{fontSize:'0.7em'}}>2</sup></span></button>
-              <button type="button" className="fmt-toolbar-btn" style={{...fmtBtnStyle, textDecoration: 'underline'}} title="Underline (~…~)" onMouseDown={(e) => { e.preventDefault(); applyWrap('~'); }}>U</button>
-              <div style={{ width: '1px', height: '20px', background: 'var(--border)', margin: '0 2px' }}></div>
-              <button type="button" className={`fmt-toolbar-btn ${showSymbols ? 'active' : ''}`} style={{...fmtBtnStyle, fontWeight: 600, background: showSymbols ? 'var(--accent)' : 'white', color: showSymbols ? 'white' : 'var(--text)' }} title="Logical symbols" onMouseDown={(e) => { e.preventDefault(); setShowSymbols(s => !s); if (!showSymbols) setShowIPA(false); }}>Σ</button>
-              <button type="button" className={`fmt-toolbar-btn ${showIPA ? 'active' : ''}`} style={{...fmtBtnStyle, fontWeight: 400, background: showIPA ? 'var(--accent)' : 'white', color: showIPA ? 'white' : 'var(--text)' }} title="IPA characters" onMouseDown={(e) => { e.preventDefault(); setShowIPA(s => !s); if (!showIPA) setShowSymbols(false); }}>t͡ʃ</button>
-            </div>
-          )}
-
-          {isEditing && showSymbols && (
-            <div className="ipa-panel ls-symbols-panel" onMouseDown={(e) => e.preventDefault()}>
-              <div className="ipa-grid">
-                {LOGIC_SYMBOLS.map(s => (
-                  <button key={s} type="button" className="ipa-char-btn" title={`Insert ${s}`} onMouseDown={(e) => { e.preventDefault(); insertSymbol(s); }}>{s}</button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {isEditing && showIPA && (
-            <div className="ipa-panel ls-ipa-panel" onMouseDown={(e) => e.preventDefault()}>
-              {IPA_CATEGORIES.map((cat) => (
-                <div key={cat.title}>
-                  <div className="ipa-category-title">{cat.title}</div>
-                  <div className="ipa-grid">
-                    {cat.chars.map((ch, j) => (
-                      <button key={j} type="button" className="ipa-char-btn" title={ch} onMouseDown={(e) => { e.preventDefault(); insertSymbol(ch); }}>{ch}</button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
           {/* Columnas de cadenas: una por cadena, ancladas en originX del cuadro LS, apiladas verticalmente sobre él. */}
           {chains.length > 0 && (
             <div className="ls-chains-layer">
@@ -1423,9 +1309,9 @@
                 value={draftValue}
                 onChange={(e) => setDraftValue(e.target.value)}
                 onBlur={(e) => {
-                  // No cerrar si el blur va a un botón de la toolbar o del panel
+                  // No cerrar si el blur va al sidebar de formato.
                   const next = e.relatedTarget;
-                  if (next && (next.closest('.ls-toolbar') || next.closest('.ls-symbols-panel') || next.closest('.ls-ipa-panel'))) return;
+                  if (next && next.closest('.sidebar-formatting-controls')) return;
                   commitDraft();
                 }}
                 onKeyDown={handleKeyDown}
@@ -1529,6 +1415,307 @@
       );
     };
 
+    /**
+     * Controles de formato persistentes en el sidebar derecho.
+     * Sustituye a la antigua FormattingToolbar flotante y a la ls-toolbar inline:
+     * el usuario aplica B/I/SC/sub/sup/U/Σ/IPA desde aquí mientras hay un input editable activo.
+     *
+     * Props:
+     *   activeInput  – { ref, setValue } | null. Si es null, los botones se muestran atenuados.
+     *
+     * Diseño:
+     *   - Fila superior: 6 botones de formato + separador + toggles Σ e IPA.
+     *   - Si Σ o IPA está activo, el panel correspondiente se expande inline debajo
+     *     (el sidebar es scrolleable, por lo que no necesita posicionamiento flotante).
+     *   - onMouseDown con preventDefault en todos los botones para no robar el foco al input.
+     */
+    const SidebarFormattingControls = ({ activeInput }) => {
+      const [showSymbols, setShowSymbols] = useState(false);
+      const [showIPAPanel, setShowIPAPanel] = useState(false);
+
+      // Si el input activo desaparece (el usuario terminó la edición), cerramos los paneles
+      // para que la próxima vez que aparezca un input no salgan abiertos por sorpresa.
+      useEffect(() => {
+        if (!activeInput) {
+          setShowSymbols(false);
+          setShowIPAPanel(false);
+        }
+      }, [activeInput]);
+
+      const isActive = !!activeInput;
+
+      const applyWrap = (left, right = left) => {
+        if (!activeInput) return;
+        const el = activeInput.ref && activeInput.ref.current;
+        if (!el) return;
+        const result = wrapSelection(el, left, right);
+        if (!result) return;
+        activeInput.setValue(result.value);
+        requestAnimationFrame(() => {
+          if (!activeInput.ref.current) return;
+          activeInput.ref.current.focus();
+          activeInput.ref.current.setSelectionRange(result.selStart, result.selEnd);
+        });
+      };
+
+      const insertSymbol = (sym) => {
+        if (!activeInput) return;
+        const el = activeInput.ref && activeInput.ref.current;
+        if (!el) return;
+        const result = insertAtCursor(el, sym);
+        if (!result) return;
+        activeInput.setValue(result.value);
+        requestAnimationFrame(() => {
+          if (!activeInput.ref.current) return;
+          activeInput.ref.current.focus();
+          activeInput.ref.current.setSelectionRange(result.selStart, result.selEnd);
+        });
+      };
+
+      const buttonBaseStyle = {
+        ...FMT_BTN_STYLE,
+        opacity: isActive ? 1 : 0.4,
+        cursor: isActive ? 'pointer' : 'not-allowed',
+      };
+
+      return (
+        <div className="sidebar-formatting-controls" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div className="sidebar-title">Text Formatting</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', padding: '8px', background: 'white', border: '1px solid var(--border-light)', borderRadius: '6px', justifyContent: 'center' }}>
+            <button type="button" className="fmt-toolbar-btn" disabled={!isActive} style={{...buttonBaseStyle, fontWeight: 700}} title="Bold (**…**)" onMouseDown={(e) => { e.preventDefault(); if (isActive) applyWrap('**'); }}>B</button>
+            <button type="button" className="fmt-toolbar-btn" disabled={!isActive} style={{...buttonBaseStyle, fontStyle: 'italic'}} title="Italic (*…*)" onMouseDown={(e) => { e.preventDefault(); if (isActive) applyWrap('*'); }}>I</button>
+            <button type="button" className="fmt-toolbar-btn" disabled={!isActive} style={{...buttonBaseStyle, fontVariant: 'small-caps', textTransform: 'lowercase'}} title="Small caps (%…%)" onMouseDown={(e) => { e.preventDefault(); if (isActive) applyWrap('%'); }}>SC</button>
+            <button type="button" className="fmt-toolbar-btn" disabled={!isActive} style={buttonBaseStyle} title="Subscript (_…_)" onMouseDown={(e) => { e.preventDefault(); if (isActive) applyWrap('_'); }}><span>X<sub style={{fontSize:'0.7em'}}>2</sub></span></button>
+            <button type="button" className="fmt-toolbar-btn" disabled={!isActive} style={buttonBaseStyle} title="Superscript (__…__)" onMouseDown={(e) => { e.preventDefault(); if (isActive) applyWrap('__'); }}><span>X<sup style={{fontSize:'0.7em'}}>2</sup></span></button>
+            <button type="button" className="fmt-toolbar-btn" disabled={!isActive} style={{...buttonBaseStyle, textDecoration: 'underline'}} title="Underline (~…~)" onMouseDown={(e) => { e.preventDefault(); if (isActive) applyWrap('~'); }}>U</button>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Insert Symbol:
+            </div>
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <button type="button" className={`fmt-toolbar-btn ${showSymbols ? 'active' : ''}`} disabled={!isActive} style={{...buttonBaseStyle, fontWeight: 600, background: showSymbols && isActive ? 'var(--accent)' : 'white', color: showSymbols && isActive ? 'white' : 'var(--text)' }} title="Logical symbols" onMouseDown={(e) => { e.preventDefault(); if (!isActive) return; setShowSymbols(s => !s); if (!showSymbols) setShowIPAPanel(false); }}>Σ</button>
+              <button type="button" className={`fmt-toolbar-btn ${showIPAPanel ? 'active' : ''}`} disabled={!isActive} style={{...buttonBaseStyle, fontWeight: 400, background: showIPAPanel && isActive ? 'var(--accent)' : 'white', color: showIPAPanel && isActive ? 'white' : 'var(--text)' }} title="IPA characters" onMouseDown={(e) => { e.preventDefault(); if (!isActive) return; setShowIPAPanel(s => !s); if (!showIPAPanel) setShowSymbols(false); }}>t͡ʃ</button>
+            </div>
+          </div>
+
+          {isActive && showSymbols && (
+            <div className="sidebar-fmt-panel" style={{ marginTop: '8px', padding: '8px', background: 'white', border: '1px solid var(--border-light)', borderRadius: '6px' }}>
+              <div className="ipa-grid">
+                {LOGIC_SYMBOLS.map(s => (
+                  <button key={s} type="button" className="ipa-char-btn" title={`Insert ${s}`} onMouseDown={(e) => { e.preventDefault(); insertSymbol(s); }}>{s}</button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {isActive && showIPAPanel && (
+            <div className="sidebar-fmt-panel" style={{ marginTop: '8px', padding: '8px', background: 'white', border: '1px solid var(--border-light)', borderRadius: '6px', maxHeight: '320px', overflowY: 'auto' }}>
+              {IPA_CATEGORIES.map((cat) => (
+                <div key={cat.title}>
+                  <div className="ipa-category-title">{cat.title}</div>
+                  <div className="ipa-grid">
+                    {cat.chars.map((ch, j) => (
+                      <button key={j} type="button" className="ipa-char-btn" title={ch} onMouseDown={(e) => { e.preventDefault(); insertSymbol(ch); }}>{ch}</button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    // ════════════════════════════════════════════════════════════════
+    // FilenameModal — diálogo personalizado que reemplaza al prompt()
+    // nativo del navegador para guardar el .tlp y exportar el PNG.
+    // Coherente con la estética de Telperion (gradient suave, acento
+    // verde, tipografía Crimson Pro para input). Se invoca vía
+    // askForFilename(...) que devuelve una promesa con el nombre
+    // confirmado o null si se cancela.
+    // ════════════════════════════════════════════════════════════════
+    const FilenameModal = ({ title, defaultName, extension, icon, extraFields, onCancel, onConfirm }) => {
+      const [value, setValue] = useState(defaultName || '');
+      const inputRef = useRef(null);
+
+      // Estado de los campos extra (radio groups u otros). Las claves son
+      // los id de cada campo y el valor inicial es el `default` declarado.
+      // Si no hay extraFields no se crea ningún estado adicional.
+      const [extras, setExtras] = useState(() => {
+        const init = {};
+        (extraFields || []).forEach(f => { init[f.id] = f.default; });
+        return init;
+      });
+
+      // Auto-focus + selección completa al abrir, para que el usuario pueda
+      // sobrescribir el nombre por defecto inmediatamente con su tipeo.
+      useEffect(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+          inputRef.current.select();
+        }
+      }, []);
+
+      // Resultado que devolvemos al confirmar: si hay campos extra
+      // devolvemos { name, extras }, si no, sólo el name (para mantener
+      // compatibilidad con los call sites que no usan extras).
+      const buildResult = useCallback(() => {
+        const name = value.trim();
+        if (extraFields && extraFields.length > 0) return { name, extras };
+        return name;
+      }, [value, extras, extraFields]);
+
+      // Atajos de teclado a nivel global del modal: Enter confirma, Escape cancela.
+      useEffect(() => {
+        const onKey = (e) => {
+          if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
+          else if (e.key === 'Enter') { e.preventDefault(); if (value.trim()) onConfirm(buildResult()); }
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+      }, [value, onCancel, onConfirm, buildResult]);
+
+      // Iconos SVG inline para el header (sin dependencias). Coinciden con
+      // los que ya se usan en los botones de la topbar (download / image).
+      const iconSvg = icon === 'image'
+        ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+        : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>;
+
+      // Cierre por clic en backdrop. Click sobre la card no propaga.
+      return (
+        <div className="fnm-backdrop" onMouseDown={onCancel}>
+          <div className="fnm-card" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="fnm-header">
+              {iconSvg}
+              <span>{title}</span>
+            </div>
+            <div className="fnm-body">
+              <label className="fnm-label" htmlFor="fnm-input">File name</label>
+              <div className="fnm-input-wrap">
+                <input
+                  ref={inputRef}
+                  id="fnm-input"
+                  type="text"
+                  className="fnm-input"
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  spellCheck={false}
+                  autoComplete="off"
+                />
+                {extension && <div className="fnm-ext">.{extension}</div>}
+              </div>
+
+              {/* Campos extra opcionales: cada uno es un radio group declarado
+                  por el caller con { id, label, options:[{value,label}], default }. */}
+              {extraFields && extraFields.map(field => (
+                <div key={field.id} className="fnm-extra-field">
+                  <div className="fnm-label" style={{ marginTop: '12px', fontSize: '11px' }}>{field.label}</div>
+                  <div className="fnm-radio-group">
+                    {field.options.map(opt => (
+                      <label key={opt.value} className={`fnm-radio ${extras[field.id] === opt.value ? 'selected' : ''}`}>
+                        <input
+                          type="radio"
+                          name={field.id}
+                          value={opt.value}
+                          checked={extras[field.id] === opt.value}
+                          onChange={() => setExtras(prev => ({ ...prev, [field.id]: opt.value }))}
+                        />
+                        <span>{opt.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="fnm-actions">
+              <button type="button" className="fnm-btn fnm-btn-cancel" onClick={onCancel}>Cancel</button>
+              <button
+                type="button"
+                className="fnm-btn fnm-btn-confirm"
+                disabled={!value.trim()}
+                onClick={() => onConfirm(buildResult())}
+              >Save</button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    // ════════════════════════════════════════════════════════════════
+    // RestoreModal — diálogo personalizado que reemplaza al confirm()
+    // nativo del navegador al detectar trabajo no guardado en
+    // localStorage. Reutiliza las clases .fnm-* del FilenameModal para
+    // mantener la estética sin duplicar CSS. La diferencia clave es que
+    // tiene dos botones de acción (Continue / Discard) en lugar de
+    // Cancel/Save, y el mensaje principal va en el cuerpo en lugar de
+    // un input editable.
+    // ════════════════════════════════════════════════════════════════
+    const RestoreModal = ({ minutesAgo, onContinue, onDiscard }) => {
+      const continueRef = useRef(null);
+
+      // Auto-focus en el botón principal para que Enter confirme y Esc descarte.
+      useEffect(() => {
+        if (continueRef.current) continueRef.current.focus();
+      }, []);
+
+      useEffect(() => {
+        const onKey = (e) => {
+          if (e.key === 'Escape') { e.preventDefault(); onDiscard(); }
+          else if (e.key === 'Enter') { e.preventDefault(); onContinue(); }
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+      }, [onContinue, onDiscard]);
+
+      const iconSvg = (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path>
+          <path d="M3 3v5h5"></path>
+        </svg>
+      );
+
+      const timeLabel = (minutesAgo === null || minutesAgo < 1)
+        ? 'Found unsaved work from your last session.'
+        : `Found unsaved work from ${minutesAgo} minute${minutesAgo === 1 ? '' : 's'} ago.`;
+
+      // No cerramos por clic en backdrop: la decisión debe ser explícita
+      // (Continue o Discard). El backdrop semi-opaco cubre la init-screen
+      // que se ve por debajo, evitando el parpadeo entre el render
+      // inicial y la restauración.
+      return (
+        <div className="fnm-backdrop">
+          <div className="fnm-card" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="fnm-header">
+              {iconSvg}
+              <span>Restore previous session</span>
+            </div>
+            <div className="fnm-body">
+              <p style={{
+                fontFamily: 'var(--font-sans)',
+                fontSize: '14px',
+                color: 'var(--text)',
+                margin: '0 0 6px 0',
+                lineHeight: 1.5
+              }}>{timeLabel}</p>
+              <p style={{
+                fontFamily: 'var(--font-sans)',
+                fontSize: '13px',
+                color: 'var(--text-secondary)',
+                margin: 0,
+                lineHeight: 1.5
+              }}>Continue where you left off, or discard the backup and start fresh?</p>
+            </div>
+            <div className="fnm-actions">
+              <button type="button" className="fnm-btn fnm-btn-cancel" onClick={onDiscard}>Discard</button>
+              <button ref={continueRef} type="button" className="fnm-btn fnm-btn-confirm" onClick={onContinue}>Continue</button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
     const TelperionApp = () => {
       const [diagram, setDiagram] = useState(null);
       const [selectedId, setSelectedId] = useState(null);
@@ -1560,6 +1747,45 @@
       const sentenceInputRef = useRef(null);
 
       const [showIPA, setShowIPA] = useState(false);
+
+      // Registro del input/textarea actualmente en edición que admite formato.
+      // El sidebar de formato lee de aquí para saber sobre qué aplicar B/I/SC/sub/sup/U/Σ/IPA.
+      // - activeFormatInput.ref: ref al elemento DOM (input o textarea)
+      // - activeFormatInput.setValue: setter del valor controlado
+      // Se actualiza con registerFormatInput cuando un campo entra en edición y se libera al salir.
+      const [activeFormatInput, setActiveFormatInput] = useState(null);
+      const registerFormatInput = useCallback((inputRef, setValue) => {
+        setActiveFormatInput({ ref: inputRef, setValue });
+      }, []);
+      const unregisterFormatInput = useCallback(() => {
+        setActiveFormatInput(null);
+      }, []);
+
+      // Estado del modal de nombre de archivo (reemplaza al prompt() nativo).
+      // Cuando filenameModal !== null, se muestra el diálogo; al confirmar/cancelar
+      // se resuelve la promesa devuelta por askForFilename y se cierra el modal.
+      const [filenameModal, setFilenameModal] = useState(null);
+      const filenameResolverRef = useRef(null);
+
+      const askForFilename = useCallback(({ title, defaultName, extension, icon, extraFields }) => {
+        return new Promise((resolve) => {
+          filenameResolverRef.current = resolve;
+          setFilenameModal({ title, defaultName: defaultName || '', extension: extension || '', icon: icon || null, extraFields: extraFields || null });
+        });
+      }, []);
+
+      const closeFilenameModal = useCallback((value) => {
+        const resolve = filenameResolverRef.current;
+        filenameResolverRef.current = null;
+        setFilenameModal(null);
+        if (resolve) resolve(value);
+      }, []);
+
+      // Estado del modal de restauración. Cuando restorePending !== null se
+      // muestra el RestoreModal y se difiere la decisión a la respuesta del
+      // usuario. Guardamos los datos parseados aquí mismo para no parsear
+      // dos veces y para que el modal pueda mostrar minutesAgo correctamente.
+      const [restorePending, setRestorePending] = useState(null);
 
       const insertIPAChar = (char) => {
         const input = sentenceInputRef.current;
@@ -1700,7 +1926,13 @@
         };
       }, [diagram, writeAutoSave]);
 
-      // Restore from auto-save on mount
+      // Restore from auto-save on mount.
+      // En lugar del confirm() bloqueante anterior, parseamos el
+      // localStorage y, si hay datos válidos, abrimos el RestoreModal.
+      // La decisión real (acceptRestore / declineRestore) ocurre cuando
+      // el usuario responde. Mientras el modal está abierto su backdrop
+      // semi-opaco cubre la init-screen para evitar el parpadeo entre
+      // la pantalla inicial y la restauración.
       useEffect(() => {
         const saved = localStorage.getItem(AUTOSAVE_KEY);
         if (!saved) return;
@@ -1715,18 +1947,30 @@
           const minutesAgo = hasValidDate
             ? Math.max(0, Math.round((Date.now() - savedDate.getTime()) / 60000))
             : null;
-          const message = minutesAgo === null
-            ? 'Found unsaved work.\n\nContinue where you left off?'
-            : minutesAgo < 1
-              ? 'Found unsaved work.\n\nContinue where you left off?'
-              : `Found unsaved work from ${minutesAgo} minute${minutesAgo === 1 ? '' : 's'} ago.\n\nContinue where you left off?`;
-          if (confirm(message)) {
-            setDiagram(data.diagram); setHistory([data.diagram]); setHistoryIndex(0);
-            if (hasValidDate) setLastSaved(savedDate);
-          } else {
-            clearAutoSave();
-          }
-        } catch (err) { console.error('Restore error:', err); clearAutoSave(); }
+          setRestorePending({ data, savedDate, hasValidDate, minutesAgo });
+        } catch (err) {
+          console.error('Restore error:', err);
+          clearAutoSave();
+        }
+      }, [clearAutoSave]);
+
+      // Handlers de la decisión del RestoreModal. acceptRestore aplica
+      // los datos del backup al estado; declineRestore borra el backup
+      // para empezar de cero. Ambos cierran el modal poniendo
+      // restorePending a null.
+      const acceptRestore = useCallback(() => {
+        if (!restorePending) return;
+        const { data, savedDate, hasValidDate } = restorePending;
+        setDiagram(data.diagram);
+        setHistory([data.diagram]);
+        setHistoryIndex(0);
+        if (hasValidDate) setLastSaved(savedDate);
+        setRestorePending(null);
+      }, [restorePending]);
+
+      const declineRestore = useCallback(() => {
+        clearAutoSave();
+        setRestorePending(null);
       }, [clearAutoSave]);
 
       useLayoutEffect(() => {
@@ -1885,17 +2129,24 @@
         return safeName || 'diagrama_telperion';
       };
 
-      const handleSave = () => {
+      const handleSave = async () => {
         if (!diagram) return;
+
+        const raw = await askForFilename({
+          title: 'Save Project',
+          defaultName: getAutoFilename(),
+          extension: 'tlp',
+          icon: 'save',
+        });
+        if (raw === null) return; // cancelado
+        const filename = (raw || 'telperion_tree').replace(/\s+/g, '_');
 
         // Flush any pending autosave and write the current state.
         // The backup is NOT cleared: this avoids losing the restoration
         // point if the user closes the tab right after saving manually.
         autoSaveDebounced.current?.flush?.();
         writeAutoSave({ silent: true });
-  
-        const filename = getAutoFilename();
-  
+
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(diagram, null, 2));
         const anchor = document.createElement('a');
         anchor.setAttribute("href", dataStr); 
@@ -1907,7 +2158,25 @@
 
       const handleExportPNG = async () => {
         if (!diagram) return;
-        const filename = getAutoFilename();
+
+        const result = await askForFilename({
+          title: 'Download as Image',
+          defaultName: getAutoFilename(),
+          extension: 'png',
+          icon: 'image',
+          extraFields: [{
+            id: 'background',
+            label: 'Background',
+            default: 'white',
+            options: [
+              { value: 'white', label: 'White' },
+              { value: 'transparent', label: 'Transparent' },
+            ],
+          }],
+        });
+        if (result === null) return; // cancelado
+        const filename = (result.name || 'telperion_tree').replace(/\s+/g, '_');
+        const backgroundMode = result.extras.background; // 'white' | 'transparent'
 
         const SCALE = 3;
         const PAD = 60;
@@ -2026,12 +2295,11 @@
         clone.querySelectorAll('.node-label.selected').forEach(n => n.classList.remove('selected'));
         clone.querySelectorAll('.node-label.is-editing').forEach(n => n.classList.remove('is-editing'));
 
-        // Logical Structure: en el export, ocultar el raíl, los puntos de origen, los marcadores fantasma
-        // y las paneles flotantes (toolbar, símbolos, IPA). Quitar también el borde y la sombra del cuadro de la LS.
+        // Logical Structure: en el export, ocultar el raíl, los puntos de origen y los marcadores fantasma.
+        // Quitar también el borde y la sombra del cuadro de la LS.
         clone.querySelectorAll('.ls-rail').forEach(n => n.remove());
         clone.querySelectorAll('.ls-origin').forEach(n => n.remove());
         clone.querySelectorAll('.ls-ghost-origin').forEach(n => n.remove());
-        clone.querySelectorAll('.ls-toolbar, .ls-symbols-panel, .ls-ipa-panel, .ipa-panel').forEach(n => n.remove());
         clone.querySelectorAll('.logical-structure-box').forEach(box => {
           box.style.border = 'none';
           box.style.boxShadow = 'none';
@@ -2081,6 +2349,15 @@
         const finalCanvas = document.createElement('canvas');
         finalCanvas.width = finalPxW; finalCanvas.height = finalPxH;
         const ctx = finalCanvas.getContext('2d');
+
+        // Fondo: si el usuario eligió 'white' en el modal, pintamos un
+        // rectángulo blanco que cubre todo el canvas antes de componer
+        // los layers. Si eligió 'transparent', no pintamos nada y el
+        // canvas conserva su transparencia original.
+        if (backgroundMode === 'white') {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, finalPxW, finalPxH);
+        }
 
         if (svgBackImg) ctx.drawImage(svgBackImg, 0, 0, finalPxW, finalPxH);
         ctx.drawImage(htmlCanvas, 0, 0);
@@ -3912,6 +4189,7 @@
 
       if (!diagram) {
         return (
+          <>
           <div className="init-screen">
             <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept=".tlp" onChange={handleFileChange} />
             <div className="init-hero"><img src="telperion_logo.png" alt="Telperion – RRG Tree Builder" /></div>
@@ -4004,6 +4282,27 @@
               <p>Carlos González Vergara (<strong><a href="mailto:cgonzalv@uc.cl">cgonzalv@uc.cl</a></strong>)</p>
             </footer>
           </div>
+
+          {filenameModal && (
+            <FilenameModal
+              title={filenameModal.title}
+              defaultName={filenameModal.defaultName}
+              extension={filenameModal.extension}
+              icon={filenameModal.icon}
+              extraFields={filenameModal.extraFields}
+              onCancel={() => closeFilenameModal(null)}
+              onConfirm={(result) => closeFilenameModal(result)}
+            />
+          )}
+
+          {restorePending && (
+            <RestoreModal
+              minutesAgo={restorePending.minutesAgo}
+              onContinue={acceptRestore}
+              onDiscard={declineRestore}
+            />
+          )}
+          </>
         );
       }
 
@@ -4052,7 +4351,7 @@
       const hasActualFocus = diagram.expressions.some(e => e.infoUnit?.focusType === 'actual');
 
       return (
-        <>
+        <FormatInputContext.Provider value={{ register: registerFormatInput, unregister: unregisterFormatInput }}>
         <div className="main-layout" onClick={() => { setSelectedId(null); setEditingId(null); setLinkingLayerId(null); setSecondaryLinkingNodeId(null); }}>
           <svg style={{ width: 0, height: 0, position: 'absolute' }}>
             <defs>
@@ -4796,47 +5095,6 @@
                     </div>
                   )}
                 </div>
-
-                {/* --- RECORDATORIO DE FORMATO --- */}
-                <div className="sidebar-section" style={{ marginTop: '16px', paddingTop: '10px', borderTop: '1px solid var(--border-light)' }}>
-                  <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '2px' }}>Text Formatting Guide</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 8px', alignItems: 'center', border: '1.5px solid var(--border)', borderRadius: '8px', padding: '10px 12px', backgroundColor: '#ffffff' }}>
-                    
-                    <code style={{ color: 'var(--accent)', background: 'var(--surface-warm)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', justifySelf: 'start' }}>
-                      *text*
-                    </code>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text)' }}>Italics: <span style={{ fontSize: '0.75rem', color: 'var(--text)', fontStyle: 'italic' }}>text</span></span>
-                    
-                    <code style={{ color: 'var(--accent)', background: 'var(--surface-warm)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', justifySelf: 'start' }}>
-                      **text**
-                    </code>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text)' }}>Bold: <span style={{ fontSize: '0.75rem', color: 'var(--text)', fontWeight: 700 }}>text</span></span>
-
-                    <code style={{ color: 'var(--accent)', background: 'var(--surface-warm)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', justifySelf: 'start' }}>
-                      %text%
-                    </code>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text)' }}>Small Caps: <span style={{ fontSize: '0.75rem', color: 'var(--text)', fontVariant: 'small-caps', textTransform: 'lowercase', fontWeight: 500 }}>text</span></span>
-                    
-                    <code style={{ color: 'var(--accent)', background: 'var(--surface-warm)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', justifySelf: 'start' }}>
-                      _text_
-                    </code>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text)' }}>Subscript: <sub>text</sub></span>
-
-                    <code style={{ color: 'var(--accent)', background: 'var(--surface-warm)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', justifySelf: 'start' }}>
-                      __text__
-                    </code>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text)' }}>Superscript: <sup>text</sup></span>
-
-                    <code style={{ color: 'var(--accent)', background: 'var(--surface-warm)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', justifySelf: 'start' }}>
-                      ~text~
-                    </code>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text)' }}>Underline: <span style={{ fontSize: '0.75rem', color: 'var(--text)', textDecoration: 'underline' }}>text</span></span>
-
-                  </div>
-                </div>
-                {/* ----------------------------- */}
-                
-                <div style={{ color: '#adb5bd', textAlign: 'center', marginTop: '20px', fontSize: '0.85rem' }}>Click any node to select and edit its text</div>
               </>
             ) : showFocusDomains ? (
               <div className="sidebar-section">
@@ -5029,6 +5287,33 @@
                 <div style={{ color: '#adb5bd', textAlign: 'center', marginTop: '20px', fontSize: '0.85rem' }}>Click any node to see relevant options</div>
               </div>
             )}
+
+            {/* --- CONTROLES Y RECORDATORIO DE FORMATO ---
+                Solo se renderizan cuando hay un input editable activo, para
+                liberar espacio en el sidebar el resto del tiempo. Al entrar
+                en edición de cualquier etiqueta, el FormatInputContext
+                registra el input y este bloque aparece automáticamente. */}
+            {activeFormatInput && (
+              <div className="sidebar-section">
+                <SidebarFormattingControls activeInput={activeFormatInput} />
+                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginTop: '12px', marginBottom: '2px' }}>Text Formatting Guide</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 8px', alignItems: 'center', border: '1.5px solid var(--border)', borderRadius: '8px', padding: '10px 12px', backgroundColor: '#ffffff' }}>
+                  <code style={{ color: 'var(--accent)', background: 'var(--surface-warm)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', justifySelf: 'start' }}>*text*</code>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text)' }}>Italics: <span style={{ fontSize: '0.75rem', color: 'var(--text)', fontStyle: 'italic' }}>text</span></span>
+                  <code style={{ color: 'var(--accent)', background: 'var(--surface-warm)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', justifySelf: 'start' }}>**text**</code>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text)' }}>Bold: <span style={{ fontSize: '0.75rem', color: 'var(--text)', fontWeight: 700 }}>text</span></span>
+                  <code style={{ color: 'var(--accent)', background: 'var(--surface-warm)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', justifySelf: 'start' }}>%text%</code>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text)' }}>Small Caps: <span style={{ fontSize: '0.75rem', color: 'var(--text)', fontVariant: 'small-caps', textTransform: 'lowercase', fontWeight: 500 }}>text</span></span>
+                  <code style={{ color: 'var(--accent)', background: 'var(--surface-warm)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', justifySelf: 'start' }}>_text_</code>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text)' }}>Subscript: <sub>text</sub></span>
+                  <code style={{ color: 'var(--accent)', background: 'var(--surface-warm)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', justifySelf: 'start' }}>__text__</code>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text)' }}>Superscript: <sup>text</sup></span>
+                  <code style={{ color: 'var(--accent)', background: 'var(--surface-warm)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', justifySelf: 'start' }}>~text~</code>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text)' }}>Underline: <span style={{ fontSize: '0.75rem', color: 'var(--text)', textDecoration: 'underline' }}>text</span></span>
+                </div>
+              </div>
+            )}
+            {/* ----------------------------- */}
           </div>
         </div>
         <footer className="app-footer">
@@ -5038,7 +5323,19 @@
           </div>
           <p>Carlos González Vergara (<strong><a href="mailto:cgonzalv@uc.cl">cgonzalv@uc.cl</a></strong>)</p>
         </footer>
-        </>
+
+        {filenameModal && (
+          <FilenameModal
+            title={filenameModal.title}
+            defaultName={filenameModal.defaultName}
+            extension={filenameModal.extension}
+            icon={filenameModal.icon}
+            extraFields={filenameModal.extraFields}
+            onCancel={() => closeFilenameModal(null)}
+            onConfirm={(result) => closeFilenameModal(result)}
+          />
+        )}
+        </FormatInputContext.Provider>
       );
     };
 
