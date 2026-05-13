@@ -1377,16 +1377,57 @@
 
     const ArrowStyleSelector = ({ value, onChange }) => {
       // Estilos posibles: 'plain', 'arrow-end' (flecha arriba), 'arrow-start' (flecha abajo), 'arrow-both'
+      // Iconos dibujados en SVG para que se vean idénticos en todos los sistemas operativos
+      // (los caracteres Unicode ↑ ↓ ↕ varían entre fuentes y plataformas).
+      // Canvas 12x16: línea vertical en x=6, de y=2 a y=14. Flechas con punta en V.
+      const renderIcon = (id, color) => {
+        const stroke = color;
+        const lineProps = { stroke, strokeWidth: 1.6, strokeLinecap: 'round', strokeLinejoin: 'round', fill: 'none' };
+        switch (id) {
+          case 'plain':
+            return (
+              <svg width="12" height="16" viewBox="0 0 12 16" xmlns="http://www.w3.org/2000/svg">
+                <line x1="6" y1="2" x2="6" y2="14" {...lineProps} />
+              </svg>
+            );
+          case 'arrow-end': // flecha hacia arriba (punta en y=2)
+            return (
+              <svg width="12" height="16" viewBox="0 0 12 16" xmlns="http://www.w3.org/2000/svg">
+                <line x1="6" y1="2" x2="6" y2="14" {...lineProps} />
+                <polyline points="3,5 6,2 9,5" {...lineProps} />
+              </svg>
+            );
+          case 'arrow-start': // flecha hacia abajo (punta en y=14)
+            return (
+              <svg width="12" height="16" viewBox="0 0 12 16" xmlns="http://www.w3.org/2000/svg">
+                <line x1="6" y1="2" x2="6" y2="14" {...lineProps} />
+                <polyline points="3,11 6,14 9,11" {...lineProps} />
+              </svg>
+            );
+          case 'arrow-both': // flechas en ambos extremos
+            return (
+              <svg width="12" height="16" viewBox="0 0 12 16" xmlns="http://www.w3.org/2000/svg">
+                <line x1="6" y1="2" x2="6" y2="14" {...lineProps} />
+                <polyline points="3,5 6,2 9,5" {...lineProps} />
+                <polyline points="3,11 6,14 9,11" {...lineProps} />
+              </svg>
+            );
+          default:
+            return null;
+        }
+      };
+
       const options = [
-        { id: 'plain',       label: '|',    title: 'Plain line' },
-        { id: 'arrow-end',   label: '↑',    title: 'Arrow at end (top)' },
-        { id: 'arrow-start', label: '↓',    title: 'Arrow at start (bottom)' },
-        { id: 'arrow-both',  label: '↕',    title: 'Arrows at both ends' },
+        { id: 'plain',       title: 'Plain line' },
+        { id: 'arrow-end',   title: 'Arrow at end (top)' },
+        { id: 'arrow-start', title: 'Arrow at start (bottom)' },
+        { id: 'arrow-both',  title: 'Arrows at both ends' },
       ];
       return (
         <div style={{ display: 'flex', gap: '4px' }}>
           {options.map(o => {
             const isActive = value === o.id;
+            const iconColor = isActive ? 'var(--accent)' : 'var(--text)';
             return (
               <button
                 key={o.id}
@@ -1394,20 +1435,20 @@
                 title={o.title}
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(o.id); }}
                 style={{
-                  flex: 1, padding: '8px 4px',
+                  flex: 1, padding: '6px 4px',
                   border: '1.5px solid',
                   borderColor: isActive ? 'var(--accent)' : 'var(--border)',
                   borderRadius: '6px',
                   background: isActive ? 'rgba(15,81,50,0.08)' : 'white',
                   cursor: 'pointer',
                   color: isActive ? 'var(--accent)' : 'var(--text)',
-                  fontWeight: isActive ? 700 : 500,
-                  fontSize: '16px',
-                  lineHeight: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   transition: 'all 0.15s ease',
                   fontFamily: 'inherit',
                 }}>
-                {o.label}
+                {renderIcon(o.id, iconColor)}
               </button>
             );
           })}
@@ -1481,7 +1522,7 @@
       return (
         <div className="sidebar-formatting-controls" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div className="sidebar-title">Text Formatting</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', padding: '8px', background: 'white', border: '1px solid var(--border-light)', borderRadius: '6px', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', justifyContent: 'center' }}>
             <button type="button" className="fmt-toolbar-btn" disabled={!isActive} style={{...buttonBaseStyle, fontWeight: 700}} title="Bold (**…**)" onMouseDown={(e) => { e.preventDefault(); if (isActive) applyWrap('**'); }}>B</button>
             <button type="button" className="fmt-toolbar-btn" disabled={!isActive} style={{...buttonBaseStyle, fontStyle: 'italic'}} title="Italic (*…*)" onMouseDown={(e) => { e.preventDefault(); if (isActive) applyWrap('*'); }}>I</button>
             <button type="button" className="fmt-toolbar-btn" disabled={!isActive} style={{...buttonBaseStyle, fontVariant: 'small-caps', textTransform: 'lowercase'}} title="Small caps (%…%)" onMouseDown={(e) => { e.preventDefault(); if (isActive) applyWrap('%'); }}>SC</button>
@@ -2233,7 +2274,7 @@
               const x2 = parseFloat(line.getAttribute('x2')), y2 = parseFloat(line.getAttribute('y2'));
               if (![x1,y1,x2,y2].every(v => Number.isFinite(v))) return;
               const ang = Math.atan2(y2 - y1, x2 - x1);
-              const hL = 7, hW = 5, tx = x2, ty = y2;
+              const hL = 10.5, hW = 7.5, tx = x2, ty = y2; // 7×5 escalado por strokeWidth=1.5 (markerUnits=strokeWidth)
               const bx = tx - hL * Math.cos(ang), by = ty - hL * Math.sin(ang);
               const lx = bx + (hW/2)*Math.cos(ang+Math.PI/2), ly = by + (hW/2)*Math.sin(ang+Math.PI/2);
               const rx = bx + (hW/2)*Math.cos(ang-Math.PI/2), ry = by + (hW/2)*Math.sin(ang-Math.PI/2);
@@ -2253,7 +2294,7 @@
               if (![x1,y1,x2,y2].every(v => Number.isFinite(v))) return;
               // El polígono apunta hacia (x1,y1); la base se desplaza hacia (x2,y2)
               const ang = Math.atan2(y2 - y1, x2 - x1);
-              const hL = 7, hW = 5, tx = x1, ty = y1;
+              const hL = 10.5, hW = 7.5, tx = x1, ty = y1; // 7×5 escalado por strokeWidth=1.5 (markerUnits=strokeWidth)
               const bx = tx + hL * Math.cos(ang), by = ty + hL * Math.sin(ang);
               const lx = bx + (hW/2)*Math.cos(ang+Math.PI/2), ly = by + (hW/2)*Math.sin(ang+Math.PI/2);
               const rx = bx + (hW/2)*Math.cos(ang-Math.PI/2), ry = by + (hW/2)*Math.sin(ang-Math.PI/2);
@@ -4487,15 +4528,55 @@
 
                     return l.isTriangle ? (
                       <polygon key={l.id} points={l.points} fill="none" stroke="#343a40" strokeWidth="1.5" strokeDasharray={l.isDashed ? "6 4" : (l.isDotted ? "0 4" : null)} strokeLinecap={l.isDotted ? "round" : undefined} style={{ transition: 'opacity 0.3s ease', opacity: lineOpacity }} />
-                    ) : (
-                      <line key={`${l.id}-${l.markerStart || 'n'}-${l.markerEnd || 'n'}`} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="#343a40" strokeWidth="1.5" strokeDasharray={l.isDashed ? "6 4" : (l.isDotted ? "0 4" : null)} strokeLinecap={l.isDotted ? "round" : undefined} markerStart={l.markerStart ? `url(#${l.markerStart})` : null} markerEnd={l.markerEnd ? `url(#${l.markerEnd})` : (l.isArrow ? "url(#arrowhead)" : null)} style={{ transition: 'opacity 0.3s ease', opacity: lineOpacity }} />
-                    );
+                    ) : (() => {
+                      // Todas las puntas de flecha se dibujan como polígonos explícitos en vez de
+                      // usar <marker> + url(#id). El sistema de markers de SVG sufre un bug de
+                      // invalidación de referencias: tras la exportación a imagen (que clona los
+                      // SVGs con sus IDs y los serializa), las referencias url(#arrowhead) en las
+                      // <line> existentes pueden quedar "rotas" — la línea sigue ahí pero las
+                      // puntas no aparecen. Dibujarlas como polígonos elimina la dependencia.
+                      // Cubrimos tres casos: markerEnd / markerStart (cadenas LS) y l.isArrow
+                      // (operadores, que apuntan al final de la línea).
+                      const x1 = l.x1, y1 = l.y1, x2 = l.x2, y2 = l.y2;
+                      const dx = x2 - x1, dy = y2 - y1;
+                      const len = Math.hypot(dx, dy);
+                      const hL = 10.5, hW = 7.5; // dimensiones escaladas: el <marker> original tiene
+                      // markerWidth="7" markerHeight="5" pero como markerUnits es strokeWidth (default),
+                      // se escala por el strokeWidth=1.5 de la línea, resultando en 10.5 × 7.5 en pantalla.
+                      const wantEnd = !!l.markerEnd || !!l.isArrow;
+                      const wantStart = !!l.markerStart;
+                      const heads = [];
+                      if (len > 0.0001 && (wantStart || wantEnd)) {
+                        const ux = dx / len, uy = dy / len; // unitario en dirección de la línea
+                        const px = -uy, py = ux;            // perpendicular
+                        if (wantEnd) {
+                          // Punta en (x2,y2), base a hL hacia atrás
+                          const bx = x2 - hL * ux, by = y2 - hL * uy;
+                          const lx = bx + (hW / 2) * px, ly = by + (hW / 2) * py;
+                          const rx = bx - (hW / 2) * px, ry = by - (hW / 2) * py;
+                          heads.push(<polygon key="me" points={`${x2},${y2} ${lx},${ly} ${rx},${ry}`} fill="#343a40" />);
+                        }
+                        if (wantStart) {
+                          // Punta en (x1,y1), base a hL hacia adelante
+                          const bx = x1 + hL * ux, by = y1 + hL * uy;
+                          const lx = bx + (hW / 2) * px, ly = by + (hW / 2) * py;
+                          const rx = bx - (hW / 2) * px, ry = by - (hW / 2) * py;
+                          heads.push(<polygon key="ms" points={`${x1},${y1} ${lx},${ly} ${rx},${ry}`} fill="#343a40" />);
+                        }
+                      }
+                      return (
+                        <g key={l.id} style={{ transition: 'opacity 0.3s ease', opacity: lineOpacity }}>
+                          <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#343a40" strokeWidth="1.5" strokeDasharray={l.isDashed ? "6 4" : (l.isDotted ? "0 4" : null)} strokeLinecap={l.isDotted ? "round" : undefined} />
+                          {heads}
+                        </g>
+                      );
+                    })();
                   };
 
                   return (
                     <>
                       <svg className="svg-layer svg-layer-back">{defsBlock}{backLines.map(renderLine)}</svg>
-                      <svg className="svg-layer svg-layer-front">{frontLines.map(renderLine)}</svg>
+                      <svg className="svg-layer svg-layer-front">{defsBlock}{frontLines.map(renderLine)}</svg>
                       {textLines.map(l => {
                         let lineOpacity = 1;
                         if (showOperators && showInfoStructure) {
@@ -4966,8 +5047,13 @@
 
                           {(chain.exprIds || []).length > 0 && (
                             <>
-                              <div className="sidebar-title" style={{ marginTop: '14px' }}>Final arrow style</div>
-                              <ArrowStyleSelector value={chain.finalArrowStyle || 'plain'} onChange={(s) => setChainFinalArrowStyle(chain.id, s)} />
+                              <div className="sidebar-title" style={{ marginTop: '14px' }}>Arrows</div>
+                              <div style={{ marginTop: '8px' }}>
+                                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
+                                  Final Arrow Style
+                                </div>
+                                <ArrowStyleSelector value={chain.finalArrowStyle || 'plain'} onChange={(s) => setChainFinalArrowStyle(chain.id, s)} />
+                              </div>
                             </>
                           )}
                         </>
@@ -4990,9 +5076,6 @@
                         <span>{isLSLine1 ? 'Macrorole Node' : 'Codification Node'}</span>
                       </button>
                       <p style={{fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0}}>{isLSLine1 ? 'Pick a macrorole or type a custom label.' : 'Pick a codification marker or type a custom label.'}</p>
-
-                      <div className="sidebar-title" style={{ marginTop: '14px' }}>Arrow from below</div>
-                      <ArrowStyleSelector value={node.arrowFromBelowStyle || 'plain'} onChange={(s) => setLSNodeArrowFromBelow(chain.id, which, s)} />
 
                       {isLSLine1 && !chain.line2 && (
                         <div style={{ marginTop: '14px' }}>
@@ -5019,15 +5102,27 @@
                               <button className="btn" onClick={() => clearChainTargets(chain.id)} style={{marginTop:'4px', fontWeight: 'normal'}}>Clear Links</button>
                             )}
                           </div>
-
-                          {(chain.exprIds || []).length > 0 && (
-                            <>
-                              <div className="sidebar-title" style={{ marginTop: '14px' }}>Final arrow style</div>
-                              <ArrowStyleSelector value={chain.finalArrowStyle || 'plain'} onChange={(s) => setChainFinalArrowStyle(chain.id, s)} />
-                            </>
-                          )}
                         </>
                       )}
+
+                      {/* Sección unificada de flechas: Final Arrow Style (cuando aplique) sobre Arrow From Below. */}
+                      <div className="sidebar-title" style={{ marginTop: '14px' }}>Arrows</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' }}>
+                        {isTopmost && (chain.exprIds || []).length > 0 && (
+                          <div>
+                            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
+                              Final Arrow Style
+                            </div>
+                            <ArrowStyleSelector value={chain.finalArrowStyle || 'plain'} onChange={(s) => setChainFinalArrowStyle(chain.id, s)} />
+                          </div>
+                        )}
+                        <div>
+                          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
+                            Arrow From Below
+                          </div>
+                          <ArrowStyleSelector value={node.arrowFromBelowStyle || 'plain'} onChange={(s) => setLSNodeArrowFromBelow(chain.id, which, s)} />
+                        </div>
+                      </div>
                     </div>
                   );
                 })()}
