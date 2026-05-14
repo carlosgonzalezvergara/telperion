@@ -263,7 +263,7 @@
     .logical-structure-box:hover { border-color: var(--accent); background: rgba(15, 81, 50, 0.02); }
     .logical-structure-box.selected { border-color: var(--accent); background: rgba(15, 81, 50, 0.04); box-shadow: 0 0 0 3px rgba(15, 81, 50, 0.10); }
     .logical-structure-box.placeholder { color: #adb5bd; border-style: dashed; font-style: italic; }
-    .logical-structure-box.editing { border-color: var(--accent); background: white; box-shadow: 0 0 0 3px rgba(15, 81, 50, 0.10); cursor: text; min-width: 400px; }
+    .logical-structure-box.editing { border-color: var(--accent); background: white; box-shadow: 0 0 0 3px rgba(15, 81, 50, 0.10); cursor: text; }
 
     .ls-rail { position: absolute; top: -16px; left: 0; right: 0; height: 12px; cursor: copy; z-index: 5; }
     .ls-rail::before { content: ''; position: absolute; left: 6px; right: 6px; bottom: 4px; height: 2px; background: rgba(15,81,50,0.35); border-radius: 1px; pointer-events: none; transition: background 0.15s ease; }
@@ -319,7 +319,7 @@
     .ls-line1-slot { position: absolute; left: 50%; bottom: 36px; transform: translateX(-50%); pointer-events: auto; z-index: 91; }
     .ls-line2-slot { position: absolute; left: 50%; bottom: 92px; transform: translateX(-50%); pointer-events: auto; z-index: 91; }
     .ls-node-label { font-size: 14px; min-height: 24px; padding: 3px 10px; }
-    .ls-textarea { width: 100%; min-width: 380px; border: none; outline: none; resize: none; font-family: inherit; font-size: 16px; line-height: 1.4; background: transparent; color: var(--text); padding: 4px 8px; box-sizing: border-box; overflow: hidden; text-align: center; }
+    .ls-textarea { width: 100%; min-width: 0; border: none; outline: none; resize: none; font-family: inherit; font-size: 16px; line-height: 1.4; background: transparent; color: var(--text); padding: 4px 8px; box-sizing: border-box; overflow: hidden; text-align: center; }
 
     .fmt-toolbar-btn {
       transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
@@ -1333,7 +1333,7 @@
             ref={boxRef}
             className={boxClasses}
             data-ls-id={ls.id}
-            style={isEditing && lockedWidth != null ? { width: `${lockedWidth}px` } : undefined}
+            style={isEditing && lockedWidth != null ? { width: `${lockedWidth}px`, minWidth: `${lockedWidth}px`, maxWidth: `${lockedWidth}px` } : undefined}
             onClick={(e) => { e.stopPropagation(); onSelect(e, ls.id); }}
             onDoubleClick={(e) => { e.stopPropagation(); onStartEdit(ls.id); }}
           >
@@ -3454,7 +3454,12 @@
 
       useLayoutEffect(() => {
         if (!diagram || !wrapperRef.current) return;
-        if (editingId !== null) return; 
+        // During LS text editing the box can momentarily change its rendered width.
+        // We must still recompute the SVG lines in that case; otherwise the DOM
+        // nodes may move while their connector lines remain at the previous x/y.
+        // For ordinary label editing we keep the old guard to avoid noisy relayouts.
+        const isEditingLogicalStructure = !!(editingId && diagram.logicalStructure && editingId === diagram.logicalStructure.id);
+        if (editingId !== null && !isEditingLogicalStructure) return; 
 
         const wrapperEl = wrapperRef.current;
         wrapperEl.style.transform = 'none';
@@ -4573,8 +4578,11 @@
                     return true;
                   });
 
-                  const backLines = visibleLines.filter(l => !isOperatorSvg(l.id) && !isLsChainSvg(l.id) && !l.isText);
-                  const frontLines = visibleLines.filter(l => (isOperatorSvg(l.id) || isLsChainSvg(l.id)) && !l.isText);
+                  // LS-to-expression chain lines are intentionally rendered on the back SVG layer.
+                  // This keeps labels visually on top when a diagonal chain crosses an LS label
+                  // or an expression item, matching the behavior expected for readable diagrams.
+                  const backLines = visibleLines.filter(l => !isOperatorSvg(l.id) && !l.isText);
+                  const frontLines = visibleLines.filter(l => isOperatorSvg(l.id) && !l.isText);
                   const textLines = visibleLines.filter(l => l.isText);
 
                   const renderLine = (l) => {
