@@ -337,6 +337,41 @@
       color: white !important;
     }
 
+    /* Lista de checkboxes "Linking to expression item" con scroll limitado.
+       Estrategia B+D: la altura está calibrada para mostrar 5 ítems completos
+       más medio sexto ítem cortado, de modo que el corte visual deja claro que
+       hay más contenido abajo. Además, un gradiente fade en el borde inferior
+       refuerza esta señal sin depender de scrollbars nativas (que en Safari
+       se ocultan según la configuración del sistema).
+       
+       El fade se atenúa hasta desaparecer cuando el usuario ha hecho scroll
+       hasta el final (clase .at-bottom añadida por ScrollFadeWrap), para no
+       tapar el último ítem real de la lista. */
+    .link-list-wrap {
+      position: relative;
+    }
+    .link-list-scroll {
+      overflow-y: auto;
+    }
+    /* El fade sólo aplica cuando el wrapper tiene .has-overflow (contenido
+       recortado) y no está en at-bottom (scrolleado hasta el fondo). */
+    .link-list-wrap::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 28px;
+      pointer-events: none;
+      background: linear-gradient(to bottom, rgba(245, 250, 247, 0) 0%, var(--surface) 100%);
+      border-radius: 0 0 4px 4px;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+    .link-list-wrap.has-overflow:not(.at-bottom)::after {
+      opacity: 1;
+    }
+
     @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
 
     /* =================================
@@ -1452,6 +1487,58 @@
               </button>
             );
           })}
+        </div>
+      );
+    };
+
+    /**
+     * Wrapper para listas con scroll vertical limitado que muestra un gradiente
+     * "fade" en el borde inferior como pista visual de que hay más contenido.
+     * El fade se oculta automáticamente cuando el usuario ha scrolleado hasta
+     * el final de la lista, para no tapar el último ítem real.
+     *
+     * Estrategia: clase `has-overflow` cuando hay contenido recortado (medido
+     * comparando scrollHeight vs clientHeight); clase `at-bottom` cuando el
+     * scroll está en (o muy cerca de) el final. El CSS dibuja el fade sólo
+     * cuando hay overflow y NO está en at-bottom.
+     */
+    const ScrollFadeWrap = ({ maxHeight = 162, children, deps = [] }) => {
+      const scrollRef = React.useRef(null);
+      const [state, setState] = React.useState({ overflow: false, atBottom: false });
+
+      const recompute = React.useCallback(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+        const overflow = el.scrollHeight - el.clientHeight > 1;
+        // Margen de 2px para tolerar redondeos de subpíxel del navegador.
+        const atBottom = !overflow || (el.scrollTop + el.clientHeight >= el.scrollHeight - 2);
+        setState(prev => (prev.overflow === overflow && prev.atBottom === atBottom) ? prev : { overflow, atBottom });
+      }, []);
+
+      React.useEffect(() => {
+        recompute();
+        const el = scrollRef.current;
+        if (!el) return;
+        el.addEventListener('scroll', recompute, { passive: true });
+        // ResizeObserver para recomputar si cambia el alto disponible o el contenido.
+        let ro;
+        if (typeof ResizeObserver !== 'undefined') {
+          ro = new ResizeObserver(recompute);
+          ro.observe(el);
+        }
+        return () => {
+          el.removeEventListener('scroll', recompute);
+          if (ro) ro.disconnect();
+        };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, [recompute, ...deps]);
+
+      const wrapClass = `link-list-wrap${state.overflow ? ' has-overflow' : ''}${state.atBottom ? ' at-bottom' : ''}`;
+      return (
+        <div className={wrapClass}>
+          <div ref={scrollRef} className="link-list-scroll" style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: `${maxHeight}px` }}>
+            {children}
+          </div>
         </div>
       );
     };
@@ -4699,18 +4786,20 @@
 
                         {info.nodeType === 'periphery' ? (
                           <div style={{display:'flex', flexDirection:'column', gap:'6px', padding:'6px 0'}}>
-                            {diagram.expressions.map(ex => {
-                              const owner = syntaxMap[ex.id];
-                              const myIds = getNodeLinkIds(selectedNodeData);
-                              const isOwnedByMe = myIds.includes(ex.id);
-                              const isOwnedByOther = owner && !isOwnedByMe;
-                              return (
-                                <label key={ex.id} style={{display:'flex', alignItems:'center', gap:'8px', fontSize:'0.9rem', opacity:isOwnedByOther ? 0.65 : 1}}>
-                                  <input type="checkbox" checked={isOwnedByMe} disabled={!!isOwnedByOther} onChange={() => handleLinkExpression(ex.id)} />
-                                  <span>{renderLabel(ex.label)}{isOwnedByOther ? ` (linked → ${owner})` : ''}</span>
-                                </label>
-                              );
-                            })}
+                            <ScrollFadeWrap maxHeight={162} deps={[diagram.expressions.length]}>
+                              {diagram.expressions.map(ex => {
+                                const owner = syntaxMap[ex.id];
+                                const myIds = getNodeLinkIds(selectedNodeData);
+                                const isOwnedByMe = myIds.includes(ex.id);
+                                const isOwnedByOther = owner && !isOwnedByMe;
+                                return (
+                                  <label key={ex.id} style={{display:'flex', alignItems:'center', gap:'8px', fontSize:'0.9rem', opacity:isOwnedByOther ? 0.65 : 1}}>
+                                    <input type="checkbox" checked={isOwnedByMe} disabled={!!isOwnedByOther} onChange={() => handleLinkExpression(ex.id)} />
+                                    <span>{renderLabel(ex.label)}{isOwnedByOther ? ` (linked → ${owner})` : ''}</span>
+                                  </label>
+                                );
+                              })}
+                            </ScrollFadeWrap>
                             {getNodeLinkIds(selectedNodeData).length > 0 && (
                               <>
                                 <button className="btn" onClick={() => handleLinkExpression('')} style={{marginTop:'4px', fontWeight: 'normal', marginBottom: '6px'}}>Clear Links</button>
@@ -4922,15 +5011,17 @@
                         <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>Linking to expression item:</span>
                       </div>
                       <div style={{display:'flex', flexDirection:'column', gap:'6px', padding:'6px 0'}}>
-                        {diagram.expressions.map(ex => {
-                          const isLinked = opLinkIds.includes(ex.id);
-                          return (
-                            <label key={ex.id} style={{display:'flex', alignItems:'center', gap:'8px', fontSize:'0.9rem'}}>
-                              <input type="checkbox" checked={isLinked} onChange={() => handleLinkExpressionForOpNode(ex.id)} />
-                              <span>{renderLabel(ex.label)}</span>
-                            </label>
-                          );
-                        })}
+                        <ScrollFadeWrap maxHeight={162} deps={[diagram.expressions.length]}>
+                          {diagram.expressions.map(ex => {
+                            const isLinked = opLinkIds.includes(ex.id);
+                            return (
+                              <label key={ex.id} style={{display:'flex', alignItems:'center', gap:'8px', fontSize:'0.9rem'}}>
+                                <input type="checkbox" checked={isLinked} onChange={() => handleLinkExpressionForOpNode(ex.id)} />
+                                <span>{renderLabel(ex.label)}</span>
+                              </label>
+                            );
+                          })}
+                        </ScrollFadeWrap>
                         {opLinkIds.length > 0 && (<button className="btn" onClick={() => handleLinkExpressionForOpNode('')} style={{marginTop:'4px', fontWeight: 'normal'}}>Clear Links</button>)}
                       </div>
                     </div>
@@ -5031,15 +5122,17 @@
                             <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>Linking to expression item:</span>
                           </div>
                           <div style={{display:'flex', flexDirection:'column', gap:'6px', padding:'6px 0'}}>
-                            {diagram.expressions.map(expr => {
-                              const isLinked = (chain.exprIds || []).includes(expr.id);
-                              return (
-                                <label key={expr.id} style={{display:'flex', alignItems:'center', gap:'8px', fontSize:'0.9rem'}}>
-                                  <input type="checkbox" checked={isLinked} onChange={() => toggleChainTarget(chain.id, expr.id)} />
-                                  <span>{renderLabel(expr.label) || '...'}</span>
-                                </label>
-                              );
-                            })}
+                            <ScrollFadeWrap maxHeight={162} deps={[diagram.expressions.length]}>
+                              {diagram.expressions.map(expr => {
+                                const isLinked = (chain.exprIds || []).includes(expr.id);
+                                return (
+                                  <label key={expr.id} style={{display:'flex', alignItems:'center', gap:'8px', fontSize:'0.9rem'}}>
+                                    <input type="checkbox" checked={isLinked} onChange={() => toggleChainTarget(chain.id, expr.id)} />
+                                    <span>{renderLabel(expr.label) || '...'}</span>
+                                  </label>
+                                );
+                              })}
+                            </ScrollFadeWrap>
                             {(chain.exprIds || []).length > 0 && (
                               <button className="btn" onClick={() => clearChainTargets(chain.id)} style={{marginTop:'4px', fontWeight: 'normal'}}>Clear Links</button>
                             )}
@@ -5089,15 +5182,17 @@
                             <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>Linking to expression item:</span>
                           </div>
                           <div style={{display:'flex', flexDirection:'column', gap:'6px', padding:'6px 0'}}>
-                            {diagram.expressions.map(expr => {
-                              const isLinked = (chain.exprIds || []).includes(expr.id);
-                              return (
-                                <label key={expr.id} style={{display:'flex', alignItems:'center', gap:'8px', fontSize:'0.9rem'}}>
-                                  <input type="checkbox" checked={isLinked} onChange={() => toggleChainTarget(chain.id, expr.id)} />
-                                  <span>{renderLabel(expr.label) || '...'}</span>
-                                </label>
-                              );
-                            })}
+                            <ScrollFadeWrap maxHeight={162} deps={[diagram.expressions.length]}>
+                              {diagram.expressions.map(expr => {
+                                const isLinked = (chain.exprIds || []).includes(expr.id);
+                                return (
+                                  <label key={expr.id} style={{display:'flex', alignItems:'center', gap:'8px', fontSize:'0.9rem'}}>
+                                    <input type="checkbox" checked={isLinked} onChange={() => toggleChainTarget(chain.id, expr.id)} />
+                                    <span>{renderLabel(expr.label) || '...'}</span>
+                                  </label>
+                                );
+                              })}
+                            </ScrollFadeWrap>
                             {(chain.exprIds || []).length > 0 && (
                               <button className="btn" onClick={() => clearChainTargets(chain.id)} style={{marginTop:'4px', fontWeight: 'normal'}}>Clear Links</button>
                             )}
