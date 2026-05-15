@@ -568,7 +568,7 @@
     const RRG_LABELS = [
       "SENTENCE", "CLAUSE", "CORE", "NUC", "PRED", "PERIPHERY", "AUX",
       "PrDP", "PoDP", "PrCS", "PoCS", "ECS", "LM", "ARG",
-      "RP", "PP", "MP", "XP",
+      "RP", "PP", "MP", "XP", "NP",
       "CORE_P", "NUC_P",
       "CORE_R", "NUC_R", "RPIP", "RPFP",
       "CORE_M", "NUC_M",
@@ -594,7 +594,7 @@
     ];
 
     const LS_LINE1_LABELS = ["ACTOR", "UNDERGOER", "NMR"];
-    const LS_LINE2_LABELS = ["PSA", "NOM", "ACC", "DAT", "ACT", "ERG", "ABS"];
+    const LS_LINE2_LABELS = ["PSA", "PSA: NOM", "PSA: ABS", "NOM", "ACC", "DAT", "ACT", "ERG", "ABS"];
 
     const renderInfoLabel = (text) => {
       if (!text) return text;
@@ -738,7 +738,7 @@
       return `${hours} hours ago`;
     };
 
-    const LOGIC_SYMBOLS = ['∅', '∧', '∨', '◇', '¬', '↔', '⊃', '+', '−', 'ϕ', 'ψ', '⟨', '⟩'];
+    const LOGIC_SYMBOLS = ['Ø', '∧', '∨', '◇', '¬', '↔', '⊃', '+', '−', 'ϕ', 'ψ', '⟨', '⟩'];
 
     const IPA_CATEGORIES = [
       { title: 'Vowels', chars: 'i y ɨ ʉ ɯ u ɪ ʏ ʊ e ø ɘ ɵ ɤ o ə ɛ œ ɜ ɞ ʌ ɔ æ ɐ a ɶ ɑ ɒ'.split(' ') },
@@ -2441,6 +2441,28 @@
             box.textContent = '';
           }
         });
+
+        // Si el usuario exporta con fondo transparente, las etiquetas no deben
+        // conservar rectángulos blancos. Esto se aplica solo al clon usado para
+        // el PNG: la interfaz en pantalla mantiene sus fondos normales. Las
+        // líneas se rasterizan antes que el HTML, de modo que el texto sigue
+        // quedando por encima de las líneas, pero sin caja blanca alrededor.
+        if (backgroundMode === 'transparent') {
+          clone.style.setProperty('--bg-color', 'transparent');
+          clone.querySelectorAll([
+            '.node-label',
+            '.node-display',
+            '.equator-item',
+            '.operator-label',
+            '.ls-node-label',
+            '.gloss-label',
+            '.logical-structure-box'
+          ].join(', ')).forEach(label => {
+            label.style.setProperty('background', 'transparent', 'important');
+            label.style.setProperty('background-color', 'transparent', 'important');
+            label.style.boxShadow = 'none';
+          });
+        }
 
         clone.style.transform = 'none'; clone.style.transformOrigin = '0 0';
         clone.style.position = 'relative'; clone.style.left = '0'; clone.style.top = '0';
@@ -4578,11 +4600,12 @@
                     return true;
                   });
 
-                  // LS-to-expression chain lines are intentionally rendered on the back SVG layer.
-                  // This keeps labels visually on top when a diagonal chain crosses an LS label
-                  // or an expression item, matching the behavior expected for readable diagrams.
-                  const backLines = visibleLines.filter(l => !isOperatorSvg(l.id) && !l.isText);
-                  const frontLines = visibleLines.filter(l => isOperatorSvg(l.id) && !l.isText);
+                  // Lines are intentionally rendered on the back SVG layer.
+                  // This keeps all labels visually on top when a diagonal line crosses them:
+                  // constituent-expression links, LS-expression chains, operator-expression links
+                  // and cross-links between operator spines remain readable without covering labels.
+                  const backLines = visibleLines.filter(l => !l.isText);
+                  const frontLines = [];
                   const textLines = visibleLines.filter(l => l.isText);
 
                   const renderLine = (l) => {
