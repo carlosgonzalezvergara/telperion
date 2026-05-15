@@ -179,9 +179,9 @@
 <h3>Create a new diagram</h3>
 <ol>
 <li>Enter your full sentence in the text input field.</li>
-<li><strong>IPA Characters:</strong> Click the <span class="ui-element">IPA</span> button to open the IPA picker. You can use it on the start screen and also later on the canvas while editing base items or node labels.</li>
+<li><strong>IPA Characters:</strong> Click the <span class="ui-element">t͡ʃ IPA</span> button to open the IPA picker. You can use it on the start screen and also later on the canvas while editing base items or node labels.</li>
 <li><strong>Adjust segments:</strong> To group or split tokens, click the space between items in the <span class="ui-element">word-flow</span> area. This toggles the boundary at that position.</li>
-<li>Use <span class="ui-element">Split All</span> to separate all words individually, or <span class="ui-element">Clear</span> to merge them all into a single block.</li>
+<li>Use <span class="ui-element">Split All</span> to separate all items individually, or <span class="ui-element">Clear</span> to merge them all into a single block.</li>
 <li>Click <span class="ui-element">Generate Initial Expression</span> to proceed to the workspace canvas.</li>
 </ol>
 
@@ -212,7 +212,7 @@
 
 <li><strong>Swap neighboring base items:</strong> You can swap adjacent base items using <span class="ui-element">← Swap Left</span> and <span class="ui-element">Swap Right →</span>. This is especially useful if you notice an ordering issue after generation and want to fix it without redoing segmentation.</li>
 
-<li><strong>IPA while editing:</strong> When you edit a base item directly on the canvas, an IPA button is available next to the text field, allowing you to insert IPA symbols at the cursor position.</li>
+<li><strong>IPA while editing:</strong> When you edit a base item directly on the canvas, an IPA button (<span class="ui-element">t͡ʃ</span>)is available in the right toolbar, allowing you to insert IPA symbols at the cursor position.</li>
 
 <li><strong>Secondary Gloss Line:</strong> To add a standard linguistic gloss layer, click <span class="ui-element">+ Add secondary gloss line</span>. This creates a row of borderless, editable boxes directly below each base item.
   <ul>
@@ -246,7 +246,7 @@
 </div>
 
 <ul>
-<li><strong>Sidebar formatting controls:</strong> as soon as you start editing any label, two blocks appear at the bottom of the right sidebar. The first, <strong>Text Formatting</strong>, contains one-click buttons for bold (<strong>B</strong>), italics (<em>I</em>), small caps (<span style="font-variant: small-caps; text-transform: lowercase;">SC</span>), subscript (X<sub>2</sub>), superscript (X<sup>2</sup>), and underline (<span style="text-decoration: underline;">U</span>). Each button wraps the current selection with the appropriate marker, so you do not need to remember the syntax. The second block, <strong>Insert Symbol:</strong>, provides two pickers — a <strong>logical symbols</strong> picker (Σ) and an <strong>IPA characters</strong> picker (t͡ʃ) — for inserting individual characters at the cursor position. A <strong>Text Formatting Guide</strong> with all the markup shortcuts is shown below the controls. The entire section disappears automatically when you finish editing, keeping the sidebar uncluttered the rest of the time.</li>
+<li><strong>Sidebar formatting controls:</strong> as soon as you start editing any label, two blocks appear at the bottom of the right sidebar. The first, <strong>Text Formatting</strong>, contains one-click buttons for bold (<span class="ui-element"><strong>B</strong></span>), italics (<span class="ui-element"><em>I</em></span>), small caps (<span class="ui-element"><span style="font-variant: small-caps; text-transform: lowercase;">SC</span></span>), subscript (<span class="ui-element">X<sub>2</sub></span>), superscript (<span class="ui-element">X<sup>2</sup></span>), and underline (<span class="ui-element"><span style="text-decoration: underline;">U</span></span>). Each button wraps the current selection with the appropriate marker, so you do not need to remember the syntax. The second block, <strong>Insert Symbol:</strong>, provides two pickers — a <strong>logical symbols</strong> picker (<span class="ui-element">Σ</span>) and an <strong>IPA characters</strong> picker (<span class="ui-element">t͡ʃ</span>) — for inserting individual characters at the cursor position. A <strong>Text Formatting Guide</strong> with all the markup shortcuts is shown below the controls. The entire section disappears automatically when you finish editing, keeping the sidebar uncluttered the rest of the time.</li>
 
 <li><strong>Dropdowns and Free Typing:</strong> When you click a label to edit it, an input field appears with a chevron on the right side. Clicking this chevron toggles a dropdown list offering context-appropriate RRG labels. You can click to select from the list, or type freely to enter any custom text.</li>
 
@@ -284,7 +284,6 @@
 <p>Telperion provides small green quick-action buttons that appear when you hover over a node. These buttons are designed to speed up tree building without moving your cursor to the sidebar.</p>
 <ul>
 <li><strong>Add child (+):</strong> When you hover over a constituent node, a small green + appears centered on the bottom edge. Click it to create new daughter nodes under that node.</li>
-<li><strong>Visibility:</strong> The quick buttons are shown on hover.</li>
 </ul>
 
 <h3>Links to the morphosyntactic expression</h3>
@@ -321,7 +320,6 @@
 <li><strong>Add child (+):</strong> When a layer node is hovered or selected, a green + appears on its bottom edge. Click it to add the next layer below.</li>
 <li><strong>Add operator on the left (→):</strong> A green button on the left edge adds an operator node to the left of the selected layer.</li>
 <li><strong>Add operator on the right (←):</strong> A green button on the right edge adds an operator node to the right of the selected layer.</li>
-<li><strong>Visibility:</strong> These buttons are visible on hover.</li>
 </ul>
 
 <h3>Cross-spine links</h3>
@@ -368,9 +366,9 @@
 <h3>Writing the logical-structure expression</h3>
 <p>Click the textbox to start editing. The same sidebar formatting controls described in <a href="#interface">§3</a> become active when you edit it, offering formatting buttons together with two pickers that are particularly useful for logical-structure work:</p>
 <ul>
-<li><strong>Formatting buttons:</strong> bold (<strong>B</strong>), italics (<em>I</em>), small caps (<span style="font-variant: small-caps; text-transform: lowercase;">SC</span>), subscript (X<sub>2</sub>), superscript (X<sup>2</sup>), and underline (<span style="text-decoration: underline;">U</span>). Each button wraps the current selection with the corresponding markup. The same markers from the <strong>Text Formatting Guide</strong> work here as well, so you can also type them directly.</li>
-<li><strong>Logical symbols (Σ):</strong> opens a panel of common symbols for logical-semantic notation: <code>∅ ∧ ∨ ◇ ¬ ↔ ⊃ + − ϕ ψ ⟨ ⟩</code>. Click any symbol to insert it at the cursor position.</li>
-<li><strong>IPA characters (t͡ʃ):</strong> the standard IPA picker, useful when the logical structure includes transcribed forms.</li>
+<li><strong>Formatting buttons:</strong> bold (<span class="ui-element"><strong>B</strong></span>), italics (<span class="ui-element"><em>I</em></span>), small caps (<span class="ui-element"><span style="font-variant: small-caps; text-transform: lowercase;">SC</span></span>), subscript (<span class="ui-element">X<sub>2</sub></span>), superscript (<span class="ui-element">X<sup>2</sup></span>), and underline (<span class="ui-element"><span style="text-decoration: underline;">U</span></span>). Each button wraps the current selection with the corresponding markup. The same markers from the <strong>Text Formatting Guide</strong> work here as well, so you can also type them directly.</li>
+<li><strong>Logical symbols (<span class="ui-element">Σ</span>):</strong> opens a panel of common symbols for logical-semantic notation: <code>∅ ∧ ∨ ◇ ¬ ↔ ⊃ + − ϕ ψ ⟨ ⟩</code>. Click any symbol to insert it at the cursor position.</li>
+<li><strong>IPA characters (<span class="ui-element">t͡ʃ</span>):</strong> the standard IPA picker, useful when the logical structure includes transcribed forms.</li>
 </ul>
 <p>Press <span class="keyboard-shortcut">Enter</span> to confirm or <span class="keyboard-shortcut">Esc</span> to cancel an edit.</p>
 
